@@ -136,6 +136,9 @@ struct WateredTabView: View {
     // Keeps AddDrinkView out of the tab bar while still allowing it to appear as a
     // focused add-drink flow above the current tab.
     @State private var isShowingAddDrinkSheet = false
+    
+    /// Controls the alert shown when saving a submitted drink fails.
+    @State private var isShowingDrinkSaveError = false
 
     // Purpose: Controls whether the Profile sheet is visible.
     //
@@ -283,6 +286,7 @@ struct WateredTabView: View {
             AddDrinkActionButton {
                 wateredLog("Add Drink flow opened")
                 isShowingAddDrinkSheet = true
+                analytics.track(.addDrinkOpened)
             }
 
             .frame(width: 88, height: 88)
@@ -304,6 +308,7 @@ struct WateredTabView: View {
         }
 
         .sheet(isPresented: $isShowingAddDrinkSheet, onDismiss: {
+            isShowingDrinkSaveError = false
             wateredLog("Add Drink flow dismissed")
         }) {
             AddDrinkView(
@@ -319,6 +324,11 @@ struct WateredTabView: View {
             )
             .presentationDetents(addDrinkPresentationDetents)
             .presentationDragIndicator(.visible)
+            .alert("Could not save your drink", isPresented: $isShowingDrinkSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your drink wasn't saved. Please try again.")
+            }
         }
         .sheet(isPresented: $isShowingProfileSheet, onDismiss: commitProfileGoal) {
             #if DEBUG
@@ -523,23 +533,47 @@ struct WateredTabView: View {
         wateredLog("Deleted \(entriesToDelete.count) saved drink entries")
     }
     
-    // Purpose: Adds a real drink entry submitted from the Add Drink form.
-    //
-    // Input:
-    // Receives the DrinkEntry created by AddDrinkView from the selected drink type,
-    // selected volume, selected unit, and current date.
-    //
-    // Behavior:
-    // Saves the entry to SwiftData, updates the app-level store, logs the added
-    // drink, and closes the Add Drink sheet so Today can refresh with the new total.
-    private func addDrinkEntry(_ entry: DrinkEntry) {
+    /// Submits a drink and closes the sheet only after success.
+    ///
+    /// - Parameters:
+    ///  - entry: The submitted drink
+    ///  - method: Whether subission came from the form or a recent-drink shortcut.
+    /// - Important: On failure, the sheet satys open and presents a save-error alert.
+    private func addDrinkEntry(_ entry: DrinkEntry, method: AddDrinkSubmissionMethod) {
+        let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
+        
+        do {
+            try handler.submit(
+                entry,
+                method: method,
+                save: persistDrinkEntry
+            )
+            isShowingAddDrinkSheet = false
+        } catch {
+            wateredLog("Drink save failed: \(error.localizedDescription)")
+            isShowingDrinkSaveError = true
+        }
+    }
+    
+    /// INserts a drink into SwiftData and explicitly saves the context.
+    ///
+    /// - Parameter entry: The drink to persist.
+    /// - Throws: The save error after pending context changes have been rolled back.
+    /// - Important: This funciton does not update app state or record analytics.
+    private func persistDrinkEntry(_ entry: DrinkEntry) throws {
         let persistentDrinkEntry = PersistentDrinkEntry(drinkEntry: entry)
         
         wateredLog("Persistence insert started for drink entry \(entry.id)")
         modelContext.insert(persistentDrinkEntry)
-        wateredLog("Drink entry accepted by Today state: \(entry.type.rawValue) \(entry.amount.formatted); drink count is \(store.entries.count)")
-        store.addDrinkEntry(entry)
-        isShowingAddDrinkSheet = false
+        
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            throw error
+        }
+    
+        wateredLog("Persistence save succeeded for drink entry \(entry.id)")
     }
 
     /// Starts a goal-editing session and presents the shared Profile sheet.

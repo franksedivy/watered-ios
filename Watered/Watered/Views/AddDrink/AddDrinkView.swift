@@ -26,12 +26,8 @@ import SwiftUI
 struct AddDrinkView: View {
     // MARK: - Actions
 
-    // Purpose:
-    // Stores the action that receives a completed drink entry when the user submits
-    // the Add Drink form.
-    //
-    // Input: Supplied by the parent view that owns the current drink entries.
-    private let onAddDrink: (DrinkEntry) -> Void
+    /// Hands the submitted drink and its interactions method to the parent.
+    private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
     // Purpose:
     // Stores the app-level display unit when the Add Drink form opens.
@@ -50,7 +46,7 @@ struct AddDrinkView: View {
     init(
         defaultUnit: LiquidUnit,
         recentDrinkOptions: [RecentDrinkOption],
-        onAddDrink: @escaping (DrinkEntry) -> Void
+        onAddDrink: @escaping (DrinkEntry, AddDrinkSubmissionMethod) -> Void
     ) {
         self.defaultUnit = defaultUnit
         self.recentDrinkOptions = recentDrinkOptions
@@ -170,17 +166,13 @@ struct AddDrinkView: View {
     }
 
     // MARK: - Submission
-    //
-    // Purpose: Submits the current Add Drink form state as a real DrinkEntry.
-    //
-    // Input:
-    // Reads the selected drink type, selected volume value, and default display unit
-    // currently held by the form.
-    //
-    // Behavior:
-    // Wraps the current form values in an AddDrinkDraft, asks the draft to create
-    // the DrinkEntry, logs the submitted entry, and hands the entry back to the
-    // parent view.
+    
+    /// Creates a drink entry from the current form selections and submits it to the parent.
+    ///
+    /// Uses the selected drink type, volume, and display unit to create an `AddDrinkDraft`.
+    /// Passes the resulting entry to `onAddDrink` with the `.form` submission method.
+    ///
+    /// - Important: The parent handles persistence, success analytics, and sheet dismissal.
     private func submitDrink() {
         let draft = AddDrinkDraft(
             drinkType: selectedDrinkType,
@@ -191,18 +183,17 @@ struct AddDrinkView: View {
         let drinkEntry = draft.drinkEntry()
 
         wateredLog("Add Drink submitted \(selectedDrinkType.rawValue) at \(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
-        onAddDrink(drinkEntry)
+        onAddDrink(drinkEntry, .form)
     }
 
-    // Purpose:
-    // Submit a recent-drink option immediately.
-    //
-    // Input:
-    // Accepts the label from the tapped recent-drink pill.
-    //
-    // Behavior:
-    // Finds the matching RecentDrinkOption, converts it to a DrinkEntry, logs the
-    // submitted recent drink, and hands the entry back to the parent view.
+    /// Submits a new drink entry from the matching recent-drink shortcut.
+    ///
+    /// Finds the option matching the tapped label and creates a new entry from its values.
+    /// Passes the entry to `onAddDrink` with the `.recent` submission method, without requiring
+    /// form confirmation. If no option matches, logs the failure and returns without submitting.
+    ///
+    /// - Parameter label: The label of the recent-drink shortcut that was tapped.
+    /// - Important: The parent handles persistence, success analytics, and sheet dismissal.
     private func submitRecentDrink(label: String) {
         guard let recentDrinkOption = recentDrinkOptions.first(where: { recentDrinkOption in
             recentDrinkOption.label == label
@@ -214,7 +205,7 @@ struct AddDrinkView: View {
         let drinkEntry = recentDrinkOption.drinkEntry()
 
         wateredLog("Recent drink submitted: \(recentDrinkOption.label)")
-        onAddDrink(drinkEntry)
+        onAddDrink(drinkEntry, .recent)
     }
 
     // MARK: - Body
@@ -299,6 +290,8 @@ struct AddDrinkView: View {
     }
 }
 
+// MARK: - Preview
+
 #Preview("With Recent Drinks") {
     AddDrinkView(
         defaultUnit: .milliliters,
@@ -309,7 +302,7 @@ struct AddDrinkView: View {
                 unit: .milliliters
             )
         ],
-        onAddDrink: { drinkEntry in
+        onAddDrink: { drinkEntry, method in
             wateredLog("Preview submitted drink entry: \(drinkEntry)")
         }
     )
@@ -318,8 +311,9 @@ struct AddDrinkView: View {
 #Preview("No Recent Drinks") {
     AddDrinkView(
         defaultUnit: .milliliters,
-        recentDrinkOptions: []
-    ) { drinkEntry in
-        wateredLog("Preview submitted drink entry: \(drinkEntry)")
-    }
+        recentDrinkOptions: [],
+        onAddDrink: { drinkEntry, method in
+            wateredLog("Preview submitted drink via \(method): \(drinkEntry)")
+        }
+    )
 }
