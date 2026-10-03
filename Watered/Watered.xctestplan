@@ -1,0 +1,41 @@
+{
+  "configurations" : [
+    {
+      "id" : "F0743DAB-E292-47F3-9540-E829116B3DF4",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Watered.xcodeproj",
+      "identifier" : "C1F5F0B42FEE623F00B03450",
+      "name" : "Watered"
+    },
+    "testInteropMode" : "complete"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Watered.xcodeproj",
+        "identifier" : "C1F5F0C12FEE624000B03450",
+        "name" : "WateredTests"
+      }
+    },
+    {
+      "skippedTests" : [
+        "WateredUITestsLaunchTests"
+      ],
+      "target" : {
+        "containerPath" : "container:Watered.xcodeproj",
+        "identifier" : "C1F5F0CB2FEE624000B03450",
+        "name" : "WateredUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

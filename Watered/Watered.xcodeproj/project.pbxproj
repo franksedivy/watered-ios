@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C16E611E3071A19E00B1DD04 /* Watered.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Watered.xctestplan; sourceTree = "<group>"; };
 		C1F5F0B52FEE623F00B03450 /* Watered.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Watered.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1F5F0C22FEE624000B03450 /* WateredTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WateredTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1F5F0CC2FEE624000B03450 /* WateredUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WateredUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +89,7 @@
 		C1F5F0AC2FEE623F00B03450 = {
 			isa = PBXGroup;
 			children = (
+				C16E611E3071A19E00B1DD04 /* Watered.xctestplan */,
 				C1F5F0B72FEE623F00B03450 /* Watered */,
 				C1F5F0C52FEE624000B03450 /* WateredTests */,
 				C1F5F0CF2FEE624000B03450 /* WateredUITests */,

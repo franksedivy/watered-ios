@@ -139,6 +139,11 @@ struct WateredTabView: View {
     
     /// Controls the alert shown when saving a submitted drink fails.
     @State private var isShowingDrinkSaveError = false
+    
+    #if DEBUG
+    /// Tracks whether the requested one-time UI-test save failures has been triggered.
+    @State private var hasSimulatedDrinkSaveFailure = false
+    #endif
 
     // Purpose: Controls whether the Profile sheet is visible.
     //
@@ -555,7 +560,9 @@ struct WateredTabView: View {
         }
     }
     
-    /// INserts a drink into SwiftData and explicitly saves the context.
+    /// Inserts a drink into SwiftData and explicitly saves the context.
+    /// Debug UI tests can request a one-time failure after insertion but before saving. This requires both the isolated-store
+    /// and first-save-failure launch arguments.
     ///
     /// - Parameter entry: The drink to persist.
     /// - Throws: The save error after pending context changes have been rolled back.
@@ -567,6 +574,18 @@ struct WateredTabView: View {
         modelContext.insert(persistentDrinkEntry)
         
         do {
+            #if DEBUG
+            let launchArguments = ProcessInfo.processInfo.arguments
+            
+            if launchArguments.contains("-uiTestingInMemory"),
+               launchArguments.contains("-uiTestingFailFirstDrinkSave"),
+               hasSimulatedDrinkSaveFailure == false {
+                hasSimulatedDrinkSaveFailure = true
+                wateredLog("UI test: simulating the first drink save failure")
+                throw CocoaError(.fileWriteUnknown)
+            }
+            #endif
+            
             try modelContext.save()
         } catch {
             modelContext.rollback()
