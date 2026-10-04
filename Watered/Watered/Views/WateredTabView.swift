@@ -467,18 +467,12 @@ struct WateredTabView: View {
         }
     }
     
-    // Purpose:
-    // Deletes one logical dirnk entry identified by its stable UUID.
-    //
-    // Input:
-    // Accepts the ID of the drink selected in the Stats detail screen.
-    //
-    // Behavior:
-    // Finds the matching persisted rows and delegates saving and store updates
-    // to the shared deletion function. An already-absent entry requires no deletion.
-    //
-    // Throw:
-    // A persistence error if saving fails.
+    /// Deletes one logical dirnk entry identified by its stable UUID.
+    ///
+    /// Finds the matching persisted rows and delegates saving and store updates to the shared deletion function.
+    /// An already-absent entry requires no deletion.
+    ///
+    /// - Throws: A persistence error if saving fails.
     private func deleteDrinkEntry(id: UUID) throws {
         let matchingEntries = persistentDrinkEntries.filter { entry in
             entry.id == id
@@ -489,45 +483,20 @@ struct WateredTabView: View {
     }
 
     
-    // Purpose:
-    // Deletes selected saved drinks and updates the app's in-memory history
-    //
-    // Input:
-    // Accepts persistent drink entries belonging to this view's model context.
-    //
-    // Behavior:
-    // Saves existing changes first so rollback cannot discard pednding settings.
-    // Updates WateredStore only after the deletion saves successfully.
-    //
-    // Throws:
-    // A persistence error if either saves fails. Failed deletions are rolled back
-    // so the caller can display an error without rpeorting a successful deletion.
+    /// Deletes stored drinks before updating the in-memory history.
+    ///
+    /// - Parameter entriesToDelete: Stored recrods belonging to this view's context.
+    /// - Throws: A persistence error, leaving the in-memory history unchanged.
     private func deleteDrinkEntries(
         _ entriesToDelete: [PersistentDrinkEntry]
     ) throws {
-        guard entriesToDelete.isEmpty == false else {
+        let deletedIDs = try DrinkEntryPersistence.delete(
+            entriesToDelete,
+            in: modelContext
+        )
+        
+        guard deletedIDs.isEmpty == false else {
             return
-        }
-        
-        if modelContext.hasChanges {
-            try modelContext.save()
-        }
-        
-        // Capture IDs befor saving the deletion invalidates the stored objects.
-        let deletedIDs = Set(entriesToDelete.map { entry in
-            entry.id
-        })
-        
-        for entry in entriesToDelete {
-            modelContext.delete(entry)
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            wateredLog("Drink deletion failed: \(error.localizedDescription)")
-            throw error
         }
         
         let remainingEntries = store.entries.filter { entry in
@@ -535,7 +504,6 @@ struct WateredTabView: View {
         }
         
         store.loadDrinkEntries(remainingEntries)
-        wateredLog("Deleted \(entriesToDelete.count) saved drink entries")
     }
     
     /// Submits a drink and closes the sheet only after success.
@@ -560,39 +528,33 @@ struct WateredTabView: View {
         }
     }
     
-    /// Inserts a drink into SwiftData and explicitly saves the context.
-    /// Debug UI tests can request a one-time failure after insertion but before saving. This requires both the isolated-store
-    /// and first-save-failure launch arguments.
+    /// Delegates drink saving to the persistence layer.
+    ///
+    /// Debug UI tests can request one failure after insertion to exercise rollback. Both isolated-storage and first-save-failure
+    /// arguments are required.
     ///
     /// - Parameter entry: The drink to persist.
-    /// - Throws: The save error after pending context changes have been rolled back.
-    /// - Important: This funciton does not update app state or record analytics.
+    /// - Throws: A persistence error after pending changes have been rolled back.
+    /// - Important: Store updates, analytics, and presentation are handled by the caller.
     private func persistDrinkEntry(_ entry: DrinkEntry) throws {
-        let persistentDrinkEntry = PersistentDrinkEntry(drinkEntry: entry)
-        
-        wateredLog("Persistence insert started for drink entry \(entry.id)")
-        modelContext.insert(persistentDrinkEntry)
-        
-        do {
-            #if DEBUG
-            let launchArguments = ProcessInfo.processInfo.arguments
-            
-            if launchArguments.contains("-uiTestingInMemory"),
-               launchArguments.contains("-uiTestingFailFirstDrinkSave"),
-               hasSimulatedDrinkSaveFailure == false {
-                hasSimulatedDrinkSaveFailure = true
-                wateredLog("UI test: simulating the first drink save failure")
-                throw CocoaError(.fileWriteUnknown)
+        try DrinkEntryPersistence.save(
+            entry,
+            in: modelContext,
+            beforeSave: {
+                #if DEBUG
+                let launchArguments = ProcessInfo.processInfo.arguments
+                
+                if launchArguments.contains("-uiTestingInMemory"),
+                   launchArguments.contains("-uiTestingFailFirstDrinkSave"),
+                   hasSimulatedDrinkSaveFailure == false {
+                    hasSimulatedDrinkSaveFailure = true
+                    wateredLog("UI test: simulating the first drink save failure")
+                    throw CocoaError(.fileWriteUnknown)
+                               
+                }
+                #endif
             }
-            #endif
-            
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            throw error
-        }
-    
-        wateredLog("Persistence save succeeded for drink entry \(entry.id)")
+        )
     }
 
     /// Starts a goal-editing session and presents the shared Profile sheet.
