@@ -49,12 +49,14 @@ enum DrinkEntryPersistence {
     /// - Parameters:
     ///   - entries: Stored drink records belonging to the supplied context.
     ///   - context: The context used to delete and save the records.
+    ///   - beforeSave: An optional action run after marking records for deletion, before saving the deletion.
     /// - Returns: The deleted identifiers, or an empty set when no records are supplied.
-    /// - Throws: An error if saving pending changes or the deletion fails.
+    /// - Throws: An error from saving pending changes, the callback, or deletion saving.
     /// - Important: This operation does not update the in-memory store.
     static func delete(
         _ entries: [PersistentDrinkEntry],
-    in context: ModelContext
+        in context: ModelContext,
+        beforeSave: () throws -> Void = {}
     ) throws -> Set<UUID> {
         guard entries.isEmpty == false else {
             return[]
@@ -74,6 +76,7 @@ enum DrinkEntryPersistence {
         }
         
         do {
+            try beforeSave()
             try context.save()
         } catch {
             context.rollback()
