@@ -67,71 +67,71 @@ struct AppSettingsPersistenceTests {
         #expect(history.source == HydrationGoalSource.appDefault.rawValue)
     }
     
-    // Given saved settings and initial goal history, when a different goal is committed,
-       // then settings reflect the new goal and one manual record is appended without
-       // changing the original default-goal record.
-       @Test func savingChangedGoalUpdatesSettingsAndPreservesHistory() throws {
-           let container = try ModelContainer(
-               for: PersistentAppSettings.self,
-               PersistentHydrationGoalChange.self,
-               configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-           )
-           let context = container.mainContext
-           let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
-           let initialDate = Date(timeIntervalSince1970: 1000)
-           let changedDate = Date(timeIntervalSince1970: 2000)
-           let settings = try AppSettingsPersistence.loadOrCreate(
-               defaults: defaults,
-               in: context,
-               at: initialDate
-           )
-           let initialRecords = try context.fetch(
-               FetchDescriptor<PersistentHydrationGoalChange>()
-           )
-           let originalID = try #require(initialRecords.first).id
-           let newGoal = HydrationGoal(amount: DrinkAmount(value: 3000, unit: .milliliters))
+    // GIVEN saved settings and initial goal history, when a different goal is committed,
+    // THEN settings reflect the new goal and one manual record is appended without
+    // changing the original default-goal record.
+    @Test func savingChangedGoalUpdatesSettingsAndPreservesHistory() throws {
+        let container = try ModelContainer(
+           for: PersistentAppSettings.self,
+           PersistentHydrationGoalChange.self,
+           configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+        let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
+        let initialDate = Date(timeIntervalSince1970: 1000)
+        let changedDate = Date(timeIntervalSince1970: 2000)
+        let settings = try AppSettingsPersistence.loadOrCreate(
+           defaults: defaults,
+           in: context,
+           at: initialDate
+        )
+        let initialRecords = try context.fetch(
+           FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+        let originalID = try #require(initialRecords.first).id
+        let newGoal = HydrationGoal(amount: DrinkAmount(value: 3000, unit: .milliliters))
 
-           let didChange = try AppSettingsPersistence.saveGoal(
-               newGoal,
-               source: .manual,
-               settings: settings,
-               in: context,
-               at: changedDate
+        let didChange = try AppSettingsPersistence.saveGoal(
+           newGoal,
+           source: .manual,
+           settings: settings,
+           in: context,
+           at: changedDate
+        )
+
+        let verificationContext = ModelContext(container)
+        let savedSettings = try verificationContext.fetch(
+           FetchDescriptor<PersistentAppSettings>()
+        )
+        let history = try verificationContext.fetch(
+           FetchDescriptor<PersistentHydrationGoalChange>(
+               sortBy: [SortDescriptor(\.changedAt)]
            )
+        )
 
-           let verificationContext = ModelContext(container)
-           let savedSettings = try verificationContext.fetch(
-               FetchDescriptor<PersistentAppSettings>()
-           )
-           let history = try verificationContext.fetch(
-               FetchDescriptor<PersistentHydrationGoalChange>(
-                   sortBy: [SortDescriptor(\.changedAt)]
-               )
-           )
+        #expect(didChange)
+        #expect(savedSettings.count == 1)
+        #expect(history.count == 2)
 
-           #expect(didChange)
-           #expect(savedSettings.count == 1)
-           #expect(history.count == 2)
+        let saved = try #require(savedSettings.first)
+        let original = try #require(history.first)
+        let latest = try #require(history.last)
 
-           let saved = try #require(savedSettings.first)
-           let original = try #require(history.first)
-           let latest = try #require(history.last)
-
-           #expect(saved.dailyGoalValue == 3000)
-           #expect(saved.dailyGoalUnitID == "milliliters")
-           #expect(saved.createdAt == initialDate)
-           #expect(saved.updatedAt == changedDate)
-           #expect(original.id == originalID)
-           #expect(original.goalValue == defaults.dailyHydrationGoal.amount.value)
-           #expect(original.goalUnitID == "milliliters")
-           #expect(original.changedAt == initialDate)
-           #expect(original.source == HydrationGoalSource.appDefault.rawValue)
-           #expect(latest.id != originalID)
-           #expect(latest.goalValue == saved.dailyGoalValue)
-           #expect(latest.goalUnitID == saved.dailyGoalUnitID)
-           #expect(latest.changedAt == changedDate)
-           #expect(latest.source == HydrationGoalSource.manual.rawValue)
-       }
+        #expect(saved.dailyGoalValue == 3000)
+        #expect(saved.dailyGoalUnitID == "milliliters")
+        #expect(saved.createdAt == initialDate)
+        #expect(saved.updatedAt == changedDate)
+        #expect(original.id == originalID)
+        #expect(original.goalValue == defaults.dailyHydrationGoal.amount.value)
+        #expect(original.goalUnitID == "milliliters")
+        #expect(original.changedAt == initialDate)
+        #expect(original.source == HydrationGoalSource.appDefault.rawValue)
+        #expect(latest.id != originalID)
+        #expect(latest.goalValue == saved.dailyGoalValue)
+        #expect(latest.goalUnitID == saved.dailyGoalUnitID)
+        #expect(latest.changedAt == changedDate)
+        #expect(latest.source == HydrationGoalSource.manual.rawValue)
+    }
     
     // Given saved settings and initial goal history, when the same goal is submitted,
     // then no change is reported, no history is appended, and timestamps stay unchanged.
@@ -312,6 +312,185 @@ struct AppSettingsPersistenceTests {
         #expect(latest.goalUnitID == "milliliters")
         #expect(latest.changedAt == Date(timeIntervalSince1970: 2000))
         #expect(latest.source == HydrationGoalSource.manual.rawValue)
+    }
+    
+    // GIVEN saved settings and initial goal history, when the display unit changes,
+    // THEN the new unit is saved without changing the goal or its history.
+    @Test func savingDisplayUnitPreservesGoalHistory() throws {
+        let container = try ModelContainer(
+            for: PersistentAppSettings.self,
+            PersistentHydrationGoalChange.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+
+        let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
+        let initialDate = Date(timeIntervalSince1970: 1000)
+        let changedDate = Date(timeIntervalSince1970: 2000)
+        let settings = try AppSettingsPersistence.loadOrCreate(
+            defaults: defaults,
+            in: context,
+            at: initialDate
+        )
+        let initialHistory = try context.fetch(
+            FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+        let originalID = try #require(initialHistory.first).id
+
+        let didChange = try AppSettingsPersistence.saveDisplayUnit(
+            .usFluidOunces,
+            settings: settings,
+            in: context,
+            at: changedDate
+        )
+
+        let verificationContext = ModelContext(container)
+        let savedSettings = try verificationContext.fetch(
+            FetchDescriptor<PersistentAppSettings>()
+        )
+        let history = try verificationContext.fetch(
+            FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+
+        #expect(didChange)
+        #expect(context.hasChanges == false)
+        #expect(savedSettings.count == 1)
+        #expect(history.count == 1)
+
+        let saved = try #require(savedSettings.first)
+        let original = try #require(history.first)
+
+        #expect(saved.displayUnitID == "usFluidOunces")
+        #expect(saved.createdAt == initialDate)
+        #expect(saved.updatedAt == changedDate)
+        #expect(saved.dailyGoalValue == defaults.dailyHydrationGoal.amount.value)
+        #expect(saved.dailyGoalUnitID == "milliliters")
+        #expect(original.id == originalID)
+        #expect(original.goalValue == saved.dailyGoalValue)
+        #expect(original.goalUnitID == saved.dailyGoalUnitID)
+        #expect(original.changedAt == initialDate)
+        #expect(original.source == HydrationGoalSource.appDefault.rawValue)
+    }
+    
+    // GIVEN saved settings, when the existing display unit is submitted,
+    // THEN no save callback runs and settings and goal history remain unchanged.
+    @Test func savingUnchangedDisplayUnitSkipsSaving() throws {
+        let container = try ModelContainer(
+            for: PersistentAppSettings.self,
+            PersistentHydrationGoalChange.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+
+        let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
+        let initialDate = Date(timeIntervalSince1970: 1000)
+        let settings = try AppSettingsPersistence.loadOrCreate(
+            defaults: defaults,
+            in: context,
+            at: initialDate
+        )
+        var didCallBeforeSave = false
+
+        let didChange = try AppSettingsPersistence.saveDisplayUnit(
+            defaults.displayUnit,
+            settings: settings,
+            in: context,
+            at: Date(timeIntervalSince1970: 2000),
+            beforeSave: {
+                didCallBeforeSave = true
+            }
+        )
+
+        #expect(didChange == false)
+        #expect(didCallBeforeSave == false)
+        #expect(context.hasChanges == false)
+
+        let verificationContext = ModelContext(container)
+        let savedSettings = try verificationContext.fetch(
+            FetchDescriptor<PersistentAppSettings>()
+        )
+        let history = try verificationContext.fetch(
+            FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+        #expect(savedSettings.count == 1)
+        #expect(history.count == 1)
+
+        let saved = try #require(savedSettings.first)
+        let original = try #require(history.first)
+        #expect(saved.displayUnitID == defaults.displayUnit.persistenceIdentifier)
+        #expect(saved.createdAt == initialDate)
+        #expect(saved.updatedAt == initialDate)
+        #expect(saved.dailyGoalValue == defaults.dailyHydrationGoal.amount.value)
+        #expect(saved.dailyGoalUnitID == "milliliters")
+        #expect(original.changedAt == initialDate)
+        #expect(original.goalValue == saved.dailyGoalValue)
+        #expect(original.goalUnitID == saved.dailyGoalUnitID)
+        #expect(original.source == HydrationGoalSource.appDefault.rawValue)
+    }
+    
+    // GIVEN saved settings, when a display-unit save fails after mutation,
+    // THEN the previous unit and timestamp are restored and goal history is preserved.
+    @Test func failedDisplayUnitSaveRestoresPreviousSettings() throws {
+        let container = try ModelContainer(
+            for: PersistentAppSettings.self,
+            PersistentHydrationGoalChange.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+
+        let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
+        let initialDate = Date(timeIntervalSince1970: 1000)
+        let settings = try AppSettingsPersistence.loadOrCreate(
+            defaults: defaults,
+            in: context,
+            at: initialDate
+        )
+        let initialHistory = try context.fetch(
+            FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+        let originalID = try #require(initialHistory.first).id
+
+        #expect(throws: CocoaError.self) {
+            try AppSettingsPersistence.saveDisplayUnit(
+                .usFluidOunces,
+                settings: settings,
+                in: context,
+                at: Date(timeIntervalSince1970: 2000),
+                beforeSave: {
+                    throw CocoaError(.fileWriteUnknown)
+                }
+            )
+        }
+
+        #expect(settings.displayUnitID == defaults.displayUnit.persistenceIdentifier)
+        #expect(settings.updatedAt == initialDate)
+        #expect(context.hasChanges == false)
+
+        let verificationContext = ModelContext(container)
+        let savedSettings = try verificationContext.fetch(
+            FetchDescriptor<PersistentAppSettings>()
+        )
+        let history = try verificationContext.fetch(
+            FetchDescriptor<PersistentHydrationGoalChange>()
+        )
+        #expect(savedSettings.count == 1)
+        #expect(history.count == 1)
+
+        let saved = try #require(savedSettings.first)
+        let original = try #require(history.first)
+        #expect(saved.displayUnitID == defaults.displayUnit.persistenceIdentifier)
+        #expect(saved.createdAt == initialDate)
+        #expect(saved.updatedAt == initialDate)
+        #expect(saved.dailyGoalValue == defaults.dailyHydrationGoal.amount.value)
+        #expect(saved.dailyGoalUnitID == "milliliters")
+        #expect(original.id == originalID)
+        #expect(original.changedAt == initialDate)
+        #expect(original.goalValue == saved.dailyGoalValue)
+        #expect(original.goalUnitID == saved.dailyGoalUnitID)
+        #expect(original.source == HydrationGoalSource.appDefault.rawValue)
     }
     
     // MARK: - Test Helpers
