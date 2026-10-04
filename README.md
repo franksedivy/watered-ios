@@ -1,9 +1,11 @@
 # Watered
-A hydration tracker and model-first SwiftUI learning project.
+The hydration tracker Apple forgot. Realistic drink textures and playful fluid dynamics make every pour feel alive, with a vision for hydration goals shaped around your climate, health, and training. Private by design. Delightful by nature.
 
 ## Current Status
 `0.4 Persistence & Analytics` is complete. Drink logging, Today summaries, recent-drink shortcuts, and drink deletion are implemented. SwiftData stores drinks, display units, the current hydration goal, and goal-change history locally. Analytics events are logged locally in Debug builds and discarded in Release builds.
+
 The current focus is `0.5 Drink Catalogue & HealthKit syncing`: a scalable catalogue of 50-60 built-in drinks, optional export-only HealthKit integration, and focused refactoring of persistence responsibilities out of the app's navigation view. Existing drink history must remain compatible as the catalogue expands.
+
 HealthKit is planned, not yet implemented; reading or importing HealthKit data is outside the initial scope. Widgets, a Watch app, iCloud sync, and production analytics collection remain future work.
 
 ## Getting Started
