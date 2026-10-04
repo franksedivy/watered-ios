@@ -560,39 +560,33 @@ struct WateredTabView: View {
         }
     }
     
-    /// Inserts a drink into SwiftData and explicitly saves the context.
-    /// Debug UI tests can request a one-time failure after insertion but before saving. This requires both the isolated-store
-    /// and first-save-failure launch arguments.
+    /// Delegates drink saving to the persistence layer.
+    ///
+    /// Debug UI tests can request one failure after insertion to exercise rollback. Both isolated-storage and first-save-failure
+    /// arguments are required.
     ///
     /// - Parameter entry: The drink to persist.
-    /// - Throws: The save error after pending context changes have been rolled back.
-    /// - Important: This funciton does not update app state or record analytics.
+    /// - Throws: A persistence error after pending changes have been rolled back.
+    /// - Important: Store updates, analytics, and presentation are handled by the caller.
     private func persistDrinkEntry(_ entry: DrinkEntry) throws {
-        let persistentDrinkEntry = PersistentDrinkEntry(drinkEntry: entry)
-        
-        wateredLog("Persistence insert started for drink entry \(entry.id)")
-        modelContext.insert(persistentDrinkEntry)
-        
-        do {
-            #if DEBUG
-            let launchArguments = ProcessInfo.processInfo.arguments
-            
-            if launchArguments.contains("-uiTestingInMemory"),
-               launchArguments.contains("-uiTestingFailFirstDrinkSave"),
-               hasSimulatedDrinkSaveFailure == false {
-                hasSimulatedDrinkSaveFailure = true
-                wateredLog("UI test: simulating the first drink save failure")
-                throw CocoaError(.fileWriteUnknown)
+        try DrinkEntryPersistence.save(
+            entry,
+            in: modelContext,
+            beforeSave: {
+                #if DEBUG
+                let launchArguments = ProcessInfo.processInfo.arguments
+                
+                if launchArguments.contains("-uiTestingInMemory"),
+                   launchArguments.contains("-uiTestingFailFirstDrinkSave"),
+                   hasSimulatedDrinkSaveFailure == false {
+                    hasSimulatedDrinkSaveFailure = true
+                    wateredLog("UI test: simulating the first drink save failure")
+                    throw CocoaError(.fileWriteUnknown)
+                               
+                }
+                #endif
             }
-            #endif
-            
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            throw error
-        }
-    
-        wateredLog("Persistence save succeeded for drink entry \(entry.id)")
+        )
     }
 
     /// Starts a goal-editing session and presents the shared Profile sheet.
