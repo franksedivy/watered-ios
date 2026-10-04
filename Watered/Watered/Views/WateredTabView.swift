@@ -467,18 +467,12 @@ struct WateredTabView: View {
         }
     }
     
-    // Purpose:
-    // Deletes one logical dirnk entry identified by its stable UUID.
-    //
-    // Input:
-    // Accepts the ID of the drink selected in the Stats detail screen.
-    //
-    // Behavior:
-    // Finds the matching persisted rows and delegates saving and store updates
-    // to the shared deletion function. An already-absent entry requires no deletion.
-    //
-    // Throw:
-    // A persistence error if saving fails.
+    /// Deletes one logical dirnk entry identified by its stable UUID.
+    ///
+    /// Finds the matching persisted rows and delegates saving and store updates to the shared deletion function.
+    /// An already-absent entry requires no deletion.
+    ///
+    /// - Throws: A persistence error if saving fails.
     private func deleteDrinkEntry(id: UUID) throws {
         let matchingEntries = persistentDrinkEntries.filter { entry in
             entry.id == id
@@ -489,45 +483,20 @@ struct WateredTabView: View {
     }
 
     
-    // Purpose:
-    // Deletes selected saved drinks and updates the app's in-memory history
-    //
-    // Input:
-    // Accepts persistent drink entries belonging to this view's model context.
-    //
-    // Behavior:
-    // Saves existing changes first so rollback cannot discard pednding settings.
-    // Updates WateredStore only after the deletion saves successfully.
-    //
-    // Throws:
-    // A persistence error if either saves fails. Failed deletions are rolled back
-    // so the caller can display an error without rpeorting a successful deletion.
+    /// Deletes stored drinks before updating the in-memory history.
+    ///
+    /// - Parameter entriesToDelete: Stored recrods belonging to this view's context.
+    /// - Throws: A persistence error, leaving the in-memory history unchanged.
     private func deleteDrinkEntries(
         _ entriesToDelete: [PersistentDrinkEntry]
     ) throws {
-        guard entriesToDelete.isEmpty == false else {
+        let deletedIDs = try DrinkEntryPersistence.delete(
+            entriesToDelete,
+            in: modelContext
+        )
+        
+        guard deletedIDs.isEmpty == false else {
             return
-        }
-        
-        if modelContext.hasChanges {
-            try modelContext.save()
-        }
-        
-        // Capture IDs befor saving the deletion invalidates the stored objects.
-        let deletedIDs = Set(entriesToDelete.map { entry in
-            entry.id
-        })
-        
-        for entry in entriesToDelete {
-            modelContext.delete(entry)
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            modelContext.rollback()
-            wateredLog("Drink deletion failed: \(error.localizedDescription)")
-            throw error
         }
         
         let remainingEntries = store.entries.filter { entry in
@@ -535,7 +504,6 @@ struct WateredTabView: View {
         }
         
         store.loadDrinkEntries(remainingEntries)
-        wateredLog("Deleted \(entriesToDelete.count) saved drink entries")
     }
     
     /// Submits a drink and closes the sheet only after success.

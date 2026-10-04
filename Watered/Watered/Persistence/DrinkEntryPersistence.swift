@@ -5,6 +5,7 @@
 //  Created by Frank Sedivy on 04/10/2026.
 //
 
+import Foundation
 import SwiftData
 
 /// Coordinates persistence operations for drink entries.
@@ -41,4 +42,46 @@ enum DrinkEntryPersistence {
         wateredLog("Persistence save succeeded for dink entry \(entry.id)")
     }
     
+    /// Deletes stored drinks and returns their indentifiers after saving succeeds.
+    ///
+    /// Pending changes are saved before deletion so rollback cannot discard them.
+    ///
+    /// - Parameters:
+    ///   - entries: Stored drink records belonging to the supplied context.
+    ///   - context: The context used to delete and save the records.
+    /// - Returns: The deleted identifiers, or an empty set when no records are supplied.
+    /// - Throws: An error if saving pending changes or the deletion fails.
+    /// - Important: This operation does not update the in-memory store.
+    static func delete(
+        _ entries: [PersistentDrinkEntry],
+    in context: ModelContext
+    ) throws -> Set<UUID> {
+        guard entries.isEmpty == false else {
+            return[]
+        }
+        
+        if context.hasChanges {
+            try context.save()
+        }
+        
+        // Capture identifiers before saving invalidates the deleted records.
+        let deletedIDs = Set(entries.map { entry in
+            entry.id
+        })
+        
+        for entry in entries {
+            context.delete(entry)
+        }
+        
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            wateredLog("Drink deletion failed: \(error.localizedDescription)")
+            throw error
+        }
+        
+        wateredLog("Deleted \(entries.count) saved drink entries")
+        return deletedIDs
+    }
 }
