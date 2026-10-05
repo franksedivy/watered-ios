@@ -25,25 +25,43 @@ struct WateredApp: App {
         #endif
     }
     
-    // MARK: - UI Test Configuration
-    
-    /// Whether this launch uses an isolated, in-memory data store for UI tests.
-    ///
-    /// Returns true only when a Debug build recieves the
-    /// - 'uiTestingInMemory' launch argument.
-    ///
-    /// - Important: Release builds always use persistent storage, regardless of launch arguments.
-    private var usesInMemoryStoreage: Bool {
+    // MARK: - Launch Configuration
+
+    /// Determines storage and test behaviour from this launch's arguments.
+    private let launchConfiguration: AppLaunchConfiguration
+
+    #if DEBUG
+    /// Retains one failure controller across SwiftUI view updates.
+    @State private var saveFailureController: DebugSaveFailureController
+    #endif
+
+    /// Reads launch configuration and creates Debug-only failure state.
+    @MainActor
+    init() {
+        let configuration = AppLaunchConfiguration(
+            arguments: ProcessInfo.processInfo.arguments
+        )
+        launchConfiguration = configuration
+
         #if DEBUG
-        return ProcessInfo.processInfo.arguments.contains("-uiTestingInMemory")
-        #else
-        return false
+        _saveFailureController = State(
+            initialValue: DebugSaveFailureController(configuration: configuration)
+        )
         #endif
     }
     
+    // MARK: - Body
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            WateredRootView(
+                analytics: analytics,
+                beforeDrinkSave: saveFailureController.beforeDrinkSave,
+                beforeDisplayUnitSave: saveFailureController.beforeDisplayUnitSave
+            )
+            #else
             WateredRootView(analytics: analytics)
+            #endif
         }
         .modelContainer(
             for: [
@@ -51,7 +69,7 @@ struct WateredApp: App {
                 PersistentAppSettings.self,
                 PersistentHydrationGoalChange.self
             ],
-            inMemory: usesInMemoryStoreage
+            inMemory: launchConfiguration.usesInMemoryStorage
         )
     }
 }

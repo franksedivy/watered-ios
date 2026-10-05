@@ -56,6 +56,12 @@ struct WateredTabView: View {
     // UI role: Lets WateredTabView show app-level UI only when it belongs to the
     // active tab.
     @State private var selectedTab: WateredTab = .today
+    
+    /// Runs after drink insertion and before persistence saves.
+    private let beforeDrinkSave: () throws -> Void
+    
+    /// Runs after display-unit mutation and before persistence saves.
+    private let beforeDisplayUnitSave: () throws -> Void
 
     // MARK: - Settings State
     //
@@ -90,6 +96,9 @@ struct WateredTabView: View {
     
     /// Presents feedback when Profile's final goal could not be saved.
     @State private var isShowingGoalSaveError = false
+    
+    /// Presents feedback when Profile's selected display unit could not be saved.
+    @State private var isShowingDisplayUnitSaveError = false
 
     // Purpose: Stores Watered's first app-level state owner.
     //
@@ -106,6 +115,20 @@ struct WateredTabView: View {
     // persisted drink history.
     @State private var activeCalendarDay = TodayCalendarDay()
     
+    /// Connects Profile's selection to explicit persistence.
+    ///
+    /// Loading saved settings does not invoke this binding's setter.
+    private var profileDisplayUnit: Binding<LiquidUnit> {
+        Binding(
+            get: {
+                displayUnit
+            },
+            set: { selectedUnit in
+                commitDisplayUnit(selectedUnit)
+            }
+        )
+    }
+    
     // MARK: - Persistence
     //
     // Purpose:
@@ -121,14 +144,6 @@ struct WateredTabView: View {
     // UI role:
     // Lets WateredTabView hydrate WateredStore when the app starts.
     @Query(sort: \PersistentDrinkEntry.loggedAt) private var persistentDrinkEntries: [PersistentDrinkEntry]
-    
-    // Purpose:
-    // Reads persisted app settings from SwiftData.
-    //
-    // UI role:
-    // Lets WateredTabView hydrate app-level settings, such as display unit and
-    // daily hydration goal, when the app starts.
-    @Query private var persistentAppSettings: [PersistentAppSettings]
 
     // Purpose: Controls whether the Add Drink sheet is visible.
     //
@@ -139,11 +154,6 @@ struct WateredTabView: View {
     
     /// Controls the alert shown when saving a submitted drink fails.
     @State private var isShowingDrinkSaveError = false
-    
-    #if DEBUG
-    /// Tracks whether the requested one-time UI-test save failures has been triggered.
-    @State private var hasSimulatedDrinkSaveFailure = false
-    #endif
 
     // Purpose: Controls whether the Profile sheet is visible.
     //
@@ -232,12 +242,24 @@ struct WateredTabView: View {
         self.init(analytics: NoOpAnalyticsClient())
     }
     
-    /// Creates the app shell with an explicitly supplied analytics client.
+    /// Creates the app shell with analytics and optional persistence callbacks.
     ///
-    /// - Parameter analytics: The client that recieves product events.
+    /// Empty callbacks leave normal saving unchanged. Launch configuration and simulated
+    /// failure state belong to the app, not this view.
+    ///
+    /// - Parameters:
+    ///   - analytics: The client that receives product events.
+    ///   - beforeDrinkSave: An action run before saving an inserted drink.
+    ///   - beforeDisplayUnitSave: An action run before saving a changed display unit.
     @MainActor
-    init(analytics: any AnalyticsClient) {
+    init(
+        analytics: any AnalyticsClient,
+        beforeDrinkSave: @escaping () throws -> Void = {},
+        beforeDisplayUnitSave: @escaping () throws -> Void = {}
+    ) {
         self.analytics = analytics
+        self.beforeDrinkSave = beforeDrinkSave
+        self.beforeDisplayUnitSave = beforeDisplayUnitSave
     }
     
     // MARK: - Body
@@ -265,10 +287,6 @@ struct WateredTabView: View {
                         Label("Stats", systemImage: "chart.bar")
                     }
                     .tag(WateredTab.stats)
-            }
-            .onChange(of: displayUnit) { previousUnit, newUnit in
-                wateredLog("Display unit changed from \(previousUnit.rawValue) to \(newUnit.rawValue)")
-                saveDisplayUnit(newUnit)
             }
             .onChange(of: selectedTab) { previousTab, newTab in
                 wateredLog("Selected tab changed from \(previousTab.rawValue) to \(newTab.rawValue)")
@@ -336,20 +354,30 @@ struct WateredTabView: View {
             }
         }
         .sheet(isPresented: $isShowingProfileSheet, onDismiss: commitProfileGoal) {
-            #if DEBUG
-            ProfileView(
-                displayUnit: $displayUnit,
-                dailyHydrationGoal: $profileDraftGoal,
-                onDeleteAllDrinks: {
-                    try deleteDrinkEntries(persistentDrinkEntries)
-                }
-            )
-            #else
-            ProfileView(
-                displayUnit: $displayUnit,
-                dailyHydrationGoal: $profileDraftGoal
-            )
-            #endif
+            Group {
+                #if DEBUG
+                ProfileView(
+                    displayUnit: profileDisplayUnit,
+                    dailyHydrationGoal: $profileDraftGoal,
+                    onDeleteAllDrinks: {
+                        try deleteDrinkEntries(persistentDrinkEntries)
+                    }
+                )
+                #else
+                ProfileView(
+                    displayUnit: profileDisplayUnit,
+                    dailyHydrationGoal: $profileDraftGoal
+                )
+                #endif
+            }
+            .alert(
+                "Could not save your display unit",
+                isPresented: $isShowingDisplayUnitSaveError
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your previous unit is still selected. Please try again.")
+            }
         }
         .alert("Could not save your goal", isPresented: $isShowingGoalSaveError) {
             Button("OK", role: .cancel) {}
@@ -406,35 +434,6 @@ struct WateredTabView: View {
             )
         } catch {
             wateredLog("Settings loading failed: \(error.localizedDescription)")
-        }
-    }
-    
-    // Purpose:
-    // Saves the selected display unit to Watered's persisted app settings.
-    //
-    // Input:
-    // Accepts the display unit selected from Profile.
-    //
-    // Behavior:
-    // Updates the existing settings row when one exists, or creates a new settings
-    // row using Watered's current first-run defaults when settings have not yet
-    // been persisted.
-    private func saveDisplayUnit(_ displayUnit: LiquidUnit) {
-        let settings = persistentAppSettings.first ?? PersistentAppSettings(
-            appSettings: AppSettings(
-                displayUnit: displayUnit,
-                dailyHydrationGoal: dailyHydrationGoal
-            )
-        )
-        
-        settings.displayUnitID = displayUnit.persistenceIdentifier
-        settings.updatedAt = Date()
-        
-        if persistentAppSettings.isEmpty {
-            modelContext.insert(settings)
-            wateredLog("Settings created with display unit \(displayUnit.rawValue)")
-        } else {
-            wateredLog("Settings updated with display unit \(displayUnit.rawValue)")
         }
     }
     
@@ -528,32 +527,19 @@ struct WateredTabView: View {
         }
     }
     
-    /// Delegates drink saving to the persistence layer.
+    /// Delegates drink insertion and saving to the persistence layer.
     ///
-    /// Debug UI tests can request one failure after insertion to exercise rollback. Both isolated-storage and first-save-failure
-    /// arguments are required.
+    /// Forwards the callback supplied at app startup without interpreting test configuration
+    /// or tracking simulated failures.
     ///
     /// - Parameter entry: The drink to persist.
-    /// - Throws: A persistence error after pending changes have been rolled back.
+    /// - Throws: An error from the callback or saving, after pending changes are rolled back.
     /// - Important: Store updates, analytics, and presentation are handled by the caller.
     private func persistDrinkEntry(_ entry: DrinkEntry) throws {
         try DrinkEntryPersistence.save(
             entry,
             in: modelContext,
-            beforeSave: {
-                #if DEBUG
-                let launchArguments = ProcessInfo.processInfo.arguments
-                
-                if launchArguments.contains("-uiTestingInMemory"),
-                   launchArguments.contains("-uiTestingFailFirstDrinkSave"),
-                   hasSimulatedDrinkSaveFailure == false {
-                    hasSimulatedDrinkSaveFailure = true
-                    wateredLog("UI test: simulating the first drink save failure")
-                    throw CocoaError(.fileWriteUnknown)
-                               
-                }
-                #endif
-            }
+            beforeSave: beforeDrinkSave
         )
     }
 
@@ -562,6 +548,38 @@ struct WateredTabView: View {
         profileDraftGoal = dailyHydrationGoal
         wateredLog("Profile opened with a new goal draft.")
         isShowingProfileSheet = true
+    }
+    
+    /// Saves Profile's selected unit before applying it to the app.
+    ///
+    /// A failed save leaves the current display unit unchanged and requests an alert inside
+    /// Profile. First-run settings creation uses the shared persistence operation. Loading
+    /// saved settings bypasses this action and does not trigger another unit save.
+    ///
+    /// - Parameter unit: The display unit selected in Profile.
+    private func commitDisplayUnit(_ unit: LiquidUnit) {
+        do {
+            let settings = try AppSettingsPersistence.loadOrCreate(
+                defaults: AppSettings.defaults(),
+                in: modelContext
+            )
+            
+            let didChange = try AppSettingsPersistence.saveDisplayUnit(
+                unit,
+                settings: settings,
+                in: modelContext,
+                beforeSave: beforeDisplayUnitSave
+            )
+            
+            displayUnit = unit
+            
+            if didChange {
+                wateredLog("Profile display unit applied: \(unit.rawValue)")
+            }
+        } catch {
+            wateredLog("Display unit save failed: \(error.localizedDescription)")
+            isShowingDisplayUnitSaveError = true
+        }
     }
     
     // Purpose:
@@ -577,6 +595,8 @@ struct WateredTabView: View {
         )
     }
 }
+
+// MARK: - Preview
 
 #Preview {
     WateredTabView()

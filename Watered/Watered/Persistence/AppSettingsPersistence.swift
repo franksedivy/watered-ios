@@ -116,5 +116,50 @@ enum AppSettingsPersistence {
         wateredLog("Persistence saved goal \(goal.amount.formatted) and its history record.")
         return true
     }
+    
+    /// Saves a changed display unit without modifying the goal or its history.
+    ///
+    /// Unchanged units produce no writes. Pending edits are saved first so this operation's
+    /// rollback cannot discard them. A failed unit save restores its previous value and timestamp.
+    ///
+    /// - Parameters:
+    ///   - unit: The selected display unit.
+    ///   - settings: The settings record managed by the supplied context.
+    ///   - context: The context used to save the settings.
+    ///   - date: The timestamp for the settings update.
+    ///   - beforeSave: An optional action run after mutation and before saving.
+    /// - Returns: True if the unit changed and was saved; otherwise false.
+    /// - Throws: An error from saving pending edits, the callback, or saving settings.
+    static func saveDisplayUnit(
+        _ unit: LiquidUnit,
+        settings: PersistentAppSettings,
+        in context: ModelContext,
+        at date: Date = Date(),
+        beforeSave: () throws -> Void = {}
+    ) throws -> Bool {
+        let unitID = unit.persistenceIdentifier
+        
+        guard settings.displayUnitID != unitID else {
+            return false
+        }
+        
+        // Protect unrelated pending edits from this operation's rollback.
+        if context.hasChanges {
+            try context.save()
+        }
+        
+        settings.displayUnitID = unitID
+        settings.updatedAt = date
+        
+        do {
+            try beforeSave()
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+        
+        wateredLog("Persistence saved display unit \(unit.rawValue).")
+        return true
+    }
 }
-
