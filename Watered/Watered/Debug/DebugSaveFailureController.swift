@@ -8,10 +8,10 @@
 #if DEBUG
 import Foundation
 
- /// Simulates each configured save failure once during this controller's lifetime.
+/// Simulates each configured save failure once during this controller's lifetime.
 ///
-/// The app owns one instance per launch. Persistence invokes its methods after mutation and before saving, so failure
-/// exercises the rollback path.
+/// The app owns one instance per launch. Persistence invokes its methods after mutation
+/// and before saving, so failures exercise the rollback path.
 @MainActor
 final class DebugSaveFailureController {
     private var shouldFailDrinkSave: Bool
@@ -42,7 +42,7 @@ final class DebugSaveFailureController {
     
     /// Throws once if a display-unit save failure was requested.
     ///
-    /// This failure is indepnedent of the drink-save failure.
+    /// This failure is independent of the drink-save failure.
     ///
     /// - Throws: A simulated file-write error on the first configured call.
     func beforeDisplayUnitSave() throws {

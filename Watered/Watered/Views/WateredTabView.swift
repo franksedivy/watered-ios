@@ -242,9 +242,15 @@ struct WateredTabView: View {
         self.init(analytics: NoOpAnalyticsClient())
     }
     
-    /// Creates the app shell with an explicitly supplied analytics client.
+    /// Creates the app shell with analytics and optional persistence callbacks.
     ///
-    /// - Parameter analytics: The client that recieves product events.
+    /// Empty callbacks leave normal saving unchanged. Launch configuration and simulated
+    /// failure state belong to the app, not this view.
+    ///
+    /// - Parameters:
+    ///   - analytics: The client that receives product events.
+    ///   - beforeDrinkSave: An action run before saving an inserted drink.
+    ///   - beforeDisplayUnitSave: An action run before saving a changed display unit.
     @MainActor
     init(
         analytics: any AnalyticsClient,
@@ -521,13 +527,13 @@ struct WateredTabView: View {
         }
     }
     
-    /// Delegates drink saving to the persistence layer.
+    /// Delegates drink insertion and saving to the persistence layer.
     ///
-    /// Debug UI tests can request one failure after insertion to exercise rollback. Both isolated-storage and first-save-failure
-    /// arguments are required.
+    /// Forwards the callback supplied at app startup without interpreting test configuration
+    /// or tracking simulated failures.
     ///
     /// - Parameter entry: The drink to persist.
-    /// - Throws: A persistence error after pending changes have been rolled back.
+    /// - Throws: An error from the callback or saving, after pending changes are rolled back.
     /// - Important: Store updates, analytics, and presentation are handled by the caller.
     private func persistDrinkEntry(_ entry: DrinkEntry) throws {
         try DrinkEntryPersistence.save(
@@ -546,8 +552,9 @@ struct WateredTabView: View {
     
     /// Saves Profile's selected unit before applying it to the app.
     ///
-    /// A failed save leaves the current display unit unchanged and requests an alerts. First0run settings creation uses the
-    /// shared persistence operation.
+    /// A failed save leaves the current display unit unchanged and requests an alert inside
+    /// Profile. First-run settings creation uses the shared persistence operation. Loading
+    /// saved settings bypasses this action and does not trigger another unit save.
     ///
     /// - Parameter unit: The display unit selected in Profile.
     private func commitDisplayUnit(_ unit: LiquidUnit) {

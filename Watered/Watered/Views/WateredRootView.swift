@@ -37,9 +37,9 @@ struct WateredRootView: View {
     /// Creates the root experience with the supplied app dependencies.
     ///
     /// - Parameters:
-    ///  - analytics: The client forwarded to the app shell.
-    ///  - beforeDrinkSave: An action run ebfore saving an inserted drink.
-    ///  - beforeDsiplayUnitSave: An action run before savin ga changed display unit.
+    ///   - analytics: The client forwarded to the app shell.
+    ///   - beforeDrinkSave: An action run before saving an inserted drink.
+    ///   - beforeDisplayUnitSave: An action run before saving a changed display unit.
     @MainActor
     init(
         analytics: any AnalyticsClient,
