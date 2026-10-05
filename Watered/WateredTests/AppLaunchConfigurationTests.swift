@@ -32,7 +32,7 @@ struct AppLaunchConfigurationTests {
         }
     }
     
-#if DEBUG
+    #if DEBUG
     // Given isolated-storage launch arguments, when failures are configured,
     // then only the explicitly requested failures are enabled.
     @Test func isolatedLaunchEnablesOnlyRequestedFailures() {
@@ -74,5 +74,23 @@ struct AppLaunchConfigurationTests {
         #expect(bothFailures.shouldFailFirstDrinkSave)
         #expect(bothFailures.shouldFailFirstDisplayUnitSave)
     }
-#endif
+    #endif
+    
+    #if !DEBUG
+    // Given a Release build with all UI-test arguments, when configuration is read,
+    // then persistent storage remains enabled and simulated failures stay disabled.
+    @Test func releaseIgnoresUITestArguments() {
+        let configuration = AppLaunchConfiguration(
+            arguments: [
+                "-uiTestingInMemory",
+                "-uiTestingFailFirstDrinkSave",
+                "-uiTestingFailFirstDisplayUnitSave"
+            ]
+        )
+
+        #expect(configuration.usesInMemoryStorage == false)
+        #expect(configuration.shouldFailFirstDrinkSave == false)
+        #expect(configuration.shouldFailFirstDisplayUnitSave == false)
+    }
+    #endif
 }
