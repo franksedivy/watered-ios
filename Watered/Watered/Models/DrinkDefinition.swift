@@ -9,8 +9,7 @@ import Foundation
 
 /// A drink available through the catalogue.
 ///
-/// This describes a drink type and its optional serving defualt, not an individual logged drink. Calculaation rules are added
-/// separately.
+/// This describes a drink type, its optional serving defualt and hydration rule.
 nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     
     /// The stable identifier, independent of the display name.
@@ -38,7 +37,12 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     /// default serving
     let defaultVolume: Double?
     
-    /// Creates a catalogue drink definition with an optional serving defualt.
+    /// The rule used to estimate hydration contribution when a drink is logged
+    ///
+    /// Catalogue JSON must provide this explicitly, including unknown rules.
+    let hydrationContributionRule: HydrationContributionRule
+    
+    /// Creates a catalogue drink definition with serving and hydration information.
     ///
     /// - Parameters:
     ///   - id: The stable drink identifier.
@@ -47,13 +51,15 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     ///   - sortOrder: the position within the category.
     ///   - isRetired: Whether the drink is unavailable for new selection.
     ///   - defaultVolume: The suggested serving volume if known (in milliliters).
+    ///   - hydrationContributionRule: The contribution rule, defaulting to unknown.
     init(
         id: String,
         name: String,
         categoryID: String,
         sortOrder: Int,
         isRetired: Bool,
-        defaultVolume: Double? = nil
+        defaultVolume: Double? = nil,
+        hydrationContributionRule: HydrationContributionRule = .unknown
     ) {
         self.id = id
         self.name = name
@@ -61,5 +67,6 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         self.sortOrder = sortOrder
         self.isRetired = isRetired
         self.defaultVolume = defaultVolume
+        self.hydrationContributionRule = hydrationContributionRule
     }
 }

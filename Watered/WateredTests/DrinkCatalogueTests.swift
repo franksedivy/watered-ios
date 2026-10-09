@@ -32,6 +32,9 @@ struct DrinkCatalogueTests {
                     "name": "Latte",
                     "categoryID": "coffee",
                     "sortOrder": 20,
+                    "hydrationContributionRule": {
+                        "kind": "unknown"
+                    },
                     "isRetired": false
                 }
             ]
@@ -455,6 +458,9 @@ struct DrinkCatalogueTests {
             "name": "Espresso",
             "categoryID": "coffee",
             "sortOrder": 10,
+            "hydrationContributionRule": {
+                "kind": "unknown"
+            },
             "isRetired": false,
             "defaultVolume": 30
         }
@@ -478,6 +484,9 @@ struct DrinkCatalogueTests {
             "name": "Espresso",
             "categoryID": "coffee",
             "sortOrder": 10,
+            "hydrationContributionRule": {
+                "kind": "unknown"
+            },
             "isRetired": false
         }
         """
@@ -553,5 +562,53 @@ struct DrinkCatalogueTests {
         )
 
         try catalogue.validate()
+    }
+    
+    // GIVEN drink JSON containing an explicit ratio contribution rule,
+    // WHEN the definition is decoded,
+    // THEN the nested rule and its value are preserved.
+    @Test func drinkDefinitionDecodesHydrationContributionRule() throws {
+        let json = """
+        {
+            "id": "still-water",
+            "name": "Still water",
+            "categoryID": "water",
+            "sortOrder": 10,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 1.0
+            }
+        }
+        """
+
+        let drink = try JSONDecoder().decode(
+            DrinkDefinition.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(drink.hydrationContributionRule == .ratio(1.0))
+    }
+    
+    // GIVEN drink JSON without a hydration contribution rule,
+    // WHEN decoding is attempted,
+    // THEN decoding fails instead of supplying an unknown rule.
+    @Test func drinkDefinitionRejectsMissingHydrationContributionRule() {
+        let json = """
+        {
+            "id": "still-water",
+            "name": "Still water",
+            "categoryID": "water",
+            "sortOrder": 10,
+            "isRetired": false
+        }
+        """
+
+        #expect(throws: DecodingError.self) {
+            _ = try JSONDecoder().decode(
+                DrinkDefinition.self,
+                from: Data(json.utf8)
+            )
+        }
     }
 }
