@@ -35,12 +35,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case duplicateCategoryID(String)
         case duplicateDrinkID(String)
         case unknownCategoryID(drinkID: String, categoryID: String)
+        case invalidDefaultVolume(drinkID: String)
     }
     
-    /// Checks the schema compatibility, identifier uniquiness and category references
+    /// Checks the schema compatibility, unique IDs, category references and serving defaults.
     ///
-    /// - Throws: A 'ValidationError' identifying an unsupported schema or a repeated category or dink  referencing
-    ///   unknown category.
+    /// Supplied default volume must be positive and finite. Missing defaults are valid.
+    ///
+    /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
         guard schemaVersion == 1 else {
@@ -69,6 +71,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                     drinkID: drink.id,
                     categoryID: drink.categoryID
                 )
+            }
+            
+            if let defaultVolume = drink.defaultVolume {
+                guard defaultVolume.isFinite && defaultVolume > 0 else {
+                    throw ValidationError.invalidDefaultVolume(
+                        drinkID: drink.id
+                    )
+                }
             }
             
             drinkIDs.insert(drink.id)

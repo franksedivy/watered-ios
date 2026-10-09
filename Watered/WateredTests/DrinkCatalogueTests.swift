@@ -444,4 +444,114 @@ struct DrinkCatalogueTests {
 
         #expect(orderedIDs == ["coffee", "tea"])
     }
+    
+    // GIVEN drink JSON containing a default serving volume in millilitres,
+    // WHEN the definition is decoded,
+    // THEN the supplied default volume is preserved.
+    @Test func drinkDefinitionDecodesDefaultVolume() throws {
+        let json = """
+        {
+            "id": "espresso",
+            "name": "Espresso",
+            "categoryID": "coffee",
+            "sortOrder": 10,
+            "isRetired": false,
+            "defaultVolume": 30
+        }
+        """
+
+        let drink = try JSONDecoder().decode(
+            DrinkDefinition.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(drink.defaultVolume == 30)
+    }
+    
+    // GIVEN drink JSON without a default serving volume,
+    // WHEN the definition is decoded,
+    // THEN its default volume is nil.
+    @Test func drinkDefinitionDecodesWithoutDefaultVolume() throws {
+        let json = """
+        {
+            "id": "espresso",
+            "name": "Espresso",
+            "categoryID": "coffee",
+            "sortOrder": 10,
+            "isRetired": false
+        }
+        """
+
+        let drink = try JSONDecoder().decode(
+            DrinkDefinition.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(drink.defaultVolume == nil)
+    }
+    
+    // GIVEN a drink with a zero, negative or non-finite default volume,
+    // WHEN the catalogue is validated,
+    // THEN validation rejects the volume and identifies the drink.
+    @Test(arguments: [
+        0.0,
+        -30.0,
+        Double.infinity,
+        -Double.infinity,
+        Double.nan
+    ])
+    func catalogueRejectsInvalidDefaultVolume(defaultVolume: Double) {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "espresso",
+                    name: "Espresso",
+                    categoryID: "coffee",
+                    sortOrder: 10,
+                    isRetired: false,
+                    defaultVolume: defaultVolume
+                )
+            ]
+        )
+
+        let expectedError =
+            DrinkCatalogue.ValidationError.invalidDefaultVolume(
+                drinkID: "espresso"
+            )
+
+        #expect(throws: expectedError) {
+            try catalogue.validate()
+        }
+    }
+    
+    // GIVEN a drink with a positive, finite default volume,
+    // WHEN the catalogue is validated,
+    // THEN validation accepts the volume, including fractional values.
+    @Test(arguments: [0.5, 30.0, 330.5])
+    func catalogueAcceptsValidDefaultVolume(defaultVolume: Double) throws {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "espresso",
+                    name: "Espresso",
+                    categoryID: "coffee",
+                    sortOrder: 10,
+                    isRetired: false,
+                    defaultVolume: defaultVolume
+                )
+            ]
+        )
+
+        try catalogue.validate()
+    }
 }
