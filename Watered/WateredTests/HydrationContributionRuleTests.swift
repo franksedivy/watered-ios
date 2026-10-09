@@ -130,4 +130,48 @@ struct HydrationContributionRuleTests {
             )
         }
     }
+    
+    // GIVEN a ratio contribution rule,
+    // WHEN the rule is encoded,
+    // THEN its JSON contains only the expected kind and numeric ratio.
+    @Test func encodesRatioRule() throws {
+        let rule = HydrationContributionRule.ratio(0.75)
+        let data = try JSONEncoder().encode(rule)
+
+        let object = try JSONSerialization.jsonObject(with: data)
+        let json = try #require(object as? [String: Any])
+
+        #expect((json["kind"] as? String) == "ratio")
+        #expect((json["ratio"] as? Double) == 0.75)
+        #expect(json.count == 2)
+    }
+    
+    // GIVEN an alcohol contribution rule,
+    // WHEN the rule is encoded,
+    // THEN its JSON contains only the expected kind and ABV fraction.
+    @Test func encodesAlcoholRule() throws {
+        let rule = HydrationContributionRule.alcohol(defaultABV: 0.05)
+        let data = try JSONEncoder().encode(rule)
+
+        let object = try JSONSerialization.jsonObject(with: data)
+        let json = try #require(object as? [String: Any])
+
+        #expect((json["kind"] as? String) == "alcohol")
+        #expect((json["defaultABV"] as? Double) == 0.05)
+        #expect(json.count == 2)
+    }
+    
+    // GIVEN an unknown contribution rule,
+    // WHEN the rule is encoded,
+    // THEN its JSON contains only the unknown kind.
+    @Test func encodesUnknownRule() throws {
+        let rule = HydrationContributionRule.unknown
+        let data = try JSONEncoder().encode(rule)
+
+        let object = try JSONSerialization.jsonObject(with: data)
+        let json = try #require(object as? [String: Any])
+
+        #expect((json["kind"] as? String) == "unknown")
+        #expect(json.count == 1)
+    }
 }

@@ -10,7 +10,7 @@ import Foundation
 /// Describes how to estimate a drink's hydration contribution.
 ///
 /// Rules are indpenedent of browsing categories and display names. They do not determine quantities exported to HealthKit.
-nonisolated enum HydrationContributionRule: Equatable, Decodable {
+nonisolated enum HydrationContributionRule: Equatable, Codable {
     /// Applies a multiplier to the logged liquid volume.
     ///
     /// A value of 1 represents the full volume.
@@ -34,7 +34,7 @@ nonisolated enum HydrationContributionRule: Equatable, Decodable {
         case defaultABV
     }
     
-    private enum RuleKind: String, Decodable {
+    private enum RuleKind: String, Codable {
         case ratio
         case alcohol
         case unknown
@@ -62,6 +62,31 @@ nonisolated enum HydrationContributionRule: Equatable, Decodable {
             
         case .unknown:
             self = .unknown
+        }
+    }
+    
+    // MARK: - Encoding
+    
+    /// Encodes a contribution rule using its explicit kind and associated value.
+    ///
+    /// Unknown rules contain only the kind field.
+    ///
+    /// - Parameter encoder: The encoder receiving the rule data.
+    /// - Throws: An encoding error if the encoder cannot represent a value.
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        switch self {
+        case .ratio(let ratio):
+            try container.encode(RuleKind.ratio, forKey: .kind)
+            try container.encode(ratio, forKey: .ratio)
+            
+        case .alcohol(let defualtABV):
+            try container.encode(RuleKind.alcohol, forKey: .kind)
+            try container.encode(defualtABV, forKey: .defaultABV)
+            
+        case .unknown:
+            try container.encode(RuleKind.unknown, forKey: .kind)
         }
     }
 }
