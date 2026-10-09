@@ -90,6 +90,22 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     
     // MARK: - Selection
     
+    /// All catalogue categories, ordered by their configured positoin.
+    ///
+    /// Categories with equal sort positions are ordered by their stable IDs.
+    /// This orders categories without filtering out those with no active drinks.
+    ///
+    /// - Precondition: The catalogue has passed validation.
+    var orderedCategories: [DrinkCategory] {
+        return categories.sorted(by: {first, second in
+            if first.sortOrder == second.sortOrder {
+                return first.id < second.id
+            }
+            
+            return first.sortOrder < second.sortOrder
+        })
+    }
+    
     /// Returns active drinks in a category, ordered for selection.
     ///
     /// Drinks with equal sort positions are ordered by their stable IDs

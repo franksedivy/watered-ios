@@ -397,4 +397,51 @@ struct DrinkCatalogueTests {
         #expect(catalogue.activeDrinks(inCategoryID: "water").isEmpty)
         #expect(catalogue.activeDrinks(inCategoryID: "missing-category").isEmpty)
     }
+    
+    // GIVEN unordered categories with distinct sort positions and no drinks,
+    // WHEN ordered categories are requested,
+    // THEN all categories are returned in their configured order.
+    @Test func catalogueOrdersCategoriesBySortPosition() throws {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "tea", name: "Tea", sortOrder: 30),
+                DrinkCategory(id: "water", name: "Water", sortOrder: 10),
+                DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 20)
+            ],
+            drinks: []
+        )
+
+        try catalogue.validate()
+
+        let orderedIDs = catalogue.orderedCategories.map({ category in
+            return category.id
+        })
+
+        #expect(orderedIDs == ["water", "coffee", "tea"])
+    }
+    
+    // GIVEN categories with equal sort positions and matching display names,
+    // WHEN ordered categories are requested,
+    // THEN their stable IDs determine the order, regardless of input order.
+    @Test func catalogueOrdersEqualCategoryPositionsByID() throws {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "tea", name: "Drinks", sortOrder: 10),
+                DrinkCategory(id: "coffee", name: "Drinks", sortOrder: 10)
+            ],
+            drinks: []
+        )
+
+        try catalogue.validate()
+
+        let orderedIDs = catalogue.orderedCategories.map({ category in
+            return category.id
+        })
+
+        #expect(orderedIDs == ["coffee", "tea"])
+    }
 }
