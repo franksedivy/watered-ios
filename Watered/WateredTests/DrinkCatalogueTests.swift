@@ -764,4 +764,47 @@ struct DrinkCatalogueTests {
             try catalogue.validate()
         }
     }
+    
+    // GIVEN an empty category ID or one containing whitespace, when validated,
+    // THEN the catalogue rejects the ID without silently changing it.
+    @Test(arguments: ["", " ", " coffee", "coffee ", "cof fee", "cof\tfee", "coffee\n"])
+    func catalogueRejectsInvalidCategoryID(id: String) {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: id, name: "Coffee", sortOrder: 10)
+            ],
+            drinks: []
+        )
+        let expectedError = DrinkCatalogue.ValidationError.invalidCategoryID(id)
+
+        #expect(throws: expectedError) {
+            try catalogue.validate()
+        }
+    }
+
+    // GIVEN an empty drink ID or one containing whitespace, when validated,
+    // THEN the catalogue rejects the ID without silently changing it.
+    @Test(arguments: ["", " ", " latte", "latte ", "lat te", "lat\tte", "latte\n"])
+    func catalogueRejectsInvalidDrinkID(id: String) {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: id, name: "Latte", categoryID: "coffee",
+                    sortOrder: 10, isRetired: false
+                )
+            ]
+        )
+        let expectedError = DrinkCatalogue.ValidationError.invalidDrinkID(id)
+
+        #expect(throws: expectedError) {
+            try catalogue.validate()
+        }
+    }
 }

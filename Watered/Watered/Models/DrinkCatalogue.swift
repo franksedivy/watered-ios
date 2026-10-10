@@ -43,6 +43,8 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case invalidCaffeineValue(drinkID: String, variant: CaffeineVariant)
         case missingShotConfiguration(drinkID: String, variant: CaffeineVariant)
         case invalidShotConfiguration(drinkID: String)
+        case invalidCategoryID(String)
+        case invalidDrinkID(String)
     }
     
     /// Checks catalogue structure, numeric rules and preparation consistency.
@@ -54,6 +56,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// Caffiene concentrations and per-shot amounts must be finite and nonnegative.
     /// Per-shot caffeine rules require a shot configuration.
     /// Shot configurations require nonempty, unique, positive counts and an avialable default
+    /// Category and drink IDs must be nonempty and contain no whitespace.
     ///
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
@@ -65,6 +68,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var categoryIDs = Set<String>()
         
         for category in categories {
+            let hasWhiteSpace = category.id.contains(where: { character in
+                return character.isWhitespace
+            })
+            
+            guard !category.id.isEmpty && !hasWhiteSpace else {
+                throw ValidationError.invalidCategoryID(category.id)
+            }
+            
             guard !categoryIDs.contains(category.id) else {
                 throw ValidationError.duplicateCategoryID(category.id)
             }
@@ -75,6 +86,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var drinkIDs = Set<String>()
         
         for drink in drinks {
+            let hasWhitespace = drink.id.contains(where: {character in
+                return character.isWhitespace
+            })
+            
+            guard !drink.id.isEmpty && !hasWhitespace else {
+                throw ValidationError.invalidDrinkID(drink.id)
+            }
+            
             guard !drinkIDs.contains(drink.id) else {
                 throw ValidationError.duplicateDrinkID(drink.id)
             }
