@@ -1,0 +1,34 @@
+{
+    "schemaVersion": 1,
+    "version": "development-1",
+    "categories": [
+        {
+            "id": "water",
+            "name": "Water",
+            "sortOrder": 10
+        }
+    ],
+    "drinks": [
+        {
+            "id": "still-water",
+            "name": "Still water",
+            "categoryID": "water",
+            "sortOrder": 10,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 1.0
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 0
+                    }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        }
+    ]
+}
