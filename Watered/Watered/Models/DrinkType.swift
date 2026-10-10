@@ -7,12 +7,6 @@
 
 import Foundation
 
-nonisolated enum HydrationContributionRule: Equatable {
-    case ratio(Double)
-    case alcohol(defaultABV: Double)
-    case unknown
-}
-
 nonisolated enum DrinkType: String, CaseIterable {
     // MARK: - Cases
 
