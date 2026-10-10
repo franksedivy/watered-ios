@@ -35,6 +35,13 @@ struct DrinkCatalogueTests {
                     "hydrationContributionRule": {
                         "kind": "unknown"
                     },
+                    "caffeineOptions": [
+                        {
+                            "variant": "regular",
+                            "rule": { "kind": "unknown" }
+                        }
+                    ],
+                    "defaultCaffeineVariant": "regular",
                     "isRetired": false
                 }
             ]
@@ -461,6 +468,13 @@ struct DrinkCatalogueTests {
             "hydrationContributionRule": {
                 "kind": "unknown"
             },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular",
             "isRetired": false,
             "defaultVolume": 30
         }
@@ -487,6 +501,13 @@ struct DrinkCatalogueTests {
             "hydrationContributionRule": {
                 "kind": "unknown"
             },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular",
             "isRetired": false
         }
         """
@@ -574,6 +595,13 @@ struct DrinkCatalogueTests {
             "name": "Still water",
             "categoryID": "water",
             "sortOrder": 10,
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular",
             "isRetired": false,
             "hydrationContributionRule": {
                 "kind": "ratio",
@@ -600,6 +628,13 @@ struct DrinkCatalogueTests {
             "name": "Still water",
             "categoryID": "water",
             "sortOrder": 10,
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular",
             "isRetired": false
         }
         """

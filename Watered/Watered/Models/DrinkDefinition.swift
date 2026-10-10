@@ -42,6 +42,19 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     /// Catalogue JSON must provide this explicitly, including unknown rules.
     let hydrationContributionRule: HydrationContributionRule
     
+    /// The available preparations and their caffeine estimation rules.
+    ///
+    /// Variants must be unique. Catalogue JSON must provide these explicitly.
+    let caffeineOptions: [CaffeineOption]
+    
+    /// The initially selected variant, which must match an available option.
+    let defaultCaffeineVariant: CaffeineVariant
+    
+    /// The supported shot counts and their default, when applicable.
+    ///
+    /// A nil value means the drink has no shot-count configuration.
+    let shotConfiguration: ShotConfiguration?
+    
     /// Creates a catalogue drink definition with serving and hydration information.
     ///
     /// - Parameters:
@@ -52,6 +65,9 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     ///   - isRetired: Whether the drink is unavailable for new selection.
     ///   - defaultVolume: The suggested serving volume if known (in milliliters).
     ///   - hydrationContributionRule: The contribution rule, defaulting to unknown.
+    ///   - caffeineOptions: Available preparations, defaulting to regular with an unknown rule.
+    ///   - defaultCaffeineVariant: The initial preparration, defaulting to regular.
+    ///   - shotConfiguration: Available shot counts and their defualt, if applicable.
     init(
         id: String,
         name: String,
@@ -59,7 +75,12 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         sortOrder: Int,
         isRetired: Bool,
         defaultVolume: Double? = nil,
-        hydrationContributionRule: HydrationContributionRule = .unknown
+        hydrationContributionRule: HydrationContributionRule = .unknown,
+        caffeineOptions: [CaffeineOption] = [
+            CaffeineOption(variant: .regular, rule: .unknown)
+        ],
+        defaultCaffeineVariant: CaffeineVariant = .regular,
+        shotConfiguration: ShotConfiguration? = nil
     ) {
         self.id = id
         self.name = name
@@ -68,5 +89,8 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         self.isRetired = isRetired
         self.defaultVolume = defaultVolume
         self.hydrationContributionRule = hydrationContributionRule
+        self.caffeineOptions = caffeineOptions
+        self.defaultCaffeineVariant = defaultCaffeineVariant
+        self.shotConfiguration = shotConfiguration
     }
 }

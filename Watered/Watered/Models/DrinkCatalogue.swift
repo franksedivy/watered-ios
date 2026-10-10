@@ -38,13 +38,22 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case invalidDefaultVolume(drinkID: String)
         case invalidHydrationRatio(drinkID: String)
         case invalidDefaultABV(drinkID: String)
+        case duplicateCaffeineVariant(drinkID: String, variant: CaffeineVariant)
+        case unavailableDefaultCaffeineVariant(drinkID: String, variant: CaffeineVariant)
+        case invalidCaffeineValue(drinkID: String, variant: CaffeineVariant)
+        case missingShotConfiguration(drinkID: String, variant: CaffeineVariant)
+        case invalidShotConfiguration(drinkID: String)
     }
     
-    /// Checks the schema compatibility, unique IDs, category references and serving defaults.
+    /// Checks catalogue structure, numeric rules and preparation consistency.
     ///
-    /// Supplied default volume must be positive and finite. Missing defaults are valid. Hydration ratios must be finite and non
-    /// negative, with no upper limit. Default ABV must be finite and between zero and one inclusive. Explicit unknown rules
-    /// are valid without numeric values.
+    /// Supplied default volume must be positive and finite.
+    /// Missing defaults are valid. Hydration ratios must be finite and non negative, with no upper limit.
+    /// Default ABV must be finite and between zero and one inclusive. Explicit unknown rules are valid without numeric values.
+    /// Caffeine variants must be unique per drink and include the configured default
+    /// Caffiene concentrations and per-shot amounts must be finite and nonnegative.
+    /// Per-shot caffeine rules require a shot configuration.
+    /// Shot configurations require nonempty, unique, positive counts and an avialable default
     ///
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
@@ -104,6 +113,67 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                 
             case .unknown:
                 break
+            }
+            
+            var caffeineVariants = Set<CaffeineVariant>()
+            
+            for option in drink.caffeineOptions {
+                guard !caffeineVariants.contains(option.variant) else {
+                    throw ValidationError.duplicateCaffeineVariant(
+                        drinkID: drink.id,
+                        variant:option.variant
+                    )
+                }
+                
+                switch option.rule {
+                case .perVolume(let concentration):
+                    guard concentration.isFinite && concentration >= 0 else {
+                        throw ValidationError.invalidCaffeineValue(
+                            drinkID: drink.id,
+                            variant: option.variant
+                        )
+                    }
+                case .perShot(let amount):
+                    guard amount.isFinite && amount >= 0 else {
+                        throw ValidationError.invalidCaffeineValue(
+                            drinkID: drink.id,
+                            variant: option.variant
+                        )
+                    }
+                    guard drink.shotConfiguration != nil else {
+                        throw ValidationError.missingShotConfiguration(
+                            drinkID: drink.id,
+                            variant: option.variant
+                        )
+                    }
+                case .unknown:
+                    break
+                }
+                
+                caffeineVariants.insert(option.variant)
+            }
+            
+            guard caffeineVariants.contains(drink.defaultCaffeineVariant) else {
+                throw ValidationError.unavailableDefaultCaffeineVariant(
+                    drinkID: drink.id,
+                    variant: drink.defaultCaffeineVariant
+                )
+            }
+            
+            if let configuration = drink.shotConfiguration {
+                let counts = configuration.supportedCounts
+                let containsOnlyPositiveCounts = counts.allSatisfy({ count in
+                    return count > 0
+                })
+                
+                guard !counts.isEmpty,
+                      containsOnlyPositiveCounts,
+                      Set(counts).count == counts.count,
+                      counts.contains(configuration.defaultCount) else {
+                    throw ValidationError.invalidShotConfiguration(
+                        drinkID: drink.id
+                    )
+                }
             }
             
             drinkIDs.insert(drink.id)
