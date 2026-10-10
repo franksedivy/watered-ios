@@ -611,4 +611,122 @@ struct DrinkCatalogueTests {
             )
         }
     }
+    
+    // GIVEN an alcohol rule with an ABV between zero and one inclusive,
+    // WHEN the catalogue is validated,
+    // THEN validation accepts both boundaries and an intermediate value.
+    @Test(arguments: [0.0, 0.05, 1.0])
+    func catalogueAcceptsValidDefaultABV(defaultABV: Double) throws {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "alcohol", name: "Alcohol", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "test-drink",
+                    name: "Test drink",
+                    categoryID: "alcohol",
+                    sortOrder: 10,
+                    isRetired: false,
+                    hydrationContributionRule: .alcohol(defaultABV: defaultABV)
+                )
+            ]
+        )
+
+        try catalogue.validate()
+    }
+    
+    // GIVEN an alcohol rule with an out-of-range or non-finite ABV,
+    // WHEN the catalogue is validated,
+    // THEN validation rejects the ABV and identifies the drink.
+    @Test(arguments: [
+        -0.01,
+        1.01,
+        Double.infinity,
+        -Double.infinity,
+        Double.nan
+    ])
+    func catalogueRejectsInvalidDefaultABV(defaultABV: Double) {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "alcohol", name: "Alcohol", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "test-drink",
+                    name: "Test drink",
+                    categoryID: "alcohol",
+                    sortOrder: 10,
+                    isRetired: false,
+                    hydrationContributionRule: .alcohol(defaultABV: defaultABV)
+                )
+            ]
+        )
+
+        let expectedError =
+            DrinkCatalogue.ValidationError.invalidDefaultABV(
+                drinkID: "test-drink"
+            )
+
+        #expect(throws: expectedError) {
+            try catalogue.validate()
+        }
+    }
+    
+    // GIVEN a finite, nonnegative hydration ratio,
+    // WHEN the catalogue is validated,
+    // THEN validation accepts zero, fractions and values above one.
+    @Test(arguments: [0.0, 0.75, 1.0, 1.25])
+    func catalogueAcceptsValidHydrationRatio(ratio: Double) throws {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "water", name: "Water", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "test-drink", name: "Test drink", categoryID: "water",
+                    sortOrder: 10, isRetired: false,
+                    hydrationContributionRule: .ratio(ratio)
+                )
+            ]
+        )
+
+        try catalogue.validate()
+    }
+
+    // GIVEN a negative or non-finite hydration ratio,
+    // WHEN the catalogue is validated,
+    // THEN validation rejects the ratio and identifies the drink.
+    @Test(arguments: [-0.01, Double.infinity, -Double.infinity, Double.nan])
+    func catalogueRejectsInvalidHydrationRatio(ratio: Double) {
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 1,
+            version: "test-1",
+            categories: [
+                DrinkCategory(id: "water", name: "Water", sortOrder: 10)
+            ],
+            drinks: [
+                DrinkDefinition(
+                    id: "test-drink", name: "Test drink", categoryID: "water",
+                    sortOrder: 10, isRetired: false,
+                    hydrationContributionRule: .ratio(ratio)
+                )
+            ]
+        )
+
+        let expectedError =
+            DrinkCatalogue.ValidationError.invalidHydrationRatio(
+                drinkID: "test-drink"
+            )
+
+        #expect(throws: expectedError) {
+            try catalogue.validate()
+        }
+    }
 }

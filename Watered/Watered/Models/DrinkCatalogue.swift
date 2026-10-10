@@ -36,11 +36,15 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case duplicateDrinkID(String)
         case unknownCategoryID(drinkID: String, categoryID: String)
         case invalidDefaultVolume(drinkID: String)
+        case invalidHydrationRatio(drinkID: String)
+        case invalidDefaultABV(drinkID: String)
     }
     
     /// Checks the schema compatibility, unique IDs, category references and serving defaults.
     ///
-    /// Supplied default volume must be positive and finite. Missing defaults are valid.
+    /// Supplied default volume must be positive and finite. Missing defaults are valid. Hydration ratios must be finite and non
+    /// negative, with no upper limit. Default ABV must be finite and between zero and one inclusive. Explicit unknown rules
+    /// are valid without numeric values.
     ///
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
@@ -79,6 +83,27 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                         drinkID: drink.id
                     )
                 }
+            }
+            
+            switch drink.hydrationContributionRule {
+            case .ratio(let ratio):
+                guard ratio.isFinite && ratio >= 0 else {
+                    throw ValidationError.invalidHydrationRatio(
+                        drinkID: drink.id
+                    )
+                }
+                
+            case .alcohol(let defaultABV):
+                guard defaultABV.isFinite &&
+                        defaultABV >= 0 &&
+                        defaultABV <= 1 else {
+                    throw ValidationError.invalidDefaultABV(
+                        drinkID: drink.id
+                    )
+                }
+                
+            case .unknown:
+                break
             }
             
             drinkIDs.insert(drink.id)
