@@ -73,6 +73,103 @@ struct DrinkCatalogueLoaderTests {
             _ = try loader.load(from: testBundle)
         }
     }
+    
+    // GIVEN the approved water definitions in the bundled catalogue,
+    // WHEN the catalogue is loaded,
+    // THEN all five drinks are active, correctly ordered and use the approved contribution ratios.
+    @Test func loadsReviewedWaterDefinitions() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+
+        let expectedDrinks: [(id: String, ratio: Double)] = [
+            ("still-water", 1.0),
+            ("mineral-water", 1.0),
+            ("sparkling-water", 1.0),
+            ("infused-water", 1.0),
+            ("coconut-water", 0.95)
+        ]
+
+        let activeWaterDrinks = catalogue.activeDrinks(
+            inCategoryID: "water"
+        )
+
+        let actualIDs = activeWaterDrinks.map({ drink in
+            return drink.id
+        })
+
+        let expectedIDs = expectedDrinks.map({ expectedDrink in
+            return expectedDrink.id
+        })
+
+        #expect(actualIDs == expectedIDs)
+
+        for expectedDrink in expectedDrinks {
+            let drink = try #require(
+                catalogue.drink(withID: expectedDrink.id)
+            )
+
+            #expect(
+                drink.hydrationContributionRule ==
+                    .ratio(expectedDrink.ratio)
+            )
+        }
+    }
+    
+    // GIVEN the approved coffee definitions in the bundled catalogue,
+    // WHEN the catalogue is loaded,
+    // THEN the drinks have the expected order, contribution ratios and caffeine preparations,
+    // with unreviewed caffeine amounts remaining explicitly unknown.
+    @Test func loadsReviewedCoffeeDefinitions() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+
+        let expectedDrinks: [
+            (id: String, ratio: Double, variant: CaffeineVariant)
+        ] = [
+            ("latte", 0.906, .regular),
+            ("cappuccino", 0.91, .regular),
+            ("iced-coffee", 0.99, .regular),
+            ("espresso", 0.95, .regular),
+            ("coffee-with-milk", 0.981, .regular),
+            ("cold-brew", 0.99, .regular),
+            ("frappe", 0.99, .regular),
+            ("americano", 0.994, .regular),
+            ("mocha", 0.862, .regular),
+            ("decaf-coffee", 0.99, .decaf),
+            ("turkish-coffee", 0.95, .regular)
+        ]
+
+        let activeCoffeeDrinks = catalogue.activeDrinks(
+            inCategoryID: "coffee"
+        )
+
+        let actualIDs = activeCoffeeDrinks.map({ drink in
+            return drink.id
+        })
+
+        let expectedIDs = expectedDrinks.map({ expectedDrink in
+            return expectedDrink.id
+        })
+        #expect(actualIDs == expectedIDs)
+
+        for expectedDrink in expectedDrinks {
+            let drink = try #require(
+                catalogue.drink(withID: expectedDrink.id)
+            )
+
+            #expect(
+                drink.hydrationContributionRule ==
+                    .ratio(expectedDrink.ratio)
+            )
+            #expect(drink.defaultCaffeineVariant == expectedDrink.variant)
+            #expect(
+                drink.caffeineOptions == [
+                    CaffeineOption(
+                        variant: expectedDrink.variant,
+                        rule: .unknown
+                    )
+                ]
+            )
+        }
+    }
 }
 // MARK: - Helpers
 
