@@ -1,11 +1,16 @@
 {
     "schemaVersion": 1,
-    "version": "development-1",
+    "version": "development-2",
     "categories": [
         {
             "id": "water",
             "name": "Water",
             "sortOrder": 10
+        },
+        {
+            "id": "coffee",
+            "name": "Coffee",
+            "sortOrder": 20
         }
     ],
     "drinks": [
@@ -26,6 +31,285 @@
                         "kind": "perVolume",
                         "concentration": 0
                     }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "mineral-water",
+            "name": "Mineral water",
+            "categoryID": "water",
+            "sortOrder": 20,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 1.0
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 0
+                    }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "sparkling-water",
+            "name": "Sparkling water",
+            "categoryID": "water",
+            "sortOrder": 30,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 1.0
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "perVolume", "concentration": 0 }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "infused-water",
+            "name": "Infused water",
+            "categoryID": "water",
+            "sortOrder": 40,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 1.0
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "perVolume", "concentration": 0 }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "coconut-water",
+            "name": "Coconut water",
+            "categoryID": "water",
+            "sortOrder": 50,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.95
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "perVolume", "concentration": 0 }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "latte",
+            "name": "Latte",
+            "categoryID": "coffee",
+            "sortOrder": 10,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.906
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "unknown"
+                    }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "cappuccino",
+            "name": "Cappuccino",
+            "categoryID": "coffee",
+            "sortOrder": 20,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.91
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "unknown"
+                    }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "iced-coffee",
+            "name": "Iced coffee",
+            "categoryID": "coffee",
+            "sortOrder": 30,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.99
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "unknown"
+                    }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "espresso",
+            "name": "Espresso",
+            "categoryID": "coffee",
+            "sortOrder": 40,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.95
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "coffee-with-milk",
+            "name": "Coffee with milk",
+            "categoryID": "coffee",
+            "sortOrder": 50,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.981
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "cold-brew",
+            "name": "Cold brew",
+            "categoryID": "coffee",
+            "sortOrder": 60,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.99
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "frappe",
+            "name": "Frappe",
+            "categoryID": "coffee",
+            "sortOrder": 70,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.99
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "americano",
+            "name": "Americano",
+            "categoryID": "coffee",
+            "sortOrder": 80,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.994
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "mocha",
+            "name": "Mocha",
+            "categoryID": "coffee",
+            "sortOrder": 90,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.862
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "regular"
+        },
+        {
+            "id": "decaf-coffee",
+            "name": "Decaf coffee",
+            "categoryID": "coffee",
+            "sortOrder": 100,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.99
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "decaf",
+                    "rule": { "kind": "unknown" }
+                }
+            ],
+            "defaultCaffeineVariant": "decaf"
+        },
+        {
+            "id": "turkish-coffee",
+            "name": "Turkish coffee",
+            "categoryID": "coffee",
+            "sortOrder": 110,
+            "isRetired": false,
+            "hydrationContributionRule": {
+                "kind": "ratio",
+                "ratio": 0.95
+            },
+            "caffeineOptions": [
+                {
+                    "variant": "regular",
+                    "rule": { "kind": "unknown" }
                 }
             ],
             "defaultCaffeineVariant": "regular"
