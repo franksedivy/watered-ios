@@ -329,5 +329,46 @@ struct DrinkEntryPersistenceTests {
             LiquidUnit.milliliters.persistenceIdentifier
         )
     }
+    
+    // GIVEN a drink with captured catalogue facts, when it is saved and read
+    // from a separate context, then the same snapshot is restored.
+    @Test func savingDrinkPreservesCatalogueSnapshot() throws {
+        let container = try ModelContainer(
+            for: PersistentDrinkEntry.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+
+        let snapshot = DrinkCatalogueSnapshot(
+            drinkID: "test-coffee",
+            drinkName: "Test coffee",
+            caffeineVariant: .decaf,
+            shotCount: 2,
+            hydrationContribution: 226.5,
+            caffeineAmount: nil,
+            catalogueVersion: "test-1",
+            calculationVersion: "1"
+        )
+        let entry = DrinkEntry(
+            type: .coffee,
+            amount: DrinkAmount(value: 250, unit: .milliliters),
+            date: Date(timeIntervalSince1970: 1000),
+            catalogueSnapshot: snapshot
+        )
+
+        try DrinkEntryPersistence.save(entry, in: context)
+
+        let verificationContext = ModelContext(container)
+        let records = try verificationContext.fetch(
+            FetchDescriptor<PersistentDrinkEntry>()
+        )
+        let record = try #require(records.first)
+        let restoredEntry = try #require(record.drinkEntry())
+
+        #expect(records.count == 1)
+        #expect(restoredEntry.id == entry.id)
+        #expect(restoredEntry.catalogueSnapshot == snapshot)
+    }
 }
 

@@ -88,7 +88,7 @@ struct LearnView: View {
                                     )
                                 } label: {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(entry.type.rawValue) · \(entry.amount.formatted)")
+                                        Text("\(entry.displayName) · \(entry.amount.formatted)")
                                             .font(.headline)
                                         Text(entry.loggedAt.formatted(date: .abbreviated, time: .shortened))
                                             .font(.caption)
