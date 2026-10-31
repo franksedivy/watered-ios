@@ -8,43 +8,29 @@
 import Foundation
 
 // MARK: - Drink Breakdown Hydration Impact Style
-//
-// Purpose:
-// Describes how a drink breakdown row should visually communicate its hydration
-// impact.
-//
-// Values:
-// - positive: the drink contributes its full consumed volume as hydration.
-// - reduced: the drink contributes hydration, but less than its raw consumed volume.
-// - negative: the drink reduces the user's net hydration progress.
-// - unknown: Watered does not know the drink's hydration contribution.
-//
-// UI role:
-// Gives SwiftUI a semantic styling value without making the view parse display
-// text or repeat hydration calculation logic.
+
+/// A presentation category based on estimated hydration contribution relative to liquid consumed.
 nonisolated enum HydrationImpactStyle {
+    /// The estimated contribution is at least 80% of consumed volume.
     case positive
+
+    /// The estimated contribution is at least 30% but below 80% of consumed volume.
     case reduced
+
+    /// The estimated contribution is below 30%, including zero and negative values.
     case negative
+
+    /// The hydration contribution is unknown.
     case unknown
 }
 
 extension HydrationImpactStyle {
     // MARK: - Initialisation
-    //
-    // Purpose:
-    // Creates a semantic hydration impact style from a hydration contribution
-    // percentage.
-    //
-    // Input:
-    // Accepts hydrationImpactProgress as a decimal value, where 1.0 means 100%.
-    //
-    // Returns:
-    // A HydrationImpactStyle bucket used by the UI.
-    //
-    // Behavior:
-    // 80% and above is strong, 30% to 79% is reduced, and anything below 30%
-    // is low or negative.
+
+    /// Maps a known hydration contribution fraction to its presentation category.
+    ///
+    /// - Parameter hydrationImpactProgress: Contribution divided by consumed volume,
+    ///   where 1.0 means 100%.
     nonisolated init(hydrationImpactProgress: Double) {
         if hydrationImpactProgress >= 0.8 {
             self = .positive
@@ -56,46 +42,64 @@ extension HydrationImpactStyle {
     }
 }
 
-// Display-ready values for one drink breakdown row.
+/// Display-ready text and styling for one grouped drink row.
 nonisolated struct DrinkBreakdownViewData {
+    /// The logged identity used to distinguish this row.
+    let drinkID: String
+
+    /// The formatted liquid amount and display name, preserving the name's casing.
     let consumedText: String
+
+    /// The formatted hydration percentage, or an unknown-contribution message.
     let hydrationImpactText: String
+
+    /// The semantic category used to style the hydration impact text.
     let hydrationImpactStyle: HydrationImpactStyle
 }
 
-// Display-ready values for the hydration summary screen.
+/// Formatted totals, progress and grouped drink rows for the Today screen.
 nonisolated struct HydrationSummaryViewData {
+    /// The raw liquid total with its descriptive label.
     let totalText: String
+
+    /// The raw liquid total without a descriptive label.
     let totalAmountText: String
+
+    /// The hydration goal with its descriptive label.
     let goalText: String
+
+    /// The hydration goal without a descriptive label.
     let goalAmountText: String
+
+    /// The labelled remaining hydration amount, or an unknown-hydration message.
     let remainingText: String
+
+    /// The labelled number of logged drinks.
     let drinkCountText: String
+
+    /// The hydration percentage clamped at zero, or an unknown-progress message.
     let progressText: String
+
+    /// The unclamped hydration progress, or nil when hydration is unknown.
     let actualProgressValue: Double?
+
+    /// Progress clamped between zero and one for display; zero when hydration is unknown.
     let visualProgressValue: Double
+
+    /// The formatted drink groups in the order supplied by the snapshot.
     let drinkBreakdownRows: [DrinkBreakdownViewData]
     
     // MARK: - Initialisation
     
-    // Purpose: Converts a HydrationSnapshot into simple display-ready values.
-    //
-    // Input: Uses a HydrationSnapshot, VolumeFormatter, ProgressFormatter and
-    // display unit.
-    //
-    // Returns:
-    // A HydrationSummaryViewData value containing strings and progress values
-    // ready for the SwiftUI view to display.
-    //
-    // Behavior:
-    // Formats raw liquid total for the main Today total, formats progress from
-    // estimated water contribution, formats remaining hydration when it is known,
-    // and formats grouped drink breakdown rows.
-    //
-    // Notes:
-    // This type prepares text for the UI, but it does not calculate hydration
-    // totals itself. Those calculations belong to HydrationTracker and
-    // HydrationSnapshot.
+    /// Formats calculated hydration values for presentation.
+    ///
+    /// Uses snapshot totals without recalculating the contributions of logged drinks.
+    ///
+    /// - Parameters:
+    ///   - snapshot: The calculated counts, volumes, goal and grouped drinks.
+    ///   - volumeFormatter: Formats volumes in the selected display unit.
+    ///   - progressFormatter: Formats progress and hydration contribution percentages.
+    ///   - displayUnit: The unit used for displayed volumes; defaults to millilitres.
     init(
         snapshot: HydrationSnapshot,
         volumeFormatter: VolumeFormatter,
@@ -144,8 +148,7 @@ nonisolated struct HydrationSummaryViewData {
                 from: drinkBreakdown.totalVolume,
                 displayedAs: displayUnit
             )
-            let drinkType = drinkBreakdown.type.rawValue.lowercased()
-            let consumedText = "\(amount) of \(drinkType)"
+            let consumedText = "\(amount) of \(drinkBreakdown.displayName)"
             
             let hydrationImpactText: String
             let hydrationImpactStyle: HydrationImpactStyle
@@ -165,6 +168,7 @@ nonisolated struct HydrationSummaryViewData {
             }
             
             return DrinkBreakdownViewData(
+                drinkID: drinkBreakdown.drinkID,
                 consumedText: consumedText,
                 hydrationImpactText: hydrationImpactText,
                 hydrationImpactStyle: hydrationImpactStyle
