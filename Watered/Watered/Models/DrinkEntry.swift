@@ -21,13 +21,18 @@ nonisolated struct DrinkEntry: Identifiable, CustomStringConvertible {
     /// Temporarily optional while existing entry creation is converted.
     let catalogueSnapshot: DrinkCatalogueSnapshot?
     
-    var description: String {
-        "\(displayName), \(amount)"
-    }
-    
     /// The captured drink anem, falling back to the legacy type name.
     var displayName: String {
         catalogueSnapshot?.drinkName ?? type.rawValue
+    }
+    
+    /// The captured catalogue ID, or the legacy type ID for an entry without a snapshot.
+    var drinkID: String {
+        catalogueSnapshot?.drinkID ?? type.persistenceIdentifier
+    }
+    
+    var description: String {
+        "\(displayName), \(amount)"
     }
     
     /// The date and time this drink was logged for.
