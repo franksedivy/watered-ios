@@ -107,11 +107,10 @@ nonisolated struct HydrationTracker {
             }
             
             let breakdown = DrinkBreakdown(
-                type: latestEntry.type,
-                totalVolume: VolumeCalculation.measurement(fromBaseValue: totalBaseValue),
-                totalHydrationVolume: totalHydrationVolume,
                 drinkID: drinkID,
-                displayName: latestEntry.displayName
+                displayName: latestEntry.displayName,
+                totalVolume: VolumeCalculation.measurement(fromBaseValue: totalBaseValue),
+                totalHydrationVolume: totalHydrationVolume
             )
             
             breakdowns.append(breakdown)

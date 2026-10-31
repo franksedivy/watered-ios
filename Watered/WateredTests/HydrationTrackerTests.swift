@@ -139,14 +139,14 @@ struct HydrationTrackerTests {
         #expect(snapshot.goalVolume.converted(to: .milliliters).value == 2000)
         #expect(snapshot.remainingHydrationVolume?.converted(to: .milliliters).value == 1500)
         #expect(breakdown.count == 1)
-        #expect(firstBreakdown?.type == .water)
+        #expect(firstBreakdown?.drinkID == "water")
         #expect(firstBreakdownTotal?.value == 500)
     }
 
-    // Given multiple drink entries, including two entries with the same drink type,
-    // when the tracker creates a drink breakdown, then entries of the same type are
+    // Given multiple drink entries, including two entries with the same drink identity,
+    // when the tracker creates a drink breakdown, then entries of the same identity are
     // grouped together and their raw liquid volumes are added.
-    @Test func hydrationTrackerCreatesDrinkBreakdownByType() {
+    @Test func hydrationTrackerCreatesDrinkBreakdownByIdentity() {
         let firstWater = DrinkEntry(
             type: .water,
             amount: DrinkAmount(value: 250, unit: .milliliters),
@@ -176,10 +176,10 @@ struct HydrationTrackerTests {
 
         let breakdown = tracker.drinkBreakdown
         let waterBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.type == .water
+            drinkBreakdown.drinkID == "water"
         }
         let juiceBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.type == .juice
+            drinkBreakdown.drinkID == "juice"
         }
 
         let waterTotal = waterBreakdown?.totalVolume.converted(to: .milliliters)
@@ -215,7 +215,7 @@ struct HydrationTrackerTests {
         )
         let breakdown = tracker.drinkBreakdown
         let waterBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.type == .water
+            drinkBreakdown.drinkID == "water"
         }
 
         let rawTotal = waterBreakdown?.totalVolume.converted(to: .milliliters)
@@ -245,7 +245,7 @@ struct HydrationTrackerTests {
         )
         let breakdown = tracker.drinkBreakdown
         let juiceBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.type == .juice
+            drinkBreakdown.drinkID == "juice"
         }
 
         let rawTotal = juiceBreakdown?.totalVolume.converted(to: .milliliters)
@@ -276,7 +276,7 @@ struct HydrationTrackerTests {
 
         let breakdown = tracker.drinkBreakdown
         let otherBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.type == .other
+            drinkBreakdown.drinkID == "other"
         }
 
         let rawTotal = otherBreakdown?.totalVolume.converted(to: .milliliters)
@@ -285,9 +285,9 @@ struct HydrationTrackerTests {
         #expect(otherBreakdown?.totalHydrationVolume == nil)
     }
 
-    // Given drink entries for only one drink type, when the tracker creates a drink
-    // breakdown, then drink types with no entries are left out of the result.
-    @Test func hydrationTrackerDrinkBreakdownExcludesEmptyDrinkTypes() {
+    // Given drink entries for only one identity, when the tracker creates a drink
+    // breakdown, then only that logged identity appears in the result.
+    @Test func hydrationTrackerDrinkBreakdownIncludesOnlyLoggedIdentities() {
         let water = DrinkEntry(
             type: .water,
             amount: DrinkAmount(value: 250, unit: .milliliters),
@@ -306,7 +306,7 @@ struct HydrationTrackerTests {
         let breakdown = tracker.drinkBreakdown
 
         #expect(breakdown.count == 1)
-        #expect(breakdown.first?.type == .water)
+        #expect(breakdown.first?.drinkID == "water")
     }
 
     // Given drinks with known hydration contribution ratios, when the tracker calculates

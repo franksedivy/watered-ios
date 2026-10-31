@@ -16,7 +16,8 @@ struct HydrationSummaryViewDataTests {
             remainingHydrationVolume: Measurement(value: 1110, unit: UnitVolume.milliliters),
             drinkBreakdown: [
                 DrinkBreakdown(
-                    type: .juice,
+                    drinkID: "juice",
+                    displayName: "Juice",
                     totalVolume: Measurement(value: 1000, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: 890, unit: UnitVolume.milliliters)
                 )
@@ -52,7 +53,8 @@ struct HydrationSummaryViewDataTests {
             remainingHydrationVolume: nil,
             drinkBreakdown: [
                 DrinkBreakdown(
-                    type: .other,
+                    drinkID: "other",
+                    displayName: "Other",
                     totalVolume: Measurement(value: 250, unit: UnitVolume.milliliters),
                     totalHydrationVolume: nil
                 )
@@ -85,7 +87,8 @@ struct HydrationSummaryViewDataTests {
             remainingHydrationVolume: Measurement(value: 1000, unit: UnitVolume.milliliters),
             drinkBreakdown: [
                 DrinkBreakdown(
-                    type: .water,
+                    drinkID: "water",
+                    displayName: "Water",
                     totalVolume: Measurement(value: 1000, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: 1000, unit: UnitVolume.milliliters)
                 )
@@ -117,7 +120,8 @@ struct HydrationSummaryViewDataTests {
             remainingHydrationVolume: Measurement(value: 2150, unit: UnitVolume.milliliters),
             drinkBreakdown: [
                 DrinkBreakdown(
-                    type: .spirits,
+                    drinkID: "spirits",
+                    displayName: "Spirits",
                     totalVolume: Measurement(value: 50, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: -150, unit: UnitVolume.milliliters)
                 )
@@ -146,22 +150,26 @@ struct HydrationSummaryViewDataTests {
             remainingHydrationVolume: Measurement(value: 2000, unit: UnitVolume.milliliters),
             drinkBreakdown: [
                 DrinkBreakdown(
-                    type: .water,
+                    drinkID: "water",
+                    displayName: "Water",
                     totalVolume: Measurement(value: 100, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: 100, unit: UnitVolume.milliliters)
                 ),
                 DrinkBreakdown(
-                    type: .beer,
+                    drinkID: "beer",
+                    displayName: "Beer",
                     totalVolume: Measurement(value: 100, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: 50, unit: UnitVolume.milliliters)
                 ),
                 DrinkBreakdown(
-                    type: .wine,
+                    drinkID: "wine",
+                    displayName: "Wine",
                     totalVolume: Measurement(value: 100, unit: UnitVolume.milliliters),
                     totalHydrationVolume: Measurement(value: -30, unit: UnitVolume.milliliters)
                 ),
                 DrinkBreakdown(
-                    type: .other,
+                    drinkID: "other",
+                    displayName: "Other",
                     totalVolume: Measurement(value: 100, unit: UnitVolume.milliliters),
                     totalHydrationVolume: nil
                 )
