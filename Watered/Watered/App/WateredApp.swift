@@ -30,6 +30,9 @@ struct WateredApp: App {
     /// Determines storage and test behaviour from this launch's arguments.
     private let launchConfiguration: AppLaunchConfiguration
 
+    /// The bundled catalogue is loaded once; a failure must not prevent history access.
+    private let catalogueResult: Result<DrinkCatalogue, Error>
+
     #if DEBUG
     /// Retains one failure controller across SwiftUI view updates.
     @State private var saveFailureController: DebugSaveFailureController
@@ -42,6 +45,7 @@ struct WateredApp: App {
             arguments: ProcessInfo.processInfo.arguments
         )
         launchConfiguration = configuration
+        catalogueResult = Result { try DrinkCatalogueLoader().load() }
 
         #if DEBUG
         _saveFailureController = State(
@@ -56,11 +60,12 @@ struct WateredApp: App {
             #if DEBUG
             WateredRootView(
                 analytics: analytics,
+                catalogueResult: catalogueResult,
                 beforeDrinkSave: saveFailureController.beforeDrinkSave,
                 beforeDisplayUnitSave: saveFailureController.beforeDisplayUnitSave
             )
             #else
-            WateredRootView(analytics: analytics)
+            WateredRootView(analytics: analytics, catalogueResult: catalogueResult)
             #endif
         }
         .modelContainer(

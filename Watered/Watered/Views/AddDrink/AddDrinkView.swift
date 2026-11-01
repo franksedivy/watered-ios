@@ -7,140 +7,62 @@
 
 import SwiftUI
 
-// MARK: - Add Drink View
-//
-// Purpose:
-// Presents Watered's first real Add Drink flow.
-//
-// Input:
-// Accepts the current display unit, recent-drink shortcuts, and an
-// onAddDrink closure from the parent view.
-//
-// Returns:
-// A SwiftUI sheet view that can submit either a selected recent drink or a new
-// drink built from the form's selected type and volume.
-//
-// UI role:
-// This view owns the temporary Add Drink form state. It does not store drinks
-// itself; submitted entries are handed back to the parent through onAddDrink.
+/// Presents catalogue selection, preparation and volume before handing a new entry to its parent.
+///
+/// The parent owns persistence, success analytics, error recovery and sheet dismissal.
 struct AddDrinkView: View {
-    // MARK: - Actions
-
-    /// Hands the submitted drink and its interactions method to the parent.
+    private let catalogue: DrinkCatalogue
+    private let defaultUnit: LiquidUnit
+    private let recentDrinkOptions: [RecentDrinkOption]
     private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
-    // Purpose:
-    // Stores the app-level display unit when the Add Drink form opens.
-    //
-    // Input:
-    // Supplied by WateredTabView from the temporary display unit selected in
-    // Profile
-    //
-    // UI role:
-    // Lets Add Drink defaults its volume selection to the same unit Today
-    // is using.
-    private let defaultUnit: LiquidUnit
+    @State private var selectedDrinkID: String?
+    @State private var selectedCaffeineVariant: CaffeineVariant
+    @State private var selectedShotCount: Int
+    @State private var selectedVolumeValue: Double
+    @State private var isShowingPreparationError = false
 
-    // MARK: - Initialisation
-
+    /// Creates the form from a validated catalogue and currently available shortcuts.
+    ///
+    /// - Parameters:
+    ///   - catalogue: Definitions available for new logs.
+    ///   - defaultUnit: The app's applied display unit.
+    ///   - recentDrinkOptions: Shortcuts filtered against the current catalogue.
+    ///   - onAddDrink: Receives a freshly resolved entry and its submission method.
     init(
+        catalogue: DrinkCatalogue,
         defaultUnit: LiquidUnit,
         recentDrinkOptions: [RecentDrinkOption],
         onAddDrink: @escaping (DrinkEntry, AddDrinkSubmissionMethod) -> Void
     ) {
+        self.catalogue = catalogue
         self.defaultUnit = defaultUnit
         self.recentDrinkOptions = recentDrinkOptions
         self.onAddDrink = onAddDrink
-        _selectedVolumeValue = State(
-            initialValue: AddDrinkView.defaultVolumeValue(for: defaultUnit)
-        )
+
+        let firstDrink = catalogue.orderedCategories.lazy.flatMap { category in
+            catalogue.activeDrinks(inCategoryID: category.id)
+        }.first
+        _selectedDrinkID = State(initialValue: firstDrink?.id)
+        _selectedCaffeineVariant = State(initialValue: firstDrink?.defaultCaffeineVariant ?? .regular)
+        _selectedShotCount = State(initialValue: firstDrink?.shotConfiguration?.defaultCount ?? 1)
+        _selectedVolumeValue = State(initialValue: Self.defaultVolumeValue(for: defaultUnit))
     }
 
-    // MARK: - Form State
-    //
-    // Purpose: Stores the drink tyep currently selected in the Add Drink form.
-    //
-    // UI role:
-    // Lets the form remember the user's selected drink type before the real
-    // DrinkEntry creation step exists.
-    //
-    // Notes:
-    // This is local form state. It updates Today only after the user submits the form.
-    @State private var selectedDrinkType: DrinkType = .water
-
-    // Purpose: Stores the selected volume amount inside the Add Drink form.
-    //
-    // Input:
-    // Gives the form a concrete volume value before the real DrinkEntry creation
-    // step exists.
-    @State private var selectedVolumeValue: Double
-
-
-    // MARK: - Recent Drink Options
-    //
-    // Purpose:
-    // Stores the recent-drink labels available to the Add Drink sheet.
-    //
-    // Input:
-    // Supplied during initilsiation. Defaults to temporary placehoder data until
-    // persistence-backed recent drinks exist.
-    private let recentDrinkOptions: [RecentDrinkOption]
-
-    // Purpose:
-    // Decides whether the Recent drinks section should be visible.
-    //
-    // Returns:
-    // 'true' when the Add Drink sheet has at least one recent-drink option.
-    //
-    // UI role:
-    // Precents the sheet from showing an empty Recent drinks section when there
-    // is no recent-drink data available.
-    private var hasRecentDrinkOptions: Bool {
-        return recentDrinkOptions.isEmpty == false
-    }
-
-    // Purpose:
-    // Converts structured recent-drink options into labels for the pill row.
-    //
-    // Returns:
-    // A list of user-facing labels such as "300 ml of Water".
-    //
-    // UI role:
-    // Keeps AddDrinkPillRow simple for now by giving it strings, while
-    // AddDrinkView still retains the structured recent-drink data needed for
-    // direct submissions.
-    private var recentDrinkLabels: [String] {
-        return recentDrinkOptions.map { recentDrinkOption in
-            recentDrinkOption.label
+    /// Active definitions in the catalogue's category and drink ordering.
+    private var availableDrinks: [DrinkDefinition] {
+        catalogue.orderedCategories.flatMap { category in
+            catalogue.activeDrinks(inCategoryID: category.id)
         }
     }
 
-    // MARK: - Drink Type Options
-    //
-    // Purpose:
-    // Provides the display labels for drink types shown in the Add Drink sheet.
-    //
-    // Returns:
-    // A list of drink type names based on the model's supported DrinkType values.
-    //
-    // UI role:
-    // Lets the Type section display horizontally scrolling selectable pills while
-    // still using DrinkType as the source of truth.
-    private var drinkTypeLabels: [String] {
-        DrinkType.allCases.map { drinkType in
-            drinkType.rawValue
+    private var selectedDefinition: DrinkDefinition? {
+        availableDrinks.first { definition in
+            definition.id == selectedDrinkID
         }
     }
 
-    // MARK: - Volume Options
-    //
-    // Purpose: Provides the first predefined volume options for the Add Drink form.
-    //
-    // Returns: A list of common drink volumes in the currently selected unit.
-    //
-    // UI role:
-    // Keeps the Volume picker simple while avoiding free numeric input for the first
-    // real Add Drink flow.
+    /// The existing shared volume presets, expressed in the applied app unit.
     private var volumeOptions: [Double] {
         switch defaultUnit {
         case .milliliters:
@@ -152,104 +74,119 @@ struct AddDrinkView: View {
         }
     }
 
-    // Purpose: Provides the default volumes for the form's selected unit.
-    //
-    // Input: Accepts the unit that Add Drink recieved from the app-level setting.
-    //
-    // Returns: A sensible starting volume from the predefined options
+    /// Supplies the shared starting volume for the applied unit.
     private static func defaultVolumeValue(for unit: LiquidUnit) -> Double {
         switch unit {
-        case .milliliters:          return 330
-        case .usFluidOunces:        return 12
-        case .imperialFluidOunces:  return 8
+        case .milliliters: return 330
+        case .usFluidOunces: return 12
+        case .imperialFluidOunces: return 8
         }
     }
 
-    // MARK: - Submission
-    
-    /// Creates a drink entry from the current form selections and submits it to the parent.
-    ///
-    /// Uses the selected drink type, volume, and display unit to create an `AddDrinkDraft`.
-    /// Passes the resulting entry to `onAddDrink` with the `.form` submission method.
-    ///
-    /// - Important: The parent handles persistence, success analytics, and sheet dismissal.
-    private func submitDrink() {
-        let draft = AddDrinkDraft(
-            drinkType: selectedDrinkType,
-            volumeValue: selectedVolumeValue,
-            unit: defaultUnit
-        )
-
-        let drinkEntry = draft.drinkEntry()
-
-        wateredLog("Add Drink submitted \(selectedDrinkType.rawValue) at \(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
-        onAddDrink(drinkEntry, .form)
+    /// Selects an active definition and starts from its supported preparation defaults.
+    private func selectDrink(_ definition: DrinkDefinition) {
+        selectedDrinkID = definition.id
+        selectedCaffeineVariant = definition.defaultCaffeineVariant
+        selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
+        wateredLog("Add Drink selection changed to \(definition.id)")
     }
 
-    /// Submits a new drink entry from the matching recent-drink shortcut.
-    ///
-    /// Finds the option matching the tapped label and creates a new entry from its values.
-    /// Passes the entry to `onAddDrink` with the `.recent` submission method, without requiring
-    /// form confirmation. If no option matches, logs the failure and returns without submitting.
-    ///
-    /// - Parameter label: The label of the recent-drink shortcut that was tapped.
-    /// - Important: The parent handles persistence, success analytics, and sheet dismissal.
-    private func submitRecentDrink(label: String) {
-        guard let recentDrinkOption = recentDrinkOptions.first(where: { recentDrinkOption in
-            recentDrinkOption.label == label
-        }) else {
-            wateredLog("Could not submit recent drink because no option matched label: \(label)")
+    /// Resolves the selected drink once before handing the entry to the submission boundary.
+    private func submitDrink() {
+        guard let definition = selectedDefinition else {
+            isShowingPreparationError = true
             return
         }
-
-        let drinkEntry = recentDrinkOption.drinkEntry()
-
-        wateredLog("Recent drink submitted: \(recentDrinkOption.label)")
-        onAddDrink(drinkEntry, .recent)
+        let draft = AddDrinkDraft(
+            drinkID: definition.id,
+            volumeValue: selectedVolumeValue,
+            unit: defaultUnit,
+            caffeineVariant: selectedCaffeineVariant,
+            shotCount: definition.shotConfiguration == nil ? nil : selectedShotCount
+        )
+        do {
+            let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+            let entry = try draft.drinkEntry(using: resolver)
+            wateredLog("Add Drink submitted \(entry.drinkID) at \(entry.amount.formatted)")
+            onAddDrink(entry, .form)
+        } catch {
+            wateredLog("Add Drink preparation failed: \(error.localizedDescription)")
+            isShowingPreparationError = true
+        }
     }
 
-    // MARK: - Body
+    /// Repeats a shortcut using current rules and a new entry identity.
+    ///
+    /// - Parameter option: The tapped shortcut, selected by identity rather than label.
+    private func submitRecentDrink(_ option: RecentDrinkOption) {
+        do {
+            let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+            let entry = try option.drinkEntry(using: resolver)
+            wateredLog("Recent drink submitted: \(entry.drinkID)")
+            onAddDrink(entry, .recent)
+        } catch {
+            wateredLog("Recent drink preparation failed: \(error.localizedDescription)")
+            isShowingPreparationError = true
+        }
+    }
 
     var body: some View {
         NavigationStack {
             Form {
-                if hasRecentDrinkOptions {
+                if !recentDrinkOptions.isEmpty {
                     Section("Recent drinks") {
                         AddDrinkPillRow(
-                            labels: recentDrinkLabels,
+                            options: recentDrinkOptions,
                             accessibilityIdentifier: "addDrinkRecentsScrollView",
-                            onSelect: { selectedLabel in
-                                submitRecentDrink(label: selectedLabel)
-                            }
+                            optionLabel: { option in return option.label },
+                            onSelect: { option in submitRecentDrink(option) }
                         )
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     }
                 }
+
                 Section("Drink type") {
                     AddDrinkPillRow(
-                        labels: drinkTypeLabels,
-                        selectedLabel: selectedDrinkType.rawValue,
+                        options: availableDrinks,
+                        selectedID: selectedDrinkID,
                         accessibilityIdentifier: "addDrinkTypeScrollView",
-                        onSelect: { selectedLabel in
-                            guard let selectedDrinkType = DrinkType(rawValue: selectedLabel)
-                            else {
-                                return
-                            }
-
-                            wateredLog("Add Drink type changed to \(selectedDrinkType.rawValue)")
-                            self.selectedDrinkType = selectedDrinkType
-                        }
+                        optionLabel: { definition in return definition.name },
+                        onSelect: { definition in selectDrink(definition) }
                     )
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 }
 
+                if let definition = selectedDefinition {
+                    if definition.caffeineOptions.count > 1 {
+                        Section("Preparation") {
+                            Picker("Caffeine", selection: $selectedCaffeineVariant) {
+                                ForEach(definition.caffeineOptions, id: \.variant) { option in
+                                    Text(option.variant.rawValue.capitalized).tag(option.variant)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .accessibilityIdentifier("addDrinkCaffeinePicker")
+                        }
+                    }
+                    if let configuration = definition.shotConfiguration {
+                        Section("Shots") {
+                            Picker("Shots", selection: $selectedShotCount) {
+                                ForEach(configuration.supportedCounts.sorted(), id: \.self) { count in
+                                    Text("\(count)").tag(count)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .accessibilityIdentifier("addDrinkShotPicker")
+                        }
+                    }
+                }
+
                 Section("Volume") {
                     Picker("Volume", selection: $selectedVolumeValue) {
                         ForEach(volumeOptions, id: \.self) { volumeOption in
-                            Text("\(Int(volumeOption)) \(defaultUnit.rawValue)")
-                                .tag(volumeOption)
+                            Text("\(Int(volumeOption)) \(defaultUnit.rawValue)").tag(volumeOption)
                         }
                     }
                     .pickerStyle(.wheel)
@@ -258,7 +195,10 @@ struct AddDrinkView: View {
                     .accessibilityValue("\(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
                     .accessibilityHint("Adjusts the amount for the drink being added.")
                     .onChange(of: selectedVolumeValue) { previousValue, newValue in
-                        wateredLog("Add Drink volume changed from \(Int(previousValue)) \(defaultUnit.rawValue) to \(Int(newValue)) \(defaultUnit.rawValue)")
+                        wateredLog(
+                            "Add Drink volume changed from \(previousValue) to \(newValue) "
+                            + "\(defaultUnit.rawValue)"
+                        )
                     }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
@@ -268,52 +208,49 @@ struct AddDrinkView: View {
             .navigationTitle("Add drink")
             .navigationSubtitle("Now, change time")
             .navigationBarTitleDisplayMode(.inline)
-
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action :submitDrink) {
+                    Button(action: submitDrink) {
                         Image(systemName: "checkmark")
                     }
                     .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.circle)
+                    .disabled(selectedDefinition == nil)
                     .accessibilityLabel("Save drink")
                     .accessibilityHint("Adds the selected drink and closes the Add Drink form.")
                     .accessibilityIdentifier("addDrinkSubmitButton")
                 }
             }
+            .alert("Could not prepare your drink", isPresented: $isShowingPreparationError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("This selection could not be prepared. Choose a drink and try again.")
+            }
             .onAppear {
-                wateredLog(
-                    "Add Drink sheet appeared with unit \(defaultUnit.rawValue) and default volume \(Int(selectedVolumeValue)) \(defaultUnit.rawValue)"
-                )
+                wateredLog("Add Drink sheet appeared with unit \(defaultUnit.rawValue)")
             }
         }
     }
 }
 
-// MARK: - Preview
-
+#if DEBUG
 #Preview("With Recent Drinks") {
+    let catalogue = try! DrinkCatalogueLoader().load()
+    let entry = DrinkPreviewData.entry(drinkID: "still-water", amount: DrinkAmount(value: 300, unit: .milliliters))
     AddDrinkView(
+        catalogue: catalogue,
         defaultUnit: .milliliters,
-        recentDrinkOptions: [
-            RecentDrinkOption(
-                drinkType: .water,
-                volumeValue: 300,
-                unit: .milliliters
-            )
-        ],
-        onAddDrink: { drinkEntry, method in
-            wateredLog("Preview submitted drink entry: \(drinkEntry)")
-        }
+        recentDrinkOptions: WateredStore(entries: [entry]).recentDrinkOptions(in: catalogue),
+        onAddDrink: { entry, method in wateredLog("Preview submitted \(entry) via \(method)") }
     )
 }
 
 #Preview("No Recent Drinks") {
     AddDrinkView(
+        catalogue: try! DrinkCatalogueLoader().load(),
         defaultUnit: .milliliters,
         recentDrinkOptions: [],
-        onAddDrink: { drinkEntry, method in
-            wateredLog("Preview submitted drink via \(method): \(drinkEntry)")
-        }
+        onAddDrink: { entry, method in wateredLog("Preview submitted \(entry) via \(method)") }
     )
 }
+#endif

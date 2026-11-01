@@ -7,59 +7,57 @@
 
 import Foundation
 
+/// One logged drink with immutable catalogue facts, amount, timestamps and provenance.
 nonisolated struct DrinkEntry: Identifiable, CustomStringConvertible {
     let id: UUID
-    let type: DrinkType
     let amount: DrinkAmount
     let date: Date
     let createdAt: Date
     let updatedAt: Date
     let source: DrinkEntrySource
-    
-    /// The catalogue facts captured when this drink was logged.
-    ///
-    /// Temporarily optional while existing entry creation is converted.
-    let catalogueSnapshot: DrinkCatalogueSnapshot?
-    
-    /// The captured drink anem, falling back to the legacy type name.
+
+    /// The identity, preparation and resolved estimates captured when logging.
+    let catalogueSnapshot: DrinkCatalogueSnapshot
+
+    /// The saved name, retained even when the catalogue definition becomes unavailable.
     var displayName: String {
-        catalogueSnapshot?.drinkName ?? type.rawValue
+        catalogueSnapshot.drinkName
     }
-    
-    /// The captured catalogue ID, or the legacy type ID for an entry without a snapshot.
+
+    /// The stable identity of the logged catalogue drink.
     var drinkID: String {
-        catalogueSnapshot?.drinkID ?? type.persistenceIdentifier
+        catalogueSnapshot.drinkID
     }
-    
+
     var description: String {
         "\(displayName), \(amount)"
     }
-    
-    /// The date and time this drink was logged for.
-    ///
-    /// Aliases 'date' and is used for calendar-day filtering and persistence. This can differ from when the entry was created
-    /// or last updated.
+
+    /// The date and time the drink was logged for, independent of its creation time.
     var loggedAt: Date {
         date
     }
-    
-    
-    /// Creates a logged drink with identity, amount, dates and provenance.
+
+    /// Creates an entry from facts already resolved at logging time.
     ///
-    /// - Parameter catalogueSnapshot: The catalogue facts captured for this drink. Defaults to nil while existing
-    ///   callers are being converted.
+    /// - Parameters:
+    ///   - id: The entry UUID, independent of its catalogue drink ID.
+    ///   - amount: The consumed liquid amount and its original unit.
+    ///   - date: The date and time the drink was logged for.
+    ///   - createdAt: When the entry was first created.
+    ///   - updatedAt: When the entry was last updated.
+    ///   - source: The origin of the logged entry.
+    ///   - catalogueSnapshot: Captured facts; later catalogue changes do not reinterpret them.
     init(
         id: UUID = UUID(),
-        type: DrinkType,
         amount: DrinkAmount,
         date: Date,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         source: DrinkEntrySource = .manual,
-        catalogueSnapshot: DrinkCatalogueSnapshot? = nil
+        catalogueSnapshot: DrinkCatalogueSnapshot
     ) {
         self.id = id
-        self.type = type
         self.amount = amount
         self.date = date
         self.createdAt = createdAt
@@ -67,38 +65,28 @@ nonisolated struct DrinkEntry: Identifiable, CustomStringConvertible {
         self.source = source
         self.catalogueSnapshot = catalogueSnapshot
     }
-    
-    // MARK: - Hydration Contribution
-    
-    /// Returns the captured hydration contribution when a snapshot exists.
+
+    /// The saved hydration estimate in millilitres, or nil when it is unknown.
     ///
-    /// An unknown captured contribution remains nil. Entries without a snapshot temporarily use the existing DrinkType
-    /// calculation while callers are converted.
+    /// Zero and negative estimates are preserved without consulting the current catalogue.
     var hydrationContributionVolume: Measurement<UnitVolume>? {
-        if let snapshot = catalogueSnapshot {
-            guard let contribution = snapshot.hydrationContribution else {
-                return nil
-            }
-            return VolumeCalculation.measurement(fromBaseValue: contribution)
-        }
-        
-        switch type.hydrationContributionRule {
-        case .ratio(let ratio):
-            return Measurement(
-                value: amount.volume.value * ratio,
-                unit: amount.volume.unit
-            )
-        case .alcohol(let defaultABV):
-            let alcoholVolume = amount.volume.value * defaultABV
-            let estimatedHydrationPenalty = alcoholVolume * 10
-            let estimatedHydrationContribution = amount.volume.value - estimatedHydrationPenalty
-            
-            return Measurement(
-                value: estimatedHydrationContribution,
-                unit: amount.volume.unit
-            )
-        case .unknown:
+        guard let contribution = catalogueSnapshot.hydrationContribution else {
             return nil
         }
+        return VolumeCalculation.measurement(fromBaseValue: contribution)
+    }
+
+    /// The saved hydration contribution divided by the consumed volume in matching units.
+    ///
+    /// Nil for unknown estimates or invalid amounts. Zero and negative ratios are preserved.
+    var hydrationContributionRatio: Double? {
+        let volume = VolumeCalculation.baseValue(from: amount.volume)
+        guard let contribution = catalogueSnapshot.hydrationContribution,
+              contribution.isFinite, volume.isFinite, volume > 0
+        else {
+            return nil
+        }
+        let ratio = contribution / volume
+        return ratio.isFinite ? ratio : nil
     }
 }

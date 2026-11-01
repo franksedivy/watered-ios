@@ -23,8 +23,10 @@ struct DrinkEntryPersistenceTests {
         let context = ModelContext(container)
         context.autosaveEnabled = false
 
-        let entry = DrinkEntry(
-           type: .water,
+        let entry = DrinkEntryFixture.make(
+           drinkID: "still-water",
+           drinkName: "Water",
+           hydrationRule: .ratio(1),
            amount: DrinkAmount(value: 330, unit: .milliliters),
            date: Date(timeIntervalSince1970: 1000),
            createdAt: Date(timeIntervalSince1970: 2000),
@@ -43,7 +45,7 @@ struct DrinkEntryPersistenceTests {
 
         let savedEntry = try #require(records.first)
         #expect(savedEntry.id == entry.id)
-        #expect(savedEntry.drinkTypeID == "water")
+        #expect(savedEntry.catalogueDrinkID == "still-water")
         #expect(savedEntry.volumeValue == 330)
         #expect(savedEntry.unitID == "milliliters")
         #expect(savedEntry.loggedAt == entry.loggedAt)
@@ -63,15 +65,19 @@ struct DrinkEntryPersistenceTests {
         let context = ModelContext(container)
         context.autosaveEnabled = false
 
-        let existingEntry = DrinkEntry(
-            type: .water,
+        let existingEntry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1000)
         )
         try DrinkEntryPersistence.save(existingEntry, in: context)
 
-        let newEntry = DrinkEntry(
-            type: .tea,
+        let newEntry = DrinkEntryFixture.make(
+            drinkID: "test-tea",
+            drinkName: "Tea",
+            hydrationRule: .ratio(0.99),
             amount: DrinkAmount(value: 500, unit: .milliliters),
             date: Date(timeIntervalSince1970: 2000)
         )
@@ -112,13 +118,17 @@ struct DrinkEntryPersistenceTests {
         context.autosaveEnabled = false
 
         let date = Date(timeIntervalSince1970: 1000)
-        let firstEntry = DrinkEntry(
-            type: .water,
+        let firstEntry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: date
         )
-        let secondEntry = DrinkEntry(
-            type: .water,
+        let secondEntry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: date
         )
@@ -169,13 +179,17 @@ struct DrinkEntryPersistenceTests {
         context.insert(settings)
         try context.save()
 
-        let firstEntry = DrinkEntry(
-            type: .water,
+        let firstEntry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1000)
         )
-        let secondEntry = DrinkEntry(
-            type: .tea,
+        let secondEntry = DrinkEntryFixture.make(
+            drinkID: "test-tea",
+            drinkName: "Tea",
+            hydrationRule: .ratio(0.99),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date(timeIntervalSince1970: 2000)
         )
@@ -229,8 +243,10 @@ struct DrinkEntryPersistenceTests {
         context.insert(settings)
         try context.save()
 
-        let entry = DrinkEntry(
-            type: .water,
+        let entry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1000)
         )
@@ -348,10 +364,10 @@ struct DrinkEntryPersistenceTests {
             hydrationContribution: 226.5,
             caffeineAmount: nil,
             catalogueVersion: "test-1",
-            calculationVersion: "1"
+            calculationVersion: "1",
+            catalogueSchemaVersion: 1
         )
         let entry = DrinkEntry(
-            type: .coffee,
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1000),
             catalogueSnapshot: snapshot

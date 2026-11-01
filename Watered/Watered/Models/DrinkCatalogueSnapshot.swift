@@ -7,10 +7,10 @@
 
 import Foundation
 
-/// Preserves catalogue identity, preparation and estimates for a logged drink
+/// Preserves catalogue identity, preparation and estimates for a logged drink.
 ///
-/// Values are captured when logging. Later catalogue changes must not alter them. The entry separately owns its amount,
-/// timestamps and source.
+/// Values are captured when logging. Later catalogue changes must not alter them.
+/// The entry separately owns its amount, timestamps and source.
 nonisolated struct DrinkCatalogueSnapshot: Equatable {
     /// The stable catalogue identifier.
     let drinkID: String
@@ -29,7 +29,7 @@ nonisolated struct DrinkCatalogueSnapshot: Equatable {
     /// Nil means unknown. Negative values represent an estimated contribution.
     let hydrationContribution: Double?
     
-    /// The resolved caffeine estimate in milligrams
+    /// The resolved caffeine estimate in milligrams.
     ///
     /// Nil means unknown. Zero means an explicitly known zero amount.
     let caffeineAmount: Double?
@@ -41,4 +41,7 @@ nonisolated struct DrinkCatalogueSnapshot: Equatable {
     ///
     /// This is independent of the catalogue's JSON schema version.
     let calculationVersion: String
+
+    /// The JSON schema version used when logging, or nil if it was not recorded.
+    let catalogueSchemaVersion: Int?
 }

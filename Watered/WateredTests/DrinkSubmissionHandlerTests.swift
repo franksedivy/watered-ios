@@ -19,8 +19,10 @@ struct DrinkSubmissionHandlerTests {
         let store = WateredStore()
         let analytics = RecordingAnalyticsClient()
         let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
-        let entry = DrinkEntry(
-            type: .water,
+        let entry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1_000)
         )
@@ -49,8 +51,10 @@ struct DrinkSubmissionHandlerTests {
         let store = WateredStore()
         let analytics = RecordingAnalyticsClient()
         let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
-        let entry = DrinkEntry(
-            type: .coffee,
+        let entry = DrinkEntryFixture.make(
+            drinkID: "latte",
+            drinkName: "Coffee",
+            hydrationRule: .ratio(0.99),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1_000)
         )
@@ -78,13 +82,17 @@ struct DrinkSubmissionHandlerTests {
     func failedSubmissionPreservesStoreAndRecordsNoEvent(
         method: AddDrinkSubmissionMethod
     ) {
-        let existingEntry = DrinkEntry(
-            type: .water,
+        let existingEntry = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1_000)
         )
-        let submittedEntry = DrinkEntry(
-            type: .coffee,
+        let submittedEntry = DrinkEntryFixture.make(
+            drinkID: "latte",
+            drinkName: "Coffee",
+            hydrationRule: .ratio(0.99),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date(timeIntervalSince1970: 2_000)
         )

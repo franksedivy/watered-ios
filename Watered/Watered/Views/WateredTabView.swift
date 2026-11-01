@@ -39,6 +39,9 @@ struct WateredTabView: View {
     /// The app supplies the implementation. Child views remain indepenedent of analytics aclients and provider SDKs
     private let analytics: any AnalyticsClient
 
+    /// The loaded catalogue or a recoverable Add Drink availability failure.
+    private let catalogueResult: Result<DrinkCatalogue, Error>
+
     // MARK: - Tabs
     //
     // Purpose: Defines the top-level app tabs that Watered currently supports.
@@ -205,6 +208,14 @@ struct WateredTabView: View {
     }
     
     // MARK: - Add Drink Presentation
+
+    /// Shortcuts supported by the current catalogue and preparation options.
+    private var recentDrinkOptions: [RecentDrinkOption] {
+        guard case .success(let catalogue) = catalogueResult else {
+            return []
+        }
+        return store.recentDrinkOptions(in: catalogue)
+    }
     
     /// The available sheet heights for the current Add Drink content.
     ///
@@ -212,7 +223,7 @@ struct WateredTabView: View {
     /// With recents, it retains the existing taller layout. Both configurations
     /// allow expansion to full height.
     private var addDrinkPresentationDetents: Set<PresentationDetent> {
-        if store.recentDrinkOptions.isEmpty {
+        if recentDrinkOptions.isEmpty {
             return [.fraction(0.50), .large]
         }
         
@@ -235,13 +246,6 @@ struct WateredTabView: View {
 
     // MARK: - Initialisation
     //
-    /// Crates the app shell without analytics reporting.
-    ///
-    /// Constructs the default client on the main actor.
-    init() {
-        self.init(analytics: NoOpAnalyticsClient())
-    }
-    
     /// Creates the app shell with analytics and optional persistence callbacks.
     ///
     /// Empty callbacks leave normal saving unchanged. Launch configuration and simulated
@@ -249,15 +253,18 @@ struct WateredTabView: View {
     ///
     /// - Parameters:
     ///   - analytics: The client that receives product events.
+    ///   - catalogueResult: The catalogue loaded at startup, or its loading failure.
     ///   - beforeDrinkSave: An action run before saving an inserted drink.
     ///   - beforeDisplayUnitSave: An action run before saving a changed display unit.
     @MainActor
     init(
         analytics: any AnalyticsClient,
+        catalogueResult: Result<DrinkCatalogue, Error>,
         beforeDrinkSave: @escaping () throws -> Void = {},
         beforeDisplayUnitSave: @escaping () throws -> Void = {}
     ) {
         self.analytics = analytics
+        self.catalogueResult = catalogueResult
         self.beforeDrinkSave = beforeDrinkSave
         self.beforeDisplayUnitSave = beforeDisplayUnitSave
     }
@@ -334,11 +341,29 @@ struct WateredTabView: View {
             isShowingDrinkSaveError = false
             wateredLog("Add Drink flow dismissed")
         }) {
-            AddDrinkView(
-                defaultUnit: displayUnit,
-                recentDrinkOptions: store.recentDrinkOptions,
-                onAddDrink: addDrinkEntry
-            )
+            Group {
+                switch catalogueResult {
+                case .success(let catalogue):
+                    AddDrinkView(
+                        catalogue: catalogue,
+                        defaultUnit: displayUnit,
+                        recentDrinkOptions: recentDrinkOptions,
+                        onAddDrink: addDrinkEntry
+                    )
+                case .failure(let error):
+                    ContentUnavailableView(
+                        "Drinks unavailable",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(
+                            "Close and reopen Watered to try again. "
+                            + "Saved drinks can still be viewed in Stats."
+                        )
+                    )
+                    .onAppear {
+                        wateredLog("Catalogue loading failed: \(error.localizedDescription)")
+                    }
+                }
+            }
             .navigationTransition(
                 .zoom(
                     sourceID: addDrinkTransitionID,
@@ -599,5 +624,8 @@ struct WateredTabView: View {
 // MARK: - Preview
 
 #Preview {
-    WateredTabView()
+    WateredTabView(
+        analytics: NoOpAnalyticsClient(),
+        catalogueResult: Result { try DrinkCatalogueLoader().load() }
+    )
 }

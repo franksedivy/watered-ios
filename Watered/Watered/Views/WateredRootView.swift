@@ -19,6 +19,9 @@ struct WateredRootView: View {
     
     /// The analytics client passed to the app shell.
     private let analytics: any AnalyticsClient
+
+    /// The loaded catalogue or the failure forwarded to the Add Drink presentation.
+    private let catalogueResult: Result<DrinkCatalogue, Error>
     
     /// The drink-save callback forwarded to the app shell.
     private let beforeDrinkSave: () throws -> Void
@@ -28,25 +31,22 @@ struct WateredRootView: View {
     
     // MARK: - Initialisation
     
-    /// Creates the root experience without analytics reporting
-    @MainActor
-    init() {
-        self.init(analytics: NoOpAnalyticsClient())
-    }
-    
     /// Creates the root experience with the supplied app dependencies.
     ///
     /// - Parameters:
     ///   - analytics: The client forwarded to the app shell.
+    ///   - catalogueResult: The catalogue loaded at app startup, or its loading failure.
     ///   - beforeDrinkSave: An action run before saving an inserted drink.
     ///   - beforeDisplayUnitSave: An action run before saving a changed display unit.
     @MainActor
     init(
         analytics: any AnalyticsClient,
+        catalogueResult: Result<DrinkCatalogue, Error>,
         beforeDrinkSave: @escaping () throws -> Void = {},
         beforeDisplayUnitSave: @escaping () throws -> Void = {}
     ) {
         self.analytics = analytics
+        self.catalogueResult = catalogueResult
         self.beforeDrinkSave = beforeDrinkSave
         self.beforeDisplayUnitSave = beforeDisplayUnitSave
     }
@@ -56,6 +56,7 @@ struct WateredRootView: View {
     var body: some View {
         WateredTabView(
             analytics: analytics,
+            catalogueResult: catalogueResult,
             beforeDrinkSave: beforeDrinkSave,
             beforeDisplayUnitSave: beforeDisplayUnitSave
         )
@@ -63,5 +64,8 @@ struct WateredRootView: View {
 }
 
 #Preview {
-    WateredRootView()
+    WateredRootView(
+        analytics: NoOpAnalyticsClient(),
+        catalogueResult: Result { try DrinkCatalogueLoader().load() }
+    )
 }

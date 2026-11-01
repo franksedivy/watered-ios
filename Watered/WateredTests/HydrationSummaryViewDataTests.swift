@@ -200,11 +200,11 @@ struct HydrationSummaryViewDataTests {
                 hydrationContribution: 200,
                 caffeineAmount: nil,
                 catalogueVersion: "test-1",
-                calculationVersion: "1"
+                calculationVersion: "1",
+                catalogueSchemaVersion: 1
             )
 
             return DrinkEntry(
-                type: .coffee,
                 amount: DrinkAmount(value: 250, unit: .milliliters),
                 date: Date(timeIntervalSince1970: 1000),
                 catalogueSnapshot: snapshot

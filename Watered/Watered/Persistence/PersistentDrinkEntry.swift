@@ -8,148 +8,117 @@
 import Foundation
 import SwiftData
 
-/// Stores drink history and fields for captured catalogue estimates in SwiftData.
+/// Stores the immutable catalogue facts and metadata of a logged drink.
 ///
-/// Storage values are mapped to DrinkEntry for calculations and display.
+/// Snapshot fields retain their storage names and optional representation. Restoration
+/// requires complete identity and version metadata; nil estimates remain valid unknowns.
 @Model
 final class PersistentDrinkEntry {
     var id: UUID = UUID()
-    var drinkTypeID: String = "water"
     var volumeValue: Double = 0
     var unitID: String = "milliliters"
     var loggedAt: Date = Date()
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var source: String = "manual"
-    
-    // MARK: - Catalogue snapshot
-    
-    /// The catalogue identifier, or nil when this entry has no captured snapshot.
-    var catalogueDrinkID: String?  = nil
-    
-    /// The dirnk name captured when the entry was logged.
+
+    /// The saved catalogue identity, independent of the current catalogue.
+    var catalogueDrinkID: String? = nil
+
+    /// The name captured when logging, retained for unavailable drinks.
     var catalogueDrinkName: String? = nil
-    
-    /// The raw identifier of the selected caffeine preparation.
+
+    /// The selected caffeine preparation's raw value.
     var caffeineVariantID: String? = nil
-    
+
     /// The selected shot count, or nil when shots do not apply.
     var shotCount: Int? = nil
-    
-    /// The captured hydration contribution in millilitres.
-    ///
-    /// Nil means unknown when a snapshot is present.
-    var hydrationContribution: Double?  = nil
-    
-    /// The captured caffeine estimate in milligrams.
-    ///
-    /// Nil means unknown when a snapshot is present' zero remains a known value.
+
+    /// The captured hydration estimate in millilitres; nil means unknown.
+    var hydrationContribution: Double? = nil
+
+    /// The captured caffeine estimate in milligrams; nil means unknown, zero means known zero.
     var caffeineAmount: Double? = nil
-    
+
     /// The catalogue content version used when logging.
     var catalogueVersion: String? = nil
-    
-    /// The calculation version used to resolve the captured estimates.
+
+    /// The calculation version used to produce the saved estimates.
     var calculationVersion: String? = nil
-    
-    init(
-        id: UUID = UUID(),
-        drinkTypeID: String,
-        volumeValue: Double,
-        unitID: String,
-        loggedAt: Date,
-        createdAt: Date,
-        updatedAt: Date,
-        source: String
-    ) {
-        self.id = id
-        self.drinkTypeID = drinkTypeID
-        self.volumeValue = volumeValue
-        self.unitID = unitID
-        self.loggedAt = loggedAt
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.source = source
+
+    /// The original JSON schema version, or nil for entries that did not capture it.
+    var catalogueSchemaVersion: Int? = nil
+
+    /// Copies a logged entry and its captured snapshot into storage fields.
+    ///
+    /// - Parameter drinkEntry: The entry whose facts and metadata must be preserved.
+    init(drinkEntry: DrinkEntry) {
+        let snapshot = drinkEntry.catalogueSnapshot
+        self.id = drinkEntry.id
+        self.volumeValue = drinkEntry.amount.value
+        self.unitID = drinkEntry.amount.unit.persistenceIdentifier
+        self.loggedAt = drinkEntry.loggedAt
+        self.createdAt = drinkEntry.createdAt
+        self.updatedAt = drinkEntry.updatedAt
+        self.source = drinkEntry.source.rawValue
+        self.catalogueDrinkID = snapshot.drinkID
+        self.catalogueDrinkName = snapshot.drinkName
+        self.caffeineVariantID = snapshot.caffeineVariant.rawValue
+        self.shotCount = snapshot.shotCount
+        self.hydrationContribution = snapshot.hydrationContribution
+        self.caffeineAmount = snapshot.caffeineAmount
+        self.catalogueVersion = snapshot.catalogueVersion
+        self.calculationVersion = snapshot.calculationVersion
+        self.catalogueSchemaVersion = snapshot.catalogueSchemaVersion
     }
-    
-    
-    /// Creates a persistent record from a logged drink.
+
+    /// Restores an entry entirely from saved facts, without a catalogue lookup.
     ///
-    /// Copies identity, amount, timestamps, source and captured catalogue facts into storage fields.
-    ///
-    /// - Parameter drinkEntry: The logged drink to store.
-    convenience init(drinkEntry: DrinkEntry) {
-        self.init(
-            id: drinkEntry.id,
-            drinkTypeID: drinkEntry.type.persistenceIdentifier,
-            volumeValue: drinkEntry.amount.value,
-            unitID: drinkEntry.amount.unit.persistenceIdentifier,
-            loggedAt: drinkEntry.loggedAt,
-            createdAt: drinkEntry.createdAt,
-            updatedAt: drinkEntry.updatedAt,
-            source: drinkEntry.source.rawValue
-        )
-        
-        if let snapshot = drinkEntry.catalogueSnapshot {
-            catalogueDrinkID = snapshot.drinkID
-            catalogueDrinkName = snapshot.drinkName
-            caffeineVariantID = snapshot.caffeineVariant.rawValue
-            shotCount = snapshot.shotCount
-            hydrationContribution = snapshot.hydrationContribution
-            caffeineAmount = snapshot.caffeineAmount
-            catalogueVersion = snapshot.catalogueVersion
-            calculationVersion = snapshot.calculationVersion
-        }
-    }
-    
-    /// Recreates a logged drink from its stored values.
-    ///
-    /// - Returns:The restored entry, or nil if its drink type, unit or source identifier is not recognised or a captured
-    ///   catalogue snapshot is incomplete
+    /// - Returns: The restored entry, or nil for incomplete metadata or invalid stored values.
+    /// - Important: Old development rows without snapshots are not reinterpreted or deleted.
     func drinkEntry() -> DrinkEntry? {
-        guard let drinkType = DrinkType(persistenceIdentifier: drinkTypeID),
-              let liquidUnit = LiquidUnit(persistenceIdentifier: unitID),
-              let drinkEntrySource = DrinkEntrySource(rawValue: source)
+        guard let drinkID = catalogueDrinkID, !drinkID.isEmpty,
+              let drinkName = catalogueDrinkName, !drinkName.isEmpty,
+              let variantID = caffeineVariantID,
+              let variant = CaffeineVariant(rawValue: variantID),
+              let catalogueVersion, !catalogueVersion.isEmpty,
+              let calculationVersion, !calculationVersion.isEmpty,
+              let unit = LiquidUnit(persistenceIdentifier: unitID),
+              let entrySource = DrinkEntrySource(rawValue: source),
+              volumeValue.isFinite, volumeValue > 0
         else {
             return nil
         }
-        
-        let snapshot: DrinkCatalogueSnapshot?
-        
-        if let drinkID = catalogueDrinkID {
-            guard let drinkName = catalogueDrinkName,
-                  let variantID = caffeineVariantID,
-                  let variant = CaffeineVariant(rawValue: variantID),
-                  let catalogueVersion,
-                  let calculationVersion
-            else {
-                return nil
-            }
-            
-            snapshot = DrinkCatalogueSnapshot(
-                drinkID: drinkID,
-                drinkName: drinkName,
-                caffeineVariant: variant,
-                shotCount: shotCount,
-                hydrationContribution: hydrationContribution,
-                caffeineAmount: caffeineAmount,
-                catalogueVersion: catalogueVersion,
-                calculationVersion: calculationVersion
-            )
-        } else {
-            snapshot = nil
+
+        if let hydrationContribution, !hydrationContribution.isFinite {
+            return nil
         }
-        
+        if let caffeineAmount, !caffeineAmount.isFinite || caffeineAmount < 0 {
+            return nil
+        }
+        if let shotCount, shotCount <= 0 {
+            return nil
+        }
+
+        let snapshot = DrinkCatalogueSnapshot(
+            drinkID: drinkID,
+            drinkName: drinkName,
+            caffeineVariant: variant,
+            shotCount: shotCount,
+            hydrationContribution: hydrationContribution,
+            caffeineAmount: caffeineAmount,
+            catalogueVersion: catalogueVersion,
+            calculationVersion: calculationVersion,
+            catalogueSchemaVersion: catalogueSchemaVersion
+        )
         return DrinkEntry(
             id: id,
-            type: drinkType,
-            amount: DrinkAmount(value: volumeValue, unit: liquidUnit),
+            amount: DrinkAmount(value: volumeValue, unit: unit),
             date: loggedAt,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            source: drinkEntrySource,
+            source: entrySource,
             catalogueSnapshot: snapshot
         )
     }
-    
 }

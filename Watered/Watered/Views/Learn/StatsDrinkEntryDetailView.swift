@@ -11,7 +11,7 @@ import SwiftUI
 
 /// Shows a logged drink's stored details and provides a deletion action.
 ///
-/// Presented from Stats so the drink's identity, dates, and source can be inspected.
+/// Presented from Stats so captured estimates, catalogue provenance and dates can be inspected.
 struct StatsDrinkEntryDetailView: View {
     let entry: DrinkEntry
     
@@ -26,6 +26,32 @@ struct StatsDrinkEntryDetailView: View {
     
     /// Controls the alert shown when deletion fails.
     @State private var isShowingDeletionError = false
+
+    /// The saved contribution in millilitres, retaining fractional values for inspection.
+    private var hydrationContributionText: String {
+        guard let contribution = entry.catalogueSnapshot.hydrationContribution else {
+            return "Unknown"
+        }
+        return contribution.formatted(.number.precision(.fractionLength(0...3))) + " ml"
+    }
+
+    /// The effective saved ratio as a fraction and percentage, without clamping its sign.
+    private var hydrationRatioText: String {
+        guard let ratio = entry.hydrationContributionRatio else {
+            return "Unknown"
+        }
+        let fraction = ratio.formatted(.number.precision(.fractionLength(0...6)))
+        let percentage = ratio.formatted(.percent.precision(.fractionLength(0...2)))
+        return "\(fraction) (\(percentage))"
+    }
+
+    /// The original schema version, without inferring it from the current catalogue.
+    private var schemaVersionText: String {
+        guard let version = entry.catalogueSnapshot.catalogueSchemaVersion else {
+            return "Not recorded"
+        }
+        return String(version)
+    }
     
     var body: some View {
         List {
@@ -34,9 +60,26 @@ struct StatsDrinkEntryDetailView: View {
                 LabeledContent("Amount", value: entry.amount.formatted)
                 LabeledContent("Source", value: entry.source.rawValue)
             }
+
+            Section("Hydration") {
+                LabeledContent("Contribution", value: hydrationContributionText)
+                    .accessibilityIdentifier("statsHydrationContribution")
+                LabeledContent("Hydration ratio", value: hydrationRatioText)
+                    .accessibilityIdentifier("statsHydrationRatio")
+            }
             
             Section("Identity") {
                 LabeledContent("ID", value: entry.id.uuidString)
+            }
+
+            Section("Catalogue") {
+                LabeledContent("Drink ID", value: entry.drinkID)
+                LabeledContent("JSON version", value: entry.catalogueSnapshot.catalogueVersion)
+                    .accessibilityIdentifier("statsCatalogueVersion")
+                LabeledContent("Schema version", value: schemaVersionText)
+                    .accessibilityIdentifier("statsCatalogueSchemaVersion")
+                LabeledContent("Calculation version", value: entry.catalogueSnapshot.calculationVersion)
+                    .accessibilityIdentifier("statsCalculationVersion")
             }
             
             Section("Dates") {
@@ -82,16 +125,18 @@ struct StatsDrinkEntryDetailView: View {
                 }
             }
         }
+        .accessibilityIdentifier("statsDrinkEntryDetailList")
         .navigationTitle(entry.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         StatsDrinkEntryDetailView(
-            entry: DrinkEntry(
-                type: .water,
+            entry: DrinkPreviewData.entry(
+                drinkID: "still-water",
                 amount: DrinkAmount(value: 300, unit: .milliliters),
                 date: Date()
             ),
@@ -101,3 +146,4 @@ struct StatsDrinkEntryDetailView: View {
         )
     }
 }
+#endif

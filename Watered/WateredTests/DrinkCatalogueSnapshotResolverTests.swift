@@ -35,6 +35,7 @@ struct DrinkCatalogueSnapshotResolverTests {
 
         #expect(abs(contribution - 226.5) < 0.000001)
         #expect(snapshot.catalogueVersion == catalogue.version)
+        #expect(snapshot.catalogueSchemaVersion == catalogue.schemaVersion)
         #expect(
             snapshot.calculationVersion ==
                 DrinkCatalogueSnapshotResolver.calculationVersion

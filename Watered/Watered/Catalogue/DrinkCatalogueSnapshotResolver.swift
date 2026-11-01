@@ -15,12 +15,12 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
         case unavailableShotCount(String)
     }
     
-    /// Identifies the calculation logic sed to produce saved estimates.
+    /// Identifies the calculation logic used to produce saved estimates.
     static let calculationVersion = "1"
     
     private let catalogue: DrinkCatalogue
     
-    /// Creates a resolver after validation its catalogue
+    /// Creates a resolver after validating its catalogue.
     ///
     /// - Parameter catalogue: The definitions to use for new logs.
     /// - Throws: A catalogue validation error when its content is invalid.
@@ -29,13 +29,13 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
         self.catalogue = catalogue
     }
     
-    /// Resolves an active drink using its the selected preparation and shot count.
+    /// Resolves an active drink using the selected preparation and shot count.
     ///
     /// - Parameters:
-    ///  - drinkID: The stable catalogue identifier.
-    ///  - amount: The consumed liquid amount.
-    ///  - caffeineVariant: The selected preparation, or nil to use the drink's default
-    ///  - shotCount: A supported count, or nil to use the configured default when appicable.
+    ///   - drinkID: The stable catalogue identifier.
+    ///   - amount: The consumed liquid amount.
+    ///   - caffeineVariant: The selected preparation, or nil to use the drink's default.
+    ///   - shotCount: A supported count, or nil to use the configured default when applicable.
     /// - Returns: Identity, preparation, estimates and versions captured together.
     /// - Throws: A resolution or calculation error when the drink cannot be logged.
     func resolve(
@@ -93,7 +93,8 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
             hydrationContribution: hydration,
             caffeineAmount: caffeine,
             catalogueVersion: catalogue.version,
-            calculationVersion: Self.calculationVersion
+            calculationVersion: Self.calculationVersion,
+            catalogueSchemaVersion: catalogue.schemaVersion
         )
     }
 }

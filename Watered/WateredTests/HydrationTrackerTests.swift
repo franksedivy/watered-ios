@@ -9,14 +9,18 @@ struct HydrationTrackerTests {
     // Given multiple drink entries, when the tracker calculates total volume,
     // then it sums the raw consumed liquid volume across entries.
     @Test func hydrationTrackerCalculatesTotalVolume() {
-        let water = DrinkEntry(
-            type: .water,
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
 
-        let tea = DrinkEntry(
-            type: .tea,
+        let tea = DrinkEntryFixture.make(
+            drinkID: "test-tea",
+            drinkName: "Tea",
+            hydrationRule: .ratio(0.99),
             amount: DrinkAmount(value: 300, unit: .milliliters),
             date: Date()
         )
@@ -35,17 +39,21 @@ struct HydrationTrackerTests {
         #expect(total.value == 550)
     }
 
-    // Given drink entries with known hydration contribution rules, when the
-    // tracker calculates total hydration, then it sums estimated hydration volume.
+    // Given entries with captured contributions, when the tracker calculates hydration,
+    // then it sums the saved estimates without consulting current catalogue rules.
     @Test func hydrationTrackerCalculatesTotalHydrationVolume() {
-        let water = DrinkEntry(
-            type: .water,
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
 
-        let juice = DrinkEntry(
-            type: .juice,
+        let juice = DrinkEntryFixture.make(
+            drinkID: "test-juice",
+            drinkName: "Juice",
+            hydrationRule: .ratio(0.89),
             amount: DrinkAmount(value: 100, unit: .milliliters),
             date: Date()
         )
@@ -68,8 +76,10 @@ struct HydrationTrackerTests {
     // tracker calculates remaining hydration, then it subtracts estimated hydration
     // from the goal.
     @Test func hydrationTrackerCalculatesRemainingHydrationVolume() {
-        let juice = DrinkEntry(
-            type: .juice,
+        let juice = DrinkEntryFixture.make(
+            drinkID: "test-juice",
+            drinkName: "Juice",
+            hydrationRule: .ratio(0.89),
             amount: DrinkAmount(value: 100, unit: .milliliters),
             date: Date()
         )
@@ -91,8 +101,10 @@ struct HydrationTrackerTests {
     // Given any entry with unknown hydration contribution, when the tracker
     // calculates hydration totals, then hydration and remaining values are unknown.
     @Test func hydrationTrackerHydrationContributionVolumeIsUnknownWhenEntryHydrationContributionVolumeIsUnknown() {
-        let other = DrinkEntry(
-            type: .other,
+        let other = DrinkEntryFixture.make(
+            drinkID: "test-other",
+            drinkName: "Other",
+            hydrationRule: .unknown,
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
@@ -113,8 +125,10 @@ struct HydrationTrackerTests {
     // Given a tracker with one drink entry and a goal, when it creates a snapshot,
     // then the snapshot captures totals, goal progress, and drink breakdown values.
     @Test func hydrationTrackerCreatesSnapshot() {
-        let water = DrinkEntry(
-            type: .water,
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 500, unit: .milliliters),
             date: Date()
         )
@@ -139,7 +153,7 @@ struct HydrationTrackerTests {
         #expect(snapshot.goalVolume.converted(to: .milliliters).value == 2000)
         #expect(snapshot.remainingHydrationVolume?.converted(to: .milliliters).value == 1500)
         #expect(breakdown.count == 1)
-        #expect(firstBreakdown?.drinkID == "water")
+        #expect(firstBreakdown?.drinkID == "still-water")
         #expect(firstBreakdownTotal?.value == 500)
     }
 
@@ -147,20 +161,26 @@ struct HydrationTrackerTests {
     // when the tracker creates a drink breakdown, then entries of the same identity are
     // grouped together and their raw liquid volumes are added.
     @Test func hydrationTrackerCreatesDrinkBreakdownByIdentity() {
-        let firstWater = DrinkEntry(
-            type: .water,
+        let firstWater = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
 
-        let secondWater = DrinkEntry(
-            type: .water,
+        let secondWater = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 500, unit: .milliliters),
             date: Date()
         )
 
-        let juice = DrinkEntry(
-            type: .juice,
+        let juice = DrinkEntryFixture.make(
+            drinkID: "test-juice",
+            drinkName: "Juice",
+            hydrationRule: .ratio(0.89),
             amount: DrinkAmount(value: 300, unit: .milliliters),
             date: Date()
         )
@@ -176,10 +196,10 @@ struct HydrationTrackerTests {
 
         let breakdown = tracker.drinkBreakdown
         let waterBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.drinkID == "water"
+            drinkBreakdown.drinkID == "still-water"
         }
         let juiceBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.drinkID == "juice"
+            drinkBreakdown.drinkID == "test-juice"
         }
 
         let waterTotal = waterBreakdown?.totalVolume.converted(to: .milliliters)
@@ -194,13 +214,17 @@ struct HydrationTrackerTests {
     // then the water breakdown reports the same value for raw liquid volume and
     // estimated hydration volume.
     @Test func hydrationTrackerDrinkBreakdownIncludesHydrationVolumeForWater() {
-        let firstWater = DrinkEntry(
-            type: .water,
+        let firstWater = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
-        let secondWater = DrinkEntry(
-            type: .water,
+        let secondWater = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 500, unit: .milliliters),
             date: Date()
         )
@@ -215,7 +239,7 @@ struct HydrationTrackerTests {
         )
         let breakdown = tracker.drinkBreakdown
         let waterBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.drinkID == "water"
+            drinkBreakdown.drinkID == "still-water"
         }
 
         let rawTotal = waterBreakdown?.totalVolume.converted(to: .milliliters)
@@ -229,8 +253,10 @@ struct HydrationTrackerTests {
     // then the juice breakdown reports full raw liquid volume and a lower estimated
     // hydration volume based on the juice water-content ratio.
     @Test func hydrationTrackerDrinkBreakdownIncludesHydrationVolumeForJuice() {
-        let juice = DrinkEntry(
-            type: .juice,
+        let juice = DrinkEntryFixture.make(
+            drinkID: "test-juice",
+            drinkName: "Juice",
+            hydrationRule: .ratio(0.89),
             amount: DrinkAmount(value: 300, unit: .milliliters),
             date: Date()
         )
@@ -245,7 +271,7 @@ struct HydrationTrackerTests {
         )
         let breakdown = tracker.drinkBreakdown
         let juiceBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.drinkID == "juice"
+            drinkBreakdown.drinkID == "test-juice"
         }
 
         let rawTotal = juiceBreakdown?.totalVolume.converted(to: .milliliters)
@@ -259,8 +285,10 @@ struct HydrationTrackerTests {
     // then the raw liquid volume is still known but estimated hydration volume
     // remains unknown.
     @Test func hydrationTrackerDrinkBreakdownIncludesTotalVolumeForOther() {
-        let other = DrinkEntry(
-            type: .other,
+        let other = DrinkEntryFixture.make(
+            drinkID: "test-other",
+            drinkName: "Other",
+            hydrationRule: .unknown,
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
@@ -276,7 +304,7 @@ struct HydrationTrackerTests {
 
         let breakdown = tracker.drinkBreakdown
         let otherBreakdown = breakdown.first { drinkBreakdown in
-            drinkBreakdown.drinkID == "other"
+            drinkBreakdown.drinkID == "test-other"
         }
 
         let rawTotal = otherBreakdown?.totalVolume.converted(to: .milliliters)
@@ -288,8 +316,10 @@ struct HydrationTrackerTests {
     // Given drink entries for only one identity, when the tracker creates a drink
     // breakdown, then only that logged identity appears in the result.
     @Test func hydrationTrackerDrinkBreakdownIncludesOnlyLoggedIdentities() {
-        let water = DrinkEntry(
-            type: .water,
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
@@ -306,20 +336,23 @@ struct HydrationTrackerTests {
         let breakdown = tracker.drinkBreakdown
 
         #expect(breakdown.count == 1)
-        #expect(breakdown.first?.drinkID == "water")
+        #expect(breakdown.first?.drinkID == "still-water")
     }
 
-    // Given drinks with known hydration contribution ratios, when the tracker calculates
-    // total hydration volume, then it returns the same value as the old water-volume
-    // calculation but uses the new hydration-contribution terminology.
-    @Test func hydrationTrackerTotalHydrationVolumeMatchesExistingContributionBehaviour() {
-        let water = DrinkEntry(
-            type: .water,
+    // Given entries with captured contributions, when the total is calculated,
+    // then the saved values are summed in the base volume unit.
+    @Test func hydrationTrackerSumsCapturedContributionVolumes() {
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date()
         )
-        let juice = DrinkEntry(
-            type: .juice,
+        let juice = DrinkEntryFixture.make(
+            drinkID: "test-juice",
+            drinkName: "Juice",
+            hydrationRule: .ratio(0.89),
             amount: DrinkAmount(value: 100, unit: .milliliters),
             date: Date()
         )
@@ -336,20 +369,26 @@ struct HydrationTrackerTests {
     }
 
     // Given water, beer, and wine entries, when the tracker calculates totals,
-    // then raw liquid includes every drink while hydration applies alcohol rules.
+    // then raw liquid includes every drink while hydration sums their saved contributions.
     @Test func hydrationTrackerCountsAlcoholInRawTotalAndHydrationContribution() {
-        let water = DrinkEntry(
-            type: .water,
+        let water = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 500, unit: .milliliters),
             date: Date()
         )
-        let beer = DrinkEntry(
-            type: .beer,
+        let beer = DrinkEntryFixture.make(
+            drinkID: "test-beer",
+            drinkName: "Beer",
+            hydrationRule: .alcohol(defaultABV: 0.05),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date()
         )
-        let wine = DrinkEntry(
-            type: .wine,
+        let wine = DrinkEntryFixture.make(
+            drinkID: "test-wine",
+            drinkName: "Wine",
+            hydrationRule: .alcohol(defaultABV: 0.13),
             amount: DrinkAmount(value: 150, unit: .milliliters),
             date: Date()
         )
@@ -371,8 +410,10 @@ struct HydrationTrackerTests {
     // Given a spirits entry with negative hydration contribution, when remaining
     // hydration is calculated, then the remaining amount increases above the goal.
     @Test func hydrationTrackerNegativeAlcoholContributionIncreasesRemainingHydration() {
-        let spirits = DrinkEntry(
-            type: .spirits,
+        let spirits = DrinkEntryFixture.make(
+            drinkID: "test-spirits",
+            drinkName: "Spirits",
+            hydrationRule: .alcohol(defaultABV: 0.40),
             amount: DrinkAmount(value: 25, unit: .milliliters),
             date: Date()
         )
@@ -461,12 +502,12 @@ struct HydrationTrackerTests {
             hydrationContribution: contribution,
             caffeineAmount: nil,
             catalogueVersion: "test-1",
-            calculationVersion: "1"
+            calculationVersion: "1",
+            catalogueSchemaVersion: 1
         )
 
         return DrinkEntry(
             id: id,
-            type: .coffee,
             amount: DrinkAmount(value: volume, unit: .milliliters),
             date: Date(timeIntervalSince1970: loggedAt),
             catalogueSnapshot: snapshot

@@ -20,15 +20,31 @@ struct DrinkEntrySnapshotTests {
         let volume = try #require(entry.hydrationContributionVolume)
 
         #expect(VolumeCalculation.baseValue(from: volume) == contribution)
+        #expect(entry.hydrationContributionRatio == contribution / 250)
     }
 
     // GIVEN an entry with an explicitly unknown captured contribution,
     // WHEN its contribution is read,
-    // THEN it remains unknown rather than using the old drink-type rule.
+    // THEN both the contribution and effective ratio remain unknown.
     @Test func entryPreservesUnknownContribution() {
         let entry = makeEntry(contribution: nil)
 
         #expect(entry.hydrationContributionVolume == nil)
+        #expect(entry.hydrationContributionRatio == nil)
+    }
+
+    // GIVEN a captured contribution for one US fluid ounce, when its ratio is read,
+    // THEN the amount is converted to the contribution's base unit before division.
+    @Test func contributionRatioUsesMatchingVolumeUnits() throws {
+        let original = makeEntry(contribution: 14.78676478125)
+        let entry = DrinkEntry(
+            amount: DrinkAmount(value: 1, unit: .usFluidOunces),
+            date: original.loggedAt,
+            catalogueSnapshot: original.catalogueSnapshot
+        )
+
+        let ratio = try #require(entry.hydrationContributionRatio)
+        #expect(abs(ratio - 0.5) < 0.000001)
     }
 
     private func makeEntry(contribution: Double?) -> DrinkEntry {
@@ -40,11 +56,11 @@ struct DrinkEntrySnapshotTests {
             hydrationContribution: contribution,
             caffeineAmount: nil,
             catalogueVersion: "test-1",
-            calculationVersion: "1"
+            calculationVersion: "1",
+            catalogueSchemaVersion: 1
         )
 
         return DrinkEntry(
-            type: .water,
             amount: DrinkAmount(value: 250, unit: .milliliters),
             date: Date(timeIntervalSince1970: 1000),
             catalogueSnapshot: snapshot
