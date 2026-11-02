@@ -9,9 +9,10 @@ import Foundation
 
 /// A versioned collection of drink categories and definitions.
 ///
-/// This represents the contets of a catalogue JSON file. Decoding alone does not establish that its content are valid.
+/// The loader assembles this model from a manifest and category definition files.
+/// Decoding alone does not establish that the contents are valid.
 nonisolated struct DrinkCatalogue: Codable, Equatable {
-    /// The JSON format version understood by the app.
+    /// The catalogue data schema understood by the app, independent of manifest packaging.
     ///
     /// Changes when the catalogue structure or interprestion changes.
     let schemaVersion: Int

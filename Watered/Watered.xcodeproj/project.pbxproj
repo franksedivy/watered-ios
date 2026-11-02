@@ -46,6 +46,9 @@
 			exceptions = (
 				C13C0D48303D57F800B60790 /* Exceptions for "Watered" folder in "Watered" target */,
 			);
+			explicitFolders = (
+				Resources/DrinkCatalogue,
+			);
 			path = Watered;
 			sourceTree = "<group>";
 		};
