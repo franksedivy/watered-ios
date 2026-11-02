@@ -1,0 +1,56 @@
+name: iOS CI
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-tests:
+    name: iOS Tests
+    runs-on: xcode-27
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+      XCODE_VERSION: '27.1'
+      IOS_SIMULATOR_RUNTIME: com.apple.CoreSimulator.SimRuntime.iOS-27-0
+      SIMULATOR_NAME: iPhone Air
+      CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check CI helper and workflow configuration
+        run: |
+          mkdir -p "$RUNNER_TEMP/watered-ios-ci"
+          bash Scripts/CI/test-run-ios-tests.sh 2>&1 |
+            tee "$RUNNER_TEMP/watered-ios-ci/helper-checks.log"
+
+      - name: Run unit and UI tests
+        timeout-minutes: 40
+        run: |
+          bash Scripts/CI/run-ios-tests.sh 2>&1 |
+            tee "$RUNNER_TEMP/watered-ios-ci/runner.log"
+
+      - name: Upload test results and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        timeout-minutes: 5
+        with:
+          name: ios-tests-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/watered-ios-ci/
+          retention-days: 7
+          if-no-files-found: warn
