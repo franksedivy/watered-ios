@@ -85,6 +85,7 @@ struct LearnView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("statsDrinkHistoryList")
         }
         .navigationTitle("Stats")
     }

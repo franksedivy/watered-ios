@@ -14,13 +14,19 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
             ("imp fl oz", "8 fl oz")
         ]
         for (unitLabel, expectedVolume) in selections {
-            app.navigationBars.buttons.firstMatch.tap()
+            let backButton = app.navigationBars.buttons["BackButton"]
+            XCTAssertTrue(backButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
+            backButton.tap()
+            XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForNonExistence(timeout: 3))
             changeDisplayUnit(to: unitLabel, in: app)
             app.tabBars.buttons["Stats"].tap()
 
-            let historyRow = app.buttons.matching(identifier: "statsDrinkEntryLink").firstMatch
+            let history = app.collectionViews["statsDrinkHistoryList"]
+            XCTAssertTrue(history.waitForExistence(timeout: 3))
+            let historyRow = history.buttons["statsDrinkEntryLink"]
             XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
             XCTAssertTrue(historyRow.label.contains(expectedVolume))
+            XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: 3))
             historyRow.tap()
             assertDisplayedVolumes(in: app, expected: expectedVolume)
         }
@@ -54,9 +60,10 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     @MainActor
     func testKnownCaffeineFreeDrinkHidesCaffeineDetails() {
         let app = openDrinkDetail(drinkID: "still-water")
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
 
         for identifier in ["statsCaffeineAmount", "statsCaffeinePreparation", "statsCaffeineShotCount"] {
-            XCTAssertFalse(app.descendants(matching: .any).matching(identifier: identifier).firstMatch.exists)
+            XCTAssertFalse(detail.staticTexts[identifier].exists)
         }
     }
 
@@ -100,13 +107,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
 
         app.tabBars.buttons["Stats"].tap()
-        let historyRow = app.buttons.matching(identifier: "statsDrinkEntryLink").firstMatch
+        let history = app.collectionViews["statsDrinkHistoryList"]
+        XCTAssertTrue(history.waitForExistence(timeout: 3))
+        let historyRow = history.buttons["statsDrinkEntryLink"]
         XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
+        XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: 3))
         historyRow.tap()
-        XCTAssertTrue(
-            app.descendants(matching: .any)
-                .matching(identifier: "statsDrinkEntryDetailList").firstMatch.waitForExistence(timeout: 3)
-        )
+        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: 3))
         return app
     }
 
@@ -125,18 +132,20 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(unitButton.wait(for: \.isSelected, toEqual: true, timeout: 3))
         app.navigationBars["Profile"].swipeDown()
         XCTAssertTrue(picker.waitForNonExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Profile"].waitForNonExistence(timeout: 3))
     }
 
     // Confirms both volume rows use the selected unit while the saved ratio stays dimensionless.
     @MainActor
     private func assertDisplayedVolumes(in app: XCUIApplication, expected: String) {
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: 3))
         for identifier in ["statsDrinkAmount", "statsHydrationContribution"] {
-            let row = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+            let row = detail.staticTexts[identifier]
             XCTAssertTrue(row.waitForExistence(timeout: 3))
             XCTAssertTrue(row.label.contains(expected))
         }
-        let ratio = app.descendants(matching: .any)
-            .matching(identifier: "statsHydrationRatio").firstMatch
+        let ratio = detail.staticTexts["statsHydrationRatio"]
         XCTAssertTrue(ratio.waitForExistence(timeout: 3))
         XCTAssertTrue(ratio.label.contains("100%"))
     }
@@ -144,17 +153,14 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // Checks the captured preparation and preserves the distinction between unknown and zero.
     @MainActor
     private func assertUnknownCaffeine(in app: XCUIApplication, preparation: String) {
-        let amount = app.descendants(matching: .any)
-            .matching(identifier: "statsCaffeineAmount").firstMatch
-        let variant = app.descendants(matching: .any)
-            .matching(identifier: "statsCaffeinePreparation").firstMatch
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: 3))
+        let amount = detail.staticTexts["statsCaffeineAmount"]
+        let variant = detail.staticTexts["statsCaffeinePreparation"]
         XCTAssertTrue(amount.waitForExistence(timeout: 3))
         XCTAssertTrue(amount.label.contains("Unknown"))
         XCTAssertTrue(variant.waitForExistence(timeout: 3))
         XCTAssertTrue(variant.label.contains(preparation))
-        XCTAssertFalse(
-            app.descendants(matching: .any)
-                .matching(identifier: "statsCaffeineShotCount").firstMatch.exists
-        )
+        XCTAssertFalse(detail.staticTexts["statsCaffeineShotCount"].exists)
     }
 }
