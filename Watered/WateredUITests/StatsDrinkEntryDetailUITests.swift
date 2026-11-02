@@ -1,6 +1,31 @@
 import XCTest
 
 final class StatsDrinkEntryDetailUITests: XCTestCase {
+    // GIVEN a drink logged in imperial ounces, when the app's display unit changes,
+    // THEN its reopened detail converts Amount and Contribution without changing their ratio.
+    @MainActor
+    func testDisplayUnitChangesReformatSavedDrinkVolumes() {
+        let app = openDrinkDetail(drinkID: "still-water", initialUnit: "imp fl oz")
+        assertDisplayedVolumes(in: app, expected: "8 fl oz")
+
+        let selections = [
+            ("US fl oz", "7.686 US fl oz"),
+            ("ml", "227.305 ml"),
+            ("imp fl oz", "8 fl oz")
+        ]
+        for (unitLabel, expectedVolume) in selections {
+            app.navigationBars.buttons.firstMatch.tap()
+            changeDisplayUnit(to: unitLabel, in: app)
+            app.tabBars.buttons["Stats"].tap()
+
+            let historyRow = app.buttons.matching(identifier: "statsDrinkEntryLink").firstMatch
+            XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
+            XCTAssertTrue(historyRow.label.contains(expectedVolume))
+            historyRow.tap()
+            assertDisplayedVolumes(in: app, expected: expectedVolume)
+        }
+    }
+
     // GIVEN regular coffee with an unknown estimate, when its saved detail is opened,
     // THEN caffeine remains unknown, the regular preparation is shown and no shots are invented.
     @MainActor
@@ -37,7 +62,7 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
 
     // Logs the selected bundled drink in isolated storage and opens its saved Stats detail.
     @MainActor
-    private func openDrinkDetail(drinkID: String) -> XCUIApplication {
+    private func openDrinkDetail(drinkID: String, initialUnit: String = "ml") -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -46,6 +71,10 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
             "-AppleLocale", "en_GB"
         ]
         app.launch()
+
+        if initialUnit != "ml" {
+            changeDisplayUnit(to: initialUnit, in: app)
+        }
 
         let addButton = app.buttons["addDrinkActionButton"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
@@ -79,6 +108,37 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
                 .matching(identifier: "statsDrinkEntryDetailList").firstMatch.waitForExistence(timeout: 3)
         )
         return app
+    }
+
+    // Changes the preference through Profile without altering the logged drink.
+    @MainActor
+    private func changeDisplayUnit(to unitLabel: String, in app: XCUIApplication) {
+        app.tabBars.buttons["Today"].tap()
+        let profileButton = app.buttons["profileButton"]
+        XCTAssertTrue(profileButton.waitForExistence(timeout: 3))
+        profileButton.tap()
+
+        let picker = app.segmentedControls["displayUnitPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 3))
+        let unitButton = picker.buttons[unitLabel]
+        unitButton.tap()
+        XCTAssertTrue(unitButton.wait(for: \.isSelected, toEqual: true, timeout: 3))
+        app.navigationBars["Profile"].swipeDown()
+        XCTAssertTrue(picker.waitForNonExistence(timeout: 3))
+    }
+
+    // Confirms both volume rows use the selected unit while the saved ratio stays dimensionless.
+    @MainActor
+    private func assertDisplayedVolumes(in app: XCUIApplication, expected: String) {
+        for identifier in ["statsDrinkAmount", "statsHydrationContribution"] {
+            let row = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 3))
+            XCTAssertTrue(row.label.contains(expected))
+        }
+        let ratio = app.descendants(matching: .any)
+            .matching(identifier: "statsHydrationRatio").firstMatch
+        XCTAssertTrue(ratio.waitForExistence(timeout: 3))
+        XCTAssertTrue(ratio.label.contains("100%"))
     }
 
     // Checks the captured preparation and preserves the distinction between unknown and zero.

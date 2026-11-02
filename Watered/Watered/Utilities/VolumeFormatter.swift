@@ -5,37 +5,43 @@
 //  Created by Frank Sedivy on 03/07/2026.
 //
 
-// Formats volume measurements for simple console output and early UI labels.
 import Foundation
 
+/// Converts volume measurements into localised display text without changing stored values.
 nonisolated struct VolumeFormatter {
     private let locale: Locale
-    
+
+    /// Creates a formatter using the supplied locale for unit names and number formatting.
+    ///
+    /// - Parameter locale: The display locale; defaults to the current locale.
     init(locale: Locale = .current) {
         self.locale = locale
     }
     
-    // MARK: - Whole Number Formatting
-        
-    // Purpose:
-    // Formats a volume measurement as a rounded whole number in the requested display unit.
-    //
-    // Input:
-    // Uses a Measurement<UnitVolume> and a LiquidUnit.
-    //
-    // Returns:
-    // A localised display string such as "1000 ml", "34 US fl oz", or "35 fl oz".
-    //
-    // Behavior:
-    // Converts the measurement to the LiquidUnit's Foundation unit, then asks
-    // Foundation's Measurement.FormatStyle to format the value and unit label.
-    //
-    // Notes:
-    // This controls display only. It does not change how the model stores or
-    // calculates volume values.
+    /// Formats a volume as a rounded whole number in the requested unit.
+    ///
+    /// - Parameters:
+    ///   - volume: The original measurement, including its source unit.
+    ///   - unit: The display unit; defaults to millilitres.
+    /// - Returns: Localised volume text such as "1000 ml" or "34 US fl oz".
     func wholeNumberString(
         from volume: Measurement<UnitVolume>,
         displayedAs unit: LiquidUnit = .milliliters
+    ) -> String {
+        string(from: volume, displayedAs: unit, fractionLength: 0...0)
+    }
+
+    /// Formats a converted volume with configurable fractional precision.
+    ///
+    /// - Parameters:
+    ///   - volume: The original measurement, including its source unit.
+    ///   - unit: The display unit; defaults to millilitres.
+    ///   - fractionLength: Allowed decimal places; defaults to zero through three.
+    /// - Returns: Localised text that distinguishes US and imperial fluid ounces.
+    func string(
+        from volume: Measurement<UnitVolume>,
+        displayedAs unit: LiquidUnit = .milliliters,
+        fractionLength: ClosedRange<Int> = 0...3
     ) -> String {
         let convertedVolume = volume.converted(to: unit.foundationUnit)
         
@@ -44,7 +50,7 @@ nonisolated struct VolumeFormatter {
                 width: .abbreviated,
                 usage: .asProvided,
                 numberFormatStyle:
-                    .number.precision(.fractionLength(0))
+                    .number.precision(.fractionLength(fractionLength))
                     .grouping(.never)
             )
             .locale(locale)
