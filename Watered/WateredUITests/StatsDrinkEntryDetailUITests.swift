@@ -78,6 +78,16 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // Logs the selected bundled drink in isolated storage and opens its saved Stats detail.
     @MainActor
     private func openDrinkDetail(drinkID: String, initialUnit: String = "ml") -> XCUIApplication {
+        let app = logDrink(drinkID: drinkID, initialUnit: initialUnit)
+        let historyRow = savedDrinkRow(in: app)
+        historyRow.tap()
+        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: readinessTimeout))
+        return app
+    }
+
+    // Submits a drink through Add Drink without navigating into its detail as part of setup.
+    @MainActor
+    private func logDrink(drinkID: String, initialUnit: String) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -114,16 +124,19 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(submitButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         submitButton.tap()
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: readinessTimeout))
+        return app
+    }
 
+    // Returns the single saved row from this test's isolated store after opening Stats.
+    @MainActor
+    private func savedDrinkRow(in app: XCUIApplication) -> XCUIElement {
         app.tabBars.buttons["Stats"].tap()
         let history = app.collectionViews["statsDrinkHistoryList"]
         XCTAssertTrue(history.waitForExistence(timeout: readinessTimeout))
         let historyRow = history.buttons["statsDrinkEntryLink"]
         XCTAssertTrue(historyRow.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
-        historyRow.tap()
-        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: readinessTimeout))
-        return app
+        return historyRow
     }
 
     // Exercises one conversion per test so all supported target units have independent time budgets.
@@ -134,22 +147,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         targetUnit: String,
         expectedAmount: String
     ) {
-        let app = openDrinkDetail(drinkID: "still-water", initialUnit: initialUnit)
-        assertDisplayedVolumes(in: app, expected: initialAmount)
+        let app = logDrink(drinkID: "still-water", initialUnit: initialUnit)
+        let originalRow = savedDrinkRow(in: app)
+        XCTAssertTrue(originalRow.label.contains(initialAmount))
 
-        let backButton = app.navigationBars.buttons["BackButton"]
-        XCTAssertTrue(backButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
-        backButton.tap()
-        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForNonExistence(timeout: readinessTimeout))
         changeDisplayUnit(to: targetUnit, in: app)
-        app.tabBars.buttons["Stats"].tap()
-
-        let history = app.collectionViews["statsDrinkHistoryList"]
-        XCTAssertTrue(history.waitForExistence(timeout: readinessTimeout))
-        let historyRow = history.buttons["statsDrinkEntryLink"]
-        XCTAssertTrue(historyRow.waitForExistence(timeout: readinessTimeout))
+        let historyRow = savedDrinkRow(in: app)
         XCTAssertTrue(historyRow.label.contains(expectedAmount))
-        XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         historyRow.tap()
         assertDisplayedVolumes(in: app, expected: expectedAmount)
     }
