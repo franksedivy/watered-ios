@@ -25,7 +25,6 @@ jobs:
       XCODE_VERSION: '27.1'
       IOS_SIMULATOR_RUNTIME: com.apple.CoreSimulator.SimRuntime.iOS-27-0
       SIMULATOR_NAME: iPhone Air
-      CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
 
     steps:
       - name: Check out source
@@ -41,6 +40,8 @@ jobs:
 
       - name: Run unit and UI tests
         timeout-minutes: 40
+        env:
+          CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
         run: |
           bash Scripts/CI/run-ios-tests.sh 2>&1 |
             tee "$RUNNER_TEMP/watered-ios-ci/runner.log"

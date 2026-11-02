@@ -121,6 +121,9 @@ job = workflow.fetch('jobs').fetch('ios-tests')
 abort 'Unexpected runner' unless job['runs-on'] == 'xcode-27'
 abort 'Unbounded timeout' unless job['timeout-minutes'] == 45
 abort 'Unexpected Xcode' unless job['env']['XCODE_VERSION'] == '27.1'
+abort 'Runner context is unavailable in job env' if job['env'].key?('CI_RUNNER_ENVIRONMENT')
+test_step = job['steps'].find { |step| step['name'] == 'Run unit and UI tests' }
+abort 'Missing hosted-runner guard' unless test_step['env']['CI_RUNNER_ENVIRONMENT'] == '${{ runner.environment }}'
 actions = job['steps'].select { |step| step.key?('uses') }
 abort 'Unexpected action dependency' unless actions.size == 2 && actions.all? { |step|
   step['uses'].match?(/\Aactions\/(checkout|upload-artifact)@[0-9a-f]{40}\z/)
