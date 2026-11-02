@@ -8,48 +8,23 @@
 import SwiftUI
 
 // MARK: - Learn View
-//
-// Purpose:
-// Shows the temporary Learn screen.
-//
-// Returns:
-// A blank SwiftUI screen inside its own navigation stack.
-//
-// UI role:
-// Gives Watered a second real tab so the app can start behaving like a
-// multi-section iOS app. The content is intentionally empty for now because
-// learning content is outside the current 0.2 UI foundation work.
+
+/// Presents saved drink history as calendar-day groups in the temporary Stats tab.
+///
+/// Volumes follow the app's display preference; persistence remains owned by the parent.
 struct LearnView: View {
     let onOpenProfile: () -> Void
-    
-    // Purpose:
-    // Stores the drink entries shown by the temporary Stats tab
-    //
-    // Input:
-    // Supplied by WateredTabView from the full app store, not the filtered Today
-    // entries.
-    //
-    // UI role:
-    // Lets the placeholder tab act as a simple history/debug view while persistence
-    // and day filtering are being built.
+
+    /// The full saved history, rather than the entries filtered for Today.
     let entries: [DrinkEntry]
-    
-    // Purpose:
-    // Requests deletion of a drink without owning persistence logic.
-    //
-    // Input:
-    // Supplied by the parent' accepts the selected drink's UUID.
-    //
-    // Behavior:
-    // Throws if saving fails so the detail screen can present an error.
+
+    /// The applied volume unit shared by history rows and their detail screens.
+    let displayUnit: LiquidUnit
+
+    /// Requests deletion by entry UUID; errors are presented by the detail screen.
     let onDeleteDrink: (UUID) throws -> Void
-    
-    // Purpose:
-    // Groups the full drink  history by local calendar day for the temporary Stats
-    //
-    // Returns:
-    // Date sections sorted newest-first, with each section containing entries from
-    // the same local calendar day.
+
+    /// Newest-first calendar-day groups, with each group's entries also newest first.
     private var entriesByCalendarDay: [(day: Date, entries: [DrinkEntry])] {
         let calendar = Calendar.current
         let groupedEntries = Dictionary(grouping: entries) { entry in
@@ -69,6 +44,14 @@ struct LearnView: View {
                 firstSection.day > secondSection.day
             }
     }
+
+    /// Formats a history row's volume using the current display preference.
+    ///
+    /// - Parameter entry: The saved entry whose original amount remains unchanged.
+    /// - Returns: The converted volume with up to three decimal places.
+    private func amountText(for entry: DrinkEntry) -> String {
+        VolumeFormatter().string(from: entry.amount.volume, displayedAs: displayUnit)
+    }
     
     var body: some View {
         NavigationStack {
@@ -84,11 +67,12 @@ struct LearnView: View {
                                 NavigationLink {
                                     StatsDrinkEntryDetailView(
                                         entry: entry,
+                                        displayUnit: displayUnit,
                                         onDeleteDrink: onDeleteDrink
                                     )
                                 } label: {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(entry.displayName) · \(entry.amount.formatted)")
+                                        Text("\(entry.displayName) · \(amountText(for: entry))")
                                             .font(.headline)
                                         Text(entry.loggedAt.formatted(date: .abbreviated, time: .shortened))
                                             .font(.caption)
@@ -110,6 +94,7 @@ struct LearnView: View {
     LearnView(
         onOpenProfile: {},
         entries: [],
+        displayUnit: .milliliters,
         onDeleteDrink: { entryID in
             wateredLog("Preview deletion requested for \(entryID)")
         }

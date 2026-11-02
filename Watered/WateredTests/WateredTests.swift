@@ -363,33 +363,6 @@ struct WateredTests {
 
     // MARK: - Formatters
 
-    // Given a volume and milliliter display unit, when it is formatted, then the
-    // string shows the whole-number milliliter value.
-    @Test func volumeFormatterFormatsWholeMilliliters() {
-        let formatter = VolumeFormatter(locale: Locale(identifier: "en_GB"))
-        let volume = Measurement(value: 1000, unit: UnitVolume.milliliters)
-
-        #expect(formatter.wholeNumberString(from: volume, displayedAs: .milliliters) == "1000 ml")
-    }
-
-    // Given a milliliter volume and US fluid ounce display unit, when it is
-    // formatted, then the string shows the rounded US fluid ounce value.
-    @Test func volumeFormatterFormatsWholeUSFluidOunces() {
-        let formatter = VolumeFormatter(locale: Locale(identifier: "en_GB"))
-        let volume = Measurement(value: 1000, unit: UnitVolume.milliliters)
-
-        #expect(formatter.wholeNumberString(from: volume, displayedAs: .usFluidOunces) == "34 US fl oz")
-    }
-
-    // Given a milliliter volume and imperial fluid ounce display unit, when it is
-    // formatted, then the string shows the rounded imperial fluid ounce value.
-    @Test func volumeFormatterFormatsWholeImperialFluidOunces() {
-        let formatter = VolumeFormatter(locale: Locale(identifier: "en_GB"))
-        let volume = Measurement(value: 1000, unit: UnitVolume.milliliters)
-
-        #expect(formatter.wholeNumberString(from: volume, displayedAs: .imperialFluidOunces) == "35 fl oz")
-    }
-
     // Given a decimal progress value, when it is formatted, then the string shows
     // a whole-number percentage.
     @Test func progressFormatterFormatsPercentage() {

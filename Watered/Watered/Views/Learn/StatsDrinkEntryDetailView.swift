@@ -14,6 +14,9 @@ import SwiftUI
 /// Presented from Stats so captured estimates, catalogue provenance and dates can be inspected.
 struct StatsDrinkEntryDetailView: View {
     let entry: DrinkEntry
+
+    /// The app's applied volume unit; the entry retains its original stored unit.
+    let displayUnit: LiquidUnit
     
     /// Requests deletion by entry ID. A thrown error keeps the view open and presents an alert.
     let onDeleteDrink: (UUID) throws -> Void
@@ -27,12 +30,17 @@ struct StatsDrinkEntryDetailView: View {
     /// Controls the alert shown when deletion fails.
     @State private var isShowingDeletionError = false
 
-    /// The saved contribution in millilitres, retaining fractional values for inspection.
+    /// The logged amount converted to the selected unit without changing stored values.
+    private var amountText: String {
+        VolumeFormatter().string(from: entry.amount.volume, displayedAs: displayUnit)
+    }
+
+    /// The saved contribution in the selected unit, retaining fractional precision.
     private var hydrationContributionText: String {
-        guard let contribution = entry.catalogueSnapshot.hydrationContribution else {
+        guard let contribution = entry.hydrationContributionVolume else {
             return "Unknown"
         }
-        return contribution.formatted(.number.precision(.fractionLength(0...3))) + " ml"
+        return VolumeFormatter().string(from: contribution, displayedAs: displayUnit)
     }
 
     /// The effective saved ratio as a fraction and percentage, without clamping its sign.
@@ -83,7 +91,8 @@ struct StatsDrinkEntryDetailView: View {
         List {
             Section("Drink") {
                 LabeledContent("Type", value: entry.displayName)
-                LabeledContent("Amount", value: entry.amount.formatted)
+                LabeledContent("Amount", value: amountText)
+                    .accessibilityIdentifier("statsDrinkAmount")
                 LabeledContent("Source", value: entry.source.rawValue)
             }
 
@@ -152,7 +161,7 @@ struct StatsDrinkEntryDetailView: View {
                     
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Delete \(entry.amount.formatted) of \(entry.displayName). This can't be undone.")
+                    Text("Delete \(amountText) of \(entry.displayName). This can't be undone.")
                 }
                 .alert(
                     "Could not delete drink",
@@ -179,6 +188,7 @@ struct StatsDrinkEntryDetailView: View {
                 amount: DrinkAmount(value: 300, unit: .milliliters),
                 date: Date()
             ),
+            displayUnit: .milliliters,
             onDeleteDrink: { entryID in
                 wateredLog("Preview deletion requested for \(entryID)")
             }

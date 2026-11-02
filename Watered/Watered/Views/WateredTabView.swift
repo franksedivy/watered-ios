@@ -288,6 +288,7 @@ struct WateredTabView: View {
                 LearnView(
                     onOpenProfile: openProfile,
                     entries: store.entries,
+                    displayUnit: displayUnit,
                     onDeleteDrink: deleteDrinkEntry
                 )
                     .tabItem {
