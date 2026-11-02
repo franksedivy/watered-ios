@@ -41,19 +41,20 @@ struct GoalReachedTodayView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     let goal = HydrationGoal(
         amount: DrinkAmount(value: 2700, unit: .milliliters)
     )
 
     let entries = [
-        DrinkEntry(
-            type: .water,
+        DrinkPreviewData.entry(
+            drinkID: "still-water",
             amount: DrinkAmount(value: 2200, unit: .milliliters),
             date: Date()
         ),
-        DrinkEntry(
-            type: .tea,
+        DrinkPreviewData.entry(
+            drinkID: "cappuccino",
             amount: DrinkAmount(value: 600, unit: .milliliters),
             date: Date()
         )
@@ -75,3 +76,4 @@ struct GoalReachedTodayView: View {
         .padding()
         .background(Color.blue)
 }
+#endif

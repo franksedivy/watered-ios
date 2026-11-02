@@ -43,13 +43,14 @@ struct TodaySummaryView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     TodaySummaryView(
         summary: HydrationSummaryViewData(
             snapshot: HydrationTracker(
                 entries: [
-                    DrinkEntry(
-                        type: .water,
+                    DrinkPreviewData.entry(
+                        drinkID: "still-water",
                         amount: DrinkAmount(value: 300, unit: .milliliters),
                         date: Date()
                     )
@@ -65,3 +66,4 @@ struct TodaySummaryView: View {
     .padding()
     .background(Color.blue)
 }
+#endif

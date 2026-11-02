@@ -7,31 +7,17 @@
 
 import Foundation
 
+/// Grouped volumes for one logged drink identity.
 nonisolated struct DrinkBreakdown {
-    // MARK: - Stored Values
-        
-    // Purpose:
-    // Identifies the drink type represented by this breakdown.
-    //
-    // Type:
-    // A DrinkType value such as water, coffee, tea, juice, or other.
-    let type: DrinkType
-    
-    // Purpose:
-    // Stores the total raw liquid volume consumed for this drink type.
-    //
-    // Type:
-    // A Measurement<UnitVolume> using Foundation measurement units.
+    /// The identity used to group logged drinks.
+    let drinkID: String
+
+    /// The captured name shown for this group.
+    let displayName: String
+
+    /// The total raw liquid volume in this group.
     let totalVolume: Measurement<UnitVolume>
-    
-    // Purpose:
-    // Stores the estimated hydration contribution for this drink type.
-    //
-    // Type:
-    // An optional Measurement<UnitVolume>.
-    //
-    // Notes:
-    // This is nil when the app does not know how much hydration this drink type
-    // contributes, such as the current "Other" drink type.
+
+    /// The estimated hydration contribution, or nil if any entry is unknown.
     let totalHydrationVolume: Measurement<UnitVolume>?
 }

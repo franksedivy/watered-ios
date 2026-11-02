@@ -7,55 +7,87 @@
 
 import Foundation
 
-// MARK: - Recent Drink Option
-//
-// Purpose:
-// Represents one complete recent-drink shortcut shown in the Add Drink sheet.
-//
-// Input:
-// Accepts the drink type, volume value, and unit needed to recreate a previously
-// used drink.
-//
-// Returns:
-// A lightweight value that can provide display text and submit a real DrinkEntry.
-//
-// Notes:
-// This is intentionally separate from AddDrinkView so recent-drink shortcuts can
-// become persistence-backed later without changing the view's basic shape.
-nonisolated struct RecentDrinkOption {
-    let drinkType: DrinkType
-    let volumeValue: Double
-    let unit: LiquidUnit
-    
-    // MARK: - Display
-    //
-    // Purpose:
-    // Provides the text shown inside the recent-drink pill.
-    //
-    // Returns:
-    // A short user-facing label such as "300 ml of Water".
-    var label: String {
-        return "\(Int(volumeValue)) \(unit.rawValue) of \(drinkType.rawValue)"
+/// A currently available shortcut that creates a fresh catalogue-backed drink.
+nonisolated struct RecentDrinkOption: Identifiable {
+    /// Distinguishes amounts, units and preparations without relying on display text.
+    nonisolated struct ID: Hashable {
+        let drinkID: String
+        let volumeValue: Double
+        let unit: LiquidUnit
+        let caffeineVariant: CaffeineVariant
+        let shotCount: Int?
     }
-    
-    // MARK: - Entry Creation
-    //
-    // Purpose:
-    // Converts the recent-drink shortcut into a real DrinkEntry.
-    //
-    // Input:
-    // Accepts the date that should be attached to the new drink entry. The default
-    // is the current date so a recent drink can be submitted immediately.
-    //
-    // Returns:
-    // A DrinkEntry containing the recent drink type, volume, unit, and supplied date.
-    func drinkEntry(date: Date = Date()) -> DrinkEntry {
-        let draft = AddDrinkDraft(
-            drinkType: drinkType,
-            volumeValue: volumeValue,
-            unit: unit
+
+    let drinkID: String
+    let drinkName: String
+    let amount: DrinkAmount
+    let caffeineVariant: CaffeineVariant
+    let shotCount: Int?
+
+    /// Whether the current definition offers a choice of caffeine preparations.
+    private let showsCaffeineVariant: Bool
+
+    var id: ID {
+        ID(
+            drinkID: drinkID,
+            volumeValue: amount.value,
+            unit: amount.unit,
+            caffeineVariant: caffeineVariant,
+            shotCount: shotCount
         )
-        
-        return draft.drinkEntry(date: date)
+    }
+
+    /// Creates a shortcut from a supported preparation and the current drink definition.
+    ///
+    /// - Parameters:
+    ///   - definition: The active definition supplying the current display name.
+    ///   - amount: The amount and unit to repeat.
+    ///   - caffeineVariant: The previously selected, still-supported preparation.
+    ///   - shotCount: The previously selected, still-supported shot count.
+    init(
+        definition: DrinkDefinition,
+        amount: DrinkAmount,
+        caffeineVariant: CaffeineVariant,
+        shotCount: Int?
+    ) {
+        self.drinkID = definition.id
+        self.drinkName = definition.name
+        self.amount = amount
+        self.caffeineVariant = caffeineVariant
+        self.shotCount = shotCount
+        self.showsCaffeineVariant = definition.caffeineOptions.count > 1
+    }
+
+    /// The displayed amount, current name and any preparation choices.
+    var label: String {
+        var text = "\(amount.formatted) of \(drinkName)"
+        if showsCaffeineVariant {
+            text += " (\(caffeineVariant.rawValue.capitalized))"
+        }
+        if let shotCount {
+            text += shotCount == 1 ? ", 1 shot" : ", \(shotCount) shots"
+        }
+        return text
+    }
+
+    /// Creates a new entry under current rules instead of copying historical estimates.
+    ///
+    /// - Parameters:
+    ///   - resolver: The catalogue resolver to use for the new submission.
+    ///   - date: The date and time to log the repeated drink for.
+    /// - Returns: A new entry with fresh identity, timestamps and estimates.
+    /// - Throws: A resolution or calculation error if the shortcut is no longer valid.
+    func drinkEntry(
+        using resolver: DrinkCatalogueSnapshotResolver,
+        date: Date = Date()
+    ) throws -> DrinkEntry {
+        let draft = AddDrinkDraft(
+            drinkID: drinkID,
+            volumeValue: amount.value,
+            unit: amount.unit,
+            caffeineVariant: caffeineVariant,
+            shotCount: shotCount
+        )
+        return try draft.drinkEntry(using: resolver, date: date)
     }
 }

@@ -512,8 +512,10 @@ struct AppSettingsPersistenceTests {
             in: context,
             at: initialDate
         )
-        let drink = DrinkEntry(
-            type: .water,
+        let drink = DrinkEntryFixture.make(
+            drinkID: "still-water",
+            drinkName: "Water",
+            hydrationRule: .ratio(1),
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: initialDate
         )

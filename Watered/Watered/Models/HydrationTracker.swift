@@ -7,26 +7,21 @@
 
 import Foundation
 
+/// Summarises the supplied drink entries against a daily hydration goal.
+///
+/// Entries are used as supplied; calendar-day filtering belongs to the caller.
 nonisolated struct HydrationTracker {
+    /// The logged drinks included in these calculations.
     var entries: [DrinkEntry] = []
+
+    /// The hydration target used to calculate the remaining amount.
     var dailyGoal: HydrationGoal
     
     // MARK: - Total Volume
-    // Purpose: Calculates the total raw liquid volume from all logged drink entries.
-    // Input:
-    // Uses the tracker's entries array.
-    //
-    // Returns:
-    // A Measurement<UnitVolume> in the model's base calculation unit representing
-    // total liquid consumed.
-    //
-    // Behavior:
-    // Converts each entry amount to the model's base calculation unit, adds the
-    // values together, and returns the final total as a Foundation Measurement.
-    //
-    // Notes:
-    // This does not apply water-content ratios. Water, juice, tea, coffee, and
-    // other drinks all count by their physical liquid volume.
+
+    /// The total consumed liquid volume, expressed in millilitres.
+    ///
+    /// Adds each drink's full logged amount after converting it to the base unit.
     var totalVolume: Measurement<UnitVolume> {
         let totalBaseValue = entries.reduce(0.0) { total, entry in
             total + VolumeCalculation.baseValue(from: entry.amount.volume)
@@ -37,19 +32,9 @@ nonisolated struct HydrationTracker {
     
     // MARK: - Total Hydration Volume
 
-    // Purpose: Calculates the estimated hydration contribution from all logged drink entries.
-    //
-    // Input: Uses the tracker's entries array and each entry's hydrationContributionVolume.
-    //
-    // Returns:
-    // An optional Measurement<UnitVolume> in the model's base calculation unit.
-    // Returns nil if any entry has unknown hydration contribution.
-    //
-    // Behavior:
-    // Loops through entries one by one. If an entry has hydrationContributionVolume,
-    // it is converted to the model's base calculation unit and added to the total.
-    // If an entry has nil hydrationContributionVolume, the calculation stops and
-    // returns nil.
+    /// The sum of the entries' estimated hydration contributions in millilitres.
+    ///
+    /// Nil if any contribution is unknown. Zero and negative contributions are preserved.
     var totalHydrationVolume: Measurement<UnitVolume>? {
         var totalBaseValue = 0.0
         
@@ -65,50 +50,44 @@ nonisolated struct HydrationTracker {
     }
     
     // MARK: - Drink Breakdown
-    // Purpose:
-    // Creates grouped drink totals by drink type.
-    //
-    // Input:
-    // Uses the tracker's entries array and DrinkType.allCases.
-    //
-    // Returns:
-    // An array of DrinkBreakdown values.
-    // Each DrinkBreakdown represents one drink type that has at least one entry.
-    // Each breakdown includes the raw liquid total and, when known, the estimated
-    // hydration contribution total for that drink type.
-    //
-    // Behavior:
-    // Loops through every known DrinkType, filters the entries down to the current
-    // type, skips the type when there are no matching entries, adds the matching
-    // raw entry volumes together, then separately adds the matching hydration
-    // contribution volumes together.
-    //
-    // Notes:
-    // If any entry for a drink type has unknown hydration contribution, that
-    // drink type still returns a raw liquid total, but its hydration contribution
-    // total is nil.
+
+    /// Groups logged drinks by stable identity and orders groups by ID.
+    ///
+    /// Uses the latest logged name in each group, with UUID string order resolving tied times.
+    /// A group has nil hydration contribution if any of its entries has an unknown contribution.
     var drinkBreakdown: [DrinkBreakdown] {
         var breakdowns: [DrinkBreakdown] = []
-        
-        for type in DrinkType.allCases {
-            let entriesForType = entries.filter { entry in
-                entry.type == type
+
+        let groupedEntries = Dictionary(grouping: entries, by: { entry in
+            return entry.drinkID
+        })
+
+        for drinkID in groupedEntries.keys.sorted() {
+            guard let entriesForDrink = groupedEntries[drinkID] else {
+                continue
             }
-            
-            guard !entriesForType.isEmpty else {
+
+            let latestEntry = entriesForDrink.max(by: { first, second in
+                if first.loggedAt == second.loggedAt {
+                    return first.id.uuidString < second.id.uuidString
+                }
+                return first.loggedAt < second.loggedAt
+            })
+
+            guard let latestEntry else {
                 continue
             }
             
             var totalBaseValue = 0.0
             
-            for entry in entriesForType {
+            for entry in entriesForDrink {
                 totalBaseValue += VolumeCalculation.baseValue(from: entry.amount.volume)
             }
             
             var totalHydrationBaseValue = 0.0
             var hasUnknownHydrationContribution = false
             
-            for entry in entriesForType {
+            for entry in entriesForDrink {
                 guard let hydrationContributionVolume = entry.hydrationContributionVolume else {
                     hasUnknownHydrationContribution = true
                     break
@@ -128,7 +107,8 @@ nonisolated struct HydrationTracker {
             }
             
             let breakdown = DrinkBreakdown(
-                type: type,
+                drinkID: drinkID,
+                displayName: latestEntry.displayName,
                 totalVolume: VolumeCalculation.measurement(fromBaseValue: totalBaseValue),
                 totalHydrationVolume: totalHydrationVolume
             )
@@ -140,25 +120,10 @@ nonisolated struct HydrationTracker {
     }
     
     // MARK: - Remaining Hydration Volume
-        
-    // Purpose:
-    // Calculates how much hydration contribution is left before the daily
-    // hydration target is met.
-    //
-    // Input: Uses dailyGoal.volume and totalHydrationVolume.
-    //
-    // Returns:
-    // An optional Measurement<UnitVolume> in the model's base calculation unit.
-    // Returns nil if totalHydrationVolume is nil.
-    //
-    // Behavior:
-    // Converts the goal and hydration contribution to the model's base calculation
-    // unit, subtracts hydration contribution from the goal, and clamps the result
-    // at zero.
-    //
-    // Notes:
-    // This is likely to become the main "remaining" value for the Today screen,
-    // because the daily goal is understood as a hydration target.
+
+    /// The estimated hydration still needed to meet the goal, expressed in millilitres.
+    ///
+    /// Nil if total hydration is unknown. Returns zero once the goal is met or exceeded.
     var remainingHydrationVolume: Measurement<UnitVolume>? {
         guard let totalHydrationVolume = totalHydrationVolume else {
             return nil
@@ -172,22 +137,10 @@ nonisolated struct HydrationTracker {
     }
     
     // MARK: - Snapshot
-        
-    // Purpose:
-    // Creates a HydrationSnapshot containing the tracker's current calculated state.
-    //
-    // Input:
-    // Uses all current tracker state: entries, dailyGoal, and calculated values.
-    //
-    // Returns:
-    // A HydrationSnapshot containing the current summary of today's hydration data.
-    //
-    // Behavior:
-    // Packages several separate calculated values into one object so the UI and
-    // view-data layer can read a single snapshot instead of repeatedly asking the
-    // tracker for individual values.
-    //
-    // Notes:
+
+    /// A presentation summary of the current drink counts, totals, goal and grouped drinks.
+    ///
+    /// Recomputed on access, independently of the immutable catalogue facts saved with each drink.
     var snapshot: HydrationSnapshot {
         HydrationSnapshot(
             drinkCount: entries.count,

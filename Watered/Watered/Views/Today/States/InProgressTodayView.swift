@@ -42,24 +42,25 @@ struct InProgressTodayView: View {
     }
 }
 
+#if DEBUG
 #Preview {
     let goal = HydrationGoal(
             amount: DrinkAmount(value: 2700, unit: .milliliters)
         )
 
         let entries = [
-            DrinkEntry(
-                type: .water,
+            DrinkPreviewData.entry(
+                drinkID: "still-water",
                 amount: DrinkAmount(value: 1200, unit: .milliliters),
                 date: Date()
             ),
-            DrinkEntry(
-                type: .beer,
+            DrinkPreviewData.entry(
+                drinkID: "sparkling-water",
                 amount: DrinkAmount(value: 660, unit: .milliliters),
                 date: Date()
             ),
-            DrinkEntry(
-                type: .spirits,
+            DrinkPreviewData.entry(
+                drinkID: "espresso",
                 amount: DrinkAmount(value: 50, unit: .milliliters),
                 date: Date()
             )
@@ -84,3 +85,4 @@ struct InProgressTodayView: View {
         .padding()
         .background(Color.blue)
 }
+#endif

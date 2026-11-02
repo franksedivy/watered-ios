@@ -45,6 +45,21 @@ final class WateredUITests: XCTestCase {
         return app
     }
 
+    // Reveals a detail row through bounded scrolling as the inspection data grows.
+    @MainActor
+    private func revealDrinkDetailElement(_ element: XCUIElement, in app: XCUIApplication) {
+        let list = app.descendants(matching: .any)
+            .matching(identifier: "statsDrinkEntryDetailList").firstMatch
+        XCTAssertTrue(list.waitForExistence(timeout: 3))
+        for _ in 0..<6 {
+            if element.exists && element.isHittable {
+                return
+            }
+            list.swipeUp()
+        }
+        XCTAssertTrue(element.exists && element.isHittable)
+    }
+
     @MainActor
     func testAppLaunchesToTodayScreen() throws {
         // Purpose: Proves that Watered launches into the main Today sexperience
@@ -232,6 +247,47 @@ final class WateredUITests: XCTestCase {
         )
     }
     
+    // GIVEN a catalogue drink selected by ID, when it is submitted and opened in Stats,
+    // THEN the sheet closes and the captured catalogue name appears in its saved detail.
+    @MainActor
+    func testSelectingCatalogueDrinkStoresItsName() throws {
+        let app = launchIsolatedApp()
+        let addButton = app.buttons["addDrinkActionButton"]
+        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(addButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        addButton.tap()
+
+        let mineralWater = app.buttons["addDrinkTypeScrollView.mineral-water"]
+        XCTAssertTrue(mineralWater.waitForExistence(timeout: 3))
+        XCTAssertTrue(mineralWater.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        mineralWater.tap()
+        XCTAssertTrue(
+            mineralWater.wait(for: \.isSelected, toEqual: true, timeout: 3),
+            app.debugDescription
+        )
+
+        let submitButton = app.buttons["addDrinkSubmitButton"]
+        XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
+        submitButton.tap()
+        XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
+
+        app.tabBars.buttons["Stats"].tap()
+        let historyRow = app.buttons.matching(identifier: "statsDrinkEntryLink").firstMatch
+        XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
+        historyRow.tap()
+        XCTAssertTrue(app.navigationBars["Mineral water"].waitForExistence(timeout: 3))
+
+        let ratio = app.descendants(matching: .any)
+            .matching(identifier: "statsHydrationRatio").firstMatch
+        revealDrinkDetailElement(ratio, in: app)
+        XCTAssertTrue(ratio.label.contains("100%"))
+
+        let schema = app.descendants(matching: .any)
+            .matching(identifier: "statsCatalogueSchemaVersion").firstMatch
+        revealDrinkDetailElement(schema, in: app)
+        XCTAssertFalse(schema.label.contains("Not recorded"))
+    }
+
     // Given two identical dirnks, when one is deleted from Stats,
     // then its detail screen closes, one history entry remains,
     // and Today shows only the remaining drink's volume.
@@ -242,13 +298,17 @@ final class WateredUITests: XCTestCase {
         let submitButton = app.buttons["addDrinkSubmitButton"]
         
         // Submit the default 330ml drink twice.
-        for _ in 0..<2 {
+        for count in 1...2 {
             XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
+            XCTAssertTrue(addDrinkButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
             addDrinkButton.tap()
             
             XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
             submitButton.tap()
             XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
+            let totalAmount = app.staticTexts["todayTotalAmountText"]
+            XCTAssertTrue(totalAmount.waitForExistence(timeout: 3))
+            XCTAssertTrue(totalAmount.wait(for: \.label, toEqual: "\(count * 330) ml", timeout: 3))
         }
         
         let totalAmountText = app.staticTexts["todayTotalAmountText"]
@@ -266,6 +326,7 @@ final class WateredUITests: XCTestCase {
         historyRows.element(boundBy: 0).tap()
 
         let deleteButton = app.buttons["deleteDrinkButton"]
+        revealDrinkDetailElement(deleteButton, in: app)
         XCTAssertTrue(deleteButton.waitForExistence(timeout: 3))
         deleteButton.tap()
         
@@ -323,6 +384,7 @@ final class WateredUITests: XCTestCase {
         historyRow.tap()
         
         let deleteButton = app.buttons["deleteDrinkButton"]
+        revealDrinkDetailElement(deleteButton, in: app)
         XCTAssertTrue(deleteButton.waitForExistence(timeout: 3))
         deleteButton.tap()
         

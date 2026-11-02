@@ -7,49 +7,118 @@
 
 import SwiftUI
 
-// MARK: - Stats Drink Entry Detail view
-//
-// Purpose:
-// Shows the raw data Watered currently has for one drink entry.
-//
-// Input:
-// Accepts a DrinkEntry selected from the temporary Stats tab.
-//
-// UI role:
-// Gives the 0.4 persistence work a rough debugging surface so stored drink data,
-// dates, identifiers, and source metadata can be inspected in the app.
+// MARK: - Stats Drink Entry Detail View
+
+/// Shows a logged drink's stored details and provides a deletion action.
+///
+/// Presented from Stats so captured estimates, catalogue provenance and dates can be inspected.
 struct StatsDrinkEntryDetailView: View {
     let entry: DrinkEntry
     
-    // Purpose:
-    // Requests deletion of a drink without owning persistence logic.
-    //
-    // Input:
-    // Supplied by the parent' accepts the selected drink's UUID.
-    //
-    // Behavior:
-    // Throws if saving fails so the detail screen can present an error.
+    /// Requests deletion by entry ID. A thrown error keeps the view open and presents an alert.
     let onDeleteDrink: (UUID) throws -> Void
     
-    // Returns to the Stats list after successful deletion.
+    /// Returns to Stats after a successful deletion.
     @Environment(\.dismiss) private var dismiss
     
-    // Controls confirmation before deleting the selected drink.
+    /// Controls the deletion confirmation dialog.
     @State private var isConfirmingDeletion = false
     
-    // Presents an error if the parent cannot complete deletion.
+    /// Controls the alert shown when deletion fails.
     @State private var isShowingDeletionError = false
+
+    /// The saved contribution in millilitres, retaining fractional values for inspection.
+    private var hydrationContributionText: String {
+        guard let contribution = entry.catalogueSnapshot.hydrationContribution else {
+            return "Unknown"
+        }
+        return contribution.formatted(.number.precision(.fractionLength(0...3))) + " ml"
+    }
+
+    /// The effective saved ratio as a fraction and percentage, without clamping its sign.
+    private var hydrationRatioText: String {
+        guard let ratio = entry.hydrationContributionRatio else {
+            return "Unknown"
+        }
+        let fraction = ratio.formatted(.number.precision(.fractionLength(0...6)))
+        let percentage = ratio.formatted(.percent.precision(.fractionLength(0...2)))
+        return "\(fraction) (\(percentage))"
+    }
+
+    /// Keeps unknown caffeine visible and hides only an explicitly known zero amount.
+    private var showsCaffeineDetails: Bool {
+        guard let amount = entry.catalogueSnapshot.caffeineAmount else {
+            return true
+        }
+        return amount != 0
+    }
+
+    /// The saved estimate in milligrams, without replacing unknown amounts with zero.
+    private var caffeineAmountText: String {
+        guard let amount = entry.catalogueSnapshot.caffeineAmount else {
+            return "Unknown"
+        }
+        return amount.formatted(.number.precision(.fractionLength(0...3))) + " mg"
+    }
+
+    /// The preparation captured when logging, independent of current catalogue options.
+    private var caffeinePreparationText: String {
+        switch entry.catalogueSnapshot.caffeineVariant {
+        case .regular:
+            return "Regular"
+        case .decaf:
+            return "Decaf"
+        }
+    }
+
+    /// The original schema version, without inferring it from the current catalogue.
+    private var schemaVersionText: String {
+        guard let version = entry.catalogueSnapshot.catalogueSchemaVersion else {
+            return "Not recorded"
+        }
+        return String(version)
+    }
     
     var body: some View {
         List {
             Section("Drink") {
-                LabeledContent("Type", value: entry.type.rawValue)
+                LabeledContent("Type", value: entry.displayName)
                 LabeledContent("Amount", value: entry.amount.formatted)
                 LabeledContent("Source", value: entry.source.rawValue)
+            }
+
+            Section("Hydration") {
+                LabeledContent("Contribution", value: hydrationContributionText)
+                    .accessibilityIdentifier("statsHydrationContribution")
+                LabeledContent("Hydration ratio", value: hydrationRatioText)
+                    .accessibilityIdentifier("statsHydrationRatio")
+            }
+
+            if showsCaffeineDetails {
+                Section("Caffeine") {
+                    LabeledContent("Estimated caffeine", value: caffeineAmountText)
+                        .accessibilityIdentifier("statsCaffeineAmount")
+                    LabeledContent("Preparation", value: caffeinePreparationText)
+                        .accessibilityIdentifier("statsCaffeinePreparation")
+                    if let shotCount = entry.catalogueSnapshot.shotCount {
+                        LabeledContent("Shots", value: String(shotCount))
+                            .accessibilityIdentifier("statsCaffeineShotCount")
+                    }
+                }
             }
             
             Section("Identity") {
                 LabeledContent("ID", value: entry.id.uuidString)
+            }
+
+            Section("Catalogue") {
+                LabeledContent("Drink ID", value: entry.drinkID)
+                LabeledContent("JSON version", value: entry.catalogueSnapshot.catalogueVersion)
+                    .accessibilityIdentifier("statsCatalogueVersion")
+                LabeledContent("Schema version", value: schemaVersionText)
+                    .accessibilityIdentifier("statsCatalogueSchemaVersion")
+                LabeledContent("Calculation version", value: entry.catalogueSnapshot.calculationVersion)
+                    .accessibilityIdentifier("statsCalculationVersion")
             }
             
             Section("Dates") {
@@ -83,7 +152,7 @@ struct StatsDrinkEntryDetailView: View {
                     
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Delete \(entry.amount.formatted) of \(entry.type.rawValue). This can't be undone.")
+                    Text("Delete \(entry.amount.formatted) of \(entry.displayName). This can't be undone.")
                 }
                 .alert(
                     "Could not delete drink",
@@ -95,16 +164,18 @@ struct StatsDrinkEntryDetailView: View {
                 }
             }
         }
-        .navigationTitle(entry.type.rawValue)
+        .accessibilityIdentifier("statsDrinkEntryDetailList")
+        .navigationTitle(entry.displayName)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+#if DEBUG
 #Preview {
     NavigationStack {
         StatsDrinkEntryDetailView(
-            entry: DrinkEntry(
-                type: .water,
+            entry: DrinkPreviewData.entry(
+                drinkID: "still-water",
                 amount: DrinkAmount(value: 300, unit: .milliliters),
                 date: Date()
             ),
@@ -114,3 +185,4 @@ struct StatsDrinkEntryDetailView: View {
         )
     }
 }
+#endif
