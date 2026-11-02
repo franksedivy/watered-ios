@@ -1,35 +1,43 @@
 import XCTest
 
 final class StatsDrinkEntryDetailUITests: XCTestCase {
-    // GIVEN a drink logged in imperial ounces, when the app's display unit changes,
-    // THEN its reopened detail converts Amount and Contribution without changing their ratio.
+    // Wait for a condition instead of assuming hosted UI transitions finish within three seconds.
+    private let readinessTimeout: TimeInterval = 10
+
+    // GIVEN a drink logged in imperial ounces, when US ounces are selected in Profile,
+    // THEN history and detail convert its saved amount and contribution without changing the ratio.
     @MainActor
-    func testDisplayUnitChangesReformatSavedDrinkVolumes() {
-        let app = openDrinkDetail(drinkID: "still-water", initialUnit: "imp fl oz")
-        assertDisplayedVolumes(in: app, expected: "8 fl oz")
+    func testSavedImperialDrinkReformatsInUSFluidOunces() {
+        assertDisplayUnitChange(
+            initialUnit: "imp fl oz",
+            initialAmount: "8 fl oz",
+            targetUnit: "US fl oz",
+            expectedAmount: "7.686 US fl oz"
+        )
+    }
 
-        let selections = [
-            ("US fl oz", "7.686 US fl oz"),
-            ("ml", "227.305 ml"),
-            ("imp fl oz", "8 fl oz")
-        ]
-        for (unitLabel, expectedVolume) in selections {
-            let backButton = app.navigationBars.buttons["BackButton"]
-            XCTAssertTrue(backButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
-            backButton.tap()
-            XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForNonExistence(timeout: 3))
-            changeDisplayUnit(to: unitLabel, in: app)
-            app.tabBars.buttons["Stats"].tap()
+    // GIVEN a drink logged in imperial ounces, when millilitres are selected in Profile,
+    // THEN history and detail show its converted volume while retaining the saved hydration ratio.
+    @MainActor
+    func testSavedImperialDrinkReformatsInMillilitres() {
+        assertDisplayUnitChange(
+            initialUnit: "imp fl oz",
+            initialAmount: "8 fl oz",
+            targetUnit: "ml",
+            expectedAmount: "227.305 ml"
+        )
+    }
 
-            let history = app.collectionViews["statsDrinkHistoryList"]
-            XCTAssertTrue(history.waitForExistence(timeout: 3))
-            let historyRow = history.buttons["statsDrinkEntryLink"]
-            XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
-            XCTAssertTrue(historyRow.label.contains(expectedVolume))
-            XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: 3))
-            historyRow.tap()
-            assertDisplayedVolumes(in: app, expected: expectedVolume)
-        }
+    // GIVEN a drink logged in millilitres, when imperial ounces are selected in Profile,
+    // THEN history and detail show the converted amount and contribution with an unchanged ratio.
+    @MainActor
+    func testSavedMetricDrinkReformatsInImperialFluidOunces() {
+        assertDisplayUnitChange(
+            initialUnit: "ml",
+            initialAmount: "330 ml",
+            targetUnit: "imp fl oz",
+            expectedAmount: "11.614 fl oz"
+        )
     }
 
     // GIVEN regular coffee with an unknown estimate, when its saved detail is opened,
@@ -84,12 +92,12 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         }
 
         let addButton = app.buttons["addDrinkActionButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
-        XCTAssertTrue(addButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        XCTAssertTrue(addButton.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(addButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         addButton.tap()
 
         let types = app.scrollViews["addDrinkTypeScrollView"]
-        XCTAssertTrue(types.waitForExistence(timeout: 3))
+        XCTAssertTrue(types.waitForExistence(timeout: readinessTimeout))
         let selectedDrink = types.buttons["addDrinkTypeScrollView.\(drinkID)"]
         for _ in 0..<8 {
             if selectedDrink.exists && selectedDrink.isHittable {
@@ -97,24 +105,53 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
             }
             types.swipeLeft()
         }
-        XCTAssertTrue(selectedDrink.exists && selectedDrink.isHittable)
+        XCTAssertTrue(selectedDrink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         selectedDrink.tap()
-        XCTAssertTrue(selectedDrink.wait(for: \.isSelected, toEqual: true, timeout: 3))
+        XCTAssertTrue(selectedDrink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
 
         let submitButton = app.buttons["addDrinkSubmitButton"]
-        XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(submitButton.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(submitButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         submitButton.tap()
-        XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
+        XCTAssertTrue(submitButton.waitForNonExistence(timeout: readinessTimeout))
 
         app.tabBars.buttons["Stats"].tap()
         let history = app.collectionViews["statsDrinkHistoryList"]
-        XCTAssertTrue(history.waitForExistence(timeout: 3))
+        XCTAssertTrue(history.waitForExistence(timeout: readinessTimeout))
         let historyRow = history.buttons["statsDrinkEntryLink"]
-        XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
-        XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        XCTAssertTrue(historyRow.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         historyRow.tap()
-        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: readinessTimeout))
         return app
+    }
+
+    // Exercises one conversion per test so all supported target units have independent time budgets.
+    @MainActor
+    private func assertDisplayUnitChange(
+        initialUnit: String,
+        initialAmount: String,
+        targetUnit: String,
+        expectedAmount: String
+    ) {
+        let app = openDrinkDetail(drinkID: "still-water", initialUnit: initialUnit)
+        assertDisplayedVolumes(in: app, expected: initialAmount)
+
+        let backButton = app.navigationBars.buttons["BackButton"]
+        XCTAssertTrue(backButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        backButton.tap()
+        XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForNonExistence(timeout: readinessTimeout))
+        changeDisplayUnit(to: targetUnit, in: app)
+        app.tabBars.buttons["Stats"].tap()
+
+        let history = app.collectionViews["statsDrinkHistoryList"]
+        XCTAssertTrue(history.waitForExistence(timeout: readinessTimeout))
+        let historyRow = history.buttons["statsDrinkEntryLink"]
+        XCTAssertTrue(historyRow.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(historyRow.label.contains(expectedAmount))
+        XCTAssertTrue(historyRow.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        historyRow.tap()
+        assertDisplayedVolumes(in: app, expected: expectedAmount)
     }
 
     // Changes the preference through Profile without altering the logged drink.
@@ -122,31 +159,33 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     private func changeDisplayUnit(to unitLabel: String, in app: XCUIApplication) {
         app.tabBars.buttons["Today"].tap()
         let profileButton = app.buttons["profileButton"]
-        XCTAssertTrue(profileButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(profileButton.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(profileButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         profileButton.tap()
 
         let picker = app.segmentedControls["displayUnitPicker"]
-        XCTAssertTrue(picker.waitForExistence(timeout: 3))
+        XCTAssertTrue(picker.waitForExistence(timeout: readinessTimeout))
         let unitButton = picker.buttons[unitLabel]
+        XCTAssertTrue(unitButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         unitButton.tap()
-        XCTAssertTrue(unitButton.wait(for: \.isSelected, toEqual: true, timeout: 3))
+        XCTAssertTrue(unitButton.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
         app.navigationBars["Profile"].swipeDown()
-        XCTAssertTrue(picker.waitForNonExistence(timeout: 3))
-        XCTAssertTrue(app.navigationBars["Profile"].waitForNonExistence(timeout: 3))
+        XCTAssertTrue(picker.waitForNonExistence(timeout: readinessTimeout))
+        XCTAssertTrue(app.navigationBars["Profile"].waitForNonExistence(timeout: readinessTimeout))
     }
 
     // Confirms both volume rows use the selected unit while the saved ratio stays dimensionless.
     @MainActor
     private func assertDisplayedVolumes(in app: XCUIApplication, expected: String) {
         let detail = app.collectionViews["statsDrinkEntryDetailList"]
-        XCTAssertTrue(detail.waitForExistence(timeout: 3))
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
         for identifier in ["statsDrinkAmount", "statsHydrationContribution"] {
             let row = detail.staticTexts[identifier]
-            XCTAssertTrue(row.waitForExistence(timeout: 3))
+            XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
             XCTAssertTrue(row.label.contains(expected))
         }
         let ratio = detail.staticTexts["statsHydrationRatio"]
-        XCTAssertTrue(ratio.waitForExistence(timeout: 3))
+        XCTAssertTrue(ratio.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(ratio.label.contains("100%"))
     }
 
@@ -154,12 +193,12 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     @MainActor
     private func assertUnknownCaffeine(in app: XCUIApplication, preparation: String) {
         let detail = app.collectionViews["statsDrinkEntryDetailList"]
-        XCTAssertTrue(detail.waitForExistence(timeout: 3))
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
         let amount = detail.staticTexts["statsCaffeineAmount"]
         let variant = detail.staticTexts["statsCaffeinePreparation"]
-        XCTAssertTrue(amount.waitForExistence(timeout: 3))
+        XCTAssertTrue(amount.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(amount.label.contains("Unknown"))
-        XCTAssertTrue(variant.waitForExistence(timeout: 3))
+        XCTAssertTrue(variant.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(variant.label.contains(preparation))
         XCTAssertFalse(detail.staticTexts["statsCaffeineShotCount"].exists)
     }
