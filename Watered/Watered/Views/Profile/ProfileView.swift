@@ -8,70 +8,43 @@
 import SwiftUI
 
 // MARK: - Profile View
-//
-// Purpose:
-// Shows the temporary Profile screen.
-//
-// Returns:
-// A blank SwiftUI screen inside its own navigation stack.
-//
-// UI role:
-// Gives the persistent FS profile button a real destination. For now this is an
-// empty sheet, but later it can grow into account details, preferences, HealthKit
-// permissions, display units, and other profile-level settings.
+
+/// Presents display-unit preferences and a draft daily hydration goal.
+///
+/// The parent persists unit changes immediately and commits the final goal on dismissal.
 struct ProfileView: View {
     
-    // Purpose: Stores the selected display unit for volume values.
-    //
-    // Input:
-    // Supplied as a binding from WateredTabView, where temporary app-level display
-    // unit state currently lives.
-    //
-    // UI role:
-    // Allows Profile to change the app's display unit without owning the setting.
+    /// The parent's applied unit, used to format volumes without changing their stored value.
     @Binding var displayUnit: LiquidUnit
     
-    // Purpose:
-    // Stores the selected daily hydration goal.
-    //
-    // Input:
-    // Supplied as a binding from WateredTabView, where app-level settings state
-    // currently lives.
-    //
-    // UI role:
-    // Allows Profile to change the goal used by Today without owning the setting.
+    /// The parent's goal draft, committed only when the Profile sheet closes.
     @Binding var dailyHydrationGoal: HydrationGoal
     
     #if DEBUG
     // MARK: - Developer Actions
-    //
-    // Purpose:
-    // Lets Profile request deletion of all saved drinks.
-    //
-    // Input:
-    // Supplied by the parent, which owns persistence and app state. Previews can
-    // omit this action.
-    //
-    // Behavior:
-    // The action throws if deletion fails, allowing Profile to show an error.
-    // A missing action means the reset control should not be displayed.
+
+    /// Requests history deletion; nil hides the control and a thrown error presents feedback.
     var onDeleteAllDrinks: (() throws -> Void)? = nil
     
-    // Controls confirmation before deleting the entire drink history.
+    /// Controls confirmation before deleting the entire drink history.
     @State private var isConfirmingDrinkReset = false
     
-    // Presents an error when the parent cannot complete the deletion.
+    /// Presents an error when the parent cannot complete the deletion.
     @State private var isShowingDrinkResetError = false
     
-    // Dismisses the Profile sheet after a successful drink-history reset.
+    /// Dismisses the Profile sheet after a successful drink-history reset.
     @Environment(\.dismiss) private var dismiss
     #endif
     
-    // Purpose:
-    // Bridges the HydrationGoal model into a numberic Profile form control.
-    //
-    // Returns:
-    // A binding to the goal amount value while preserving the goal unit.
+    /// Formats the goal in the selected display unit without mutating the goal draft.
+    private var formattedDailyHydrationGoal: String {
+        VolumeFormatter().wholeNumberString(
+            from: dailyHydrationGoal.volume,
+            displayedAs: displayUnit
+        )
+    }
+
+    /// Bridges the goal draft to the stepper while preserving its original storage unit.
     private var dailyHydrationGoalValue: Binding<Double> {
         Binding(
             get: {
@@ -108,7 +81,7 @@ struct ProfileView: View {
                         in: 500...5000,
                         step: 100
                     ) {
-                        Text("Daily goal: \(dailyHydrationGoal.amount.formatted)")
+                        Text("Daily goal: \(formattedDailyHydrationGoal)")
                             .accessibilityIdentifier("dailyHydrationGoalText")
                     }
                     .accessibilityIdentifier("dailyHydrationGoalStepper")
