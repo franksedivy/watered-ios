@@ -45,6 +45,32 @@ struct StatsDrinkEntryDetailView: View {
         return "\(fraction) (\(percentage))"
     }
 
+    /// Keeps unknown caffeine visible and hides only an explicitly known zero amount.
+    private var showsCaffeineDetails: Bool {
+        guard let amount = entry.catalogueSnapshot.caffeineAmount else {
+            return true
+        }
+        return amount != 0
+    }
+
+    /// The saved estimate in milligrams, without replacing unknown amounts with zero.
+    private var caffeineAmountText: String {
+        guard let amount = entry.catalogueSnapshot.caffeineAmount else {
+            return "Unknown"
+        }
+        return amount.formatted(.number.precision(.fractionLength(0...3))) + " mg"
+    }
+
+    /// The preparation captured when logging, independent of current catalogue options.
+    private var caffeinePreparationText: String {
+        switch entry.catalogueSnapshot.caffeineVariant {
+        case .regular:
+            return "Regular"
+        case .decaf:
+            return "Decaf"
+        }
+    }
+
     /// The original schema version, without inferring it from the current catalogue.
     private var schemaVersionText: String {
         guard let version = entry.catalogueSnapshot.catalogueSchemaVersion else {
@@ -66,6 +92,19 @@ struct StatsDrinkEntryDetailView: View {
                     .accessibilityIdentifier("statsHydrationContribution")
                 LabeledContent("Hydration ratio", value: hydrationRatioText)
                     .accessibilityIdentifier("statsHydrationRatio")
+            }
+
+            if showsCaffeineDetails {
+                Section("Caffeine") {
+                    LabeledContent("Estimated caffeine", value: caffeineAmountText)
+                        .accessibilityIdentifier("statsCaffeineAmount")
+                    LabeledContent("Preparation", value: caffeinePreparationText)
+                        .accessibilityIdentifier("statsCaffeinePreparation")
+                    if let shotCount = entry.catalogueSnapshot.shotCount {
+                        LabeledContent("Shots", value: String(shotCount))
+                            .accessibilityIdentifier("statsCaffeineShotCount")
+                    }
+                }
             }
             
             Section("Identity") {
