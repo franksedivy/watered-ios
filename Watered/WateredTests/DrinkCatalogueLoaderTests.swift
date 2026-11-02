@@ -23,21 +23,31 @@ struct DrinkCatalogueLoaderTests {
         )
 
         #expect(catalogue.schemaVersion == 1)
-        #expect(!catalogue.version.isEmpty)
+        #expect(catalogue.version == "development-2")
+        #expect(catalogue.drinks.count == 16)
+        #expect(catalogue.categories == [
+            DrinkCategory(id: "water", name: "Water", sortOrder: 10),
+            DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 20)
+        ])
         #expect(water.categoryID == "water")
         #expect(!water.isRetired)
         #expect(catalogue.activeDrinks(inCategoryID: "water").contains(water))
     }
     
-    // GIVEN malformed JSON or an object missing required catalogue fields,
+    // GIVEN malformed JSON or an object missing required manifest fields,
     // WHEN the loader processes the data,
     // THEN it reports a decoding error instead of returning a catalogue.
     @Test(arguments: ["not valid JSON", "{}"])
-    func rejectsUndecodableCatalogue(json: String) {
+    func rejectsUndecodableManifest(json: String) {
         let loader = DrinkCatalogueLoader()
 
         #expect(throws: DecodingError.self) {
-            _ = try loader.load(from: Data(json.utf8))
+            _ = try loader.load(
+                from: Data(json.utf8),
+                categoryData: { filename in
+                    throw DrinkCatalogueLoader.LoadError.categoryResourceNotFound(filename)
+                }
+            )
         }
     }
 
@@ -47,10 +57,10 @@ struct DrinkCatalogueLoaderTests {
     @Test func rejectsUnsupportedCatalogueSchema() {
         let json = """
         {
+            "manifestVersion": 1,
             "schemaVersion": 2,
             "version": "test-1",
-            "categories": [],
-            "drinks": []
+            "categories": []
         }
         """
         let loader = DrinkCatalogueLoader()
@@ -58,7 +68,12 @@ struct DrinkCatalogueLoaderTests {
             DrinkCatalogue.ValidationError.unsupportedSchemaVersion(2)
 
         #expect(throws: expectedError) {
-            _ = try loader.load(from: Data(json.utf8))
+            _ = try loader.load(
+                from: Data(json.utf8),
+                categoryData: { filename in
+                    throw DrinkCatalogueLoader.LoadError.categoryResourceNotFound(filename)
+                }
+            )
         }
     }
     

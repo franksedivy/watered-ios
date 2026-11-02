@@ -1,0 +1,107 @@
+[
+    {
+        "id": "still-water",
+        "name": "Still water",
+        "categoryID": "water",
+        "sortOrder": 10,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 1
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perVolume",
+                    "concentration": 0
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular"
+    },
+    {
+        "id": "mineral-water",
+        "name": "Mineral water",
+        "categoryID": "water",
+        "sortOrder": 20,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 1
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perVolume",
+                    "concentration": 0
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular"
+    },
+    {
+        "id": "sparkling-water",
+        "name": "Sparkling water",
+        "categoryID": "water",
+        "sortOrder": 30,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 1
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perVolume",
+                    "concentration": 0
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular"
+    },
+    {
+        "id": "infused-water",
+        "name": "Infused water",
+        "categoryID": "water",
+        "sortOrder": 40,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 1
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perVolume",
+                    "concentration": 0
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular"
+    },
+    {
+        "id": "coconut-water",
+        "name": "Coconut water",
+        "categoryID": "water",
+        "sortOrder": 50,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perVolume",
+                    "concentration": 0
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular"
+    }
+]
