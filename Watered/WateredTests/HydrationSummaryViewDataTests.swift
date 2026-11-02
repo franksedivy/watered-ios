@@ -26,7 +26,7 @@ struct HydrationSummaryViewDataTests {
 
         let viewData = HydrationSummaryViewData(
             snapshot: snapshot,
-            volumeFormatter: VolumeFormatter(),
+            volumeFormatter: VolumeFormatter(locale: Locale(identifier: "en_GB")),
             progressFormatter: ProgressFormatter()
         )
 
@@ -63,7 +63,7 @@ struct HydrationSummaryViewDataTests {
 
         let viewData = HydrationSummaryViewData(
             snapshot: snapshot,
-            volumeFormatter: VolumeFormatter(),
+            volumeFormatter: VolumeFormatter(locale: Locale(identifier: "en_GB")),
             progressFormatter: ProgressFormatter()
         )
 
@@ -130,7 +130,7 @@ struct HydrationSummaryViewDataTests {
 
         let viewData = HydrationSummaryViewData(
             snapshot: snapshot,
-            volumeFormatter: VolumeFormatter(),
+            volumeFormatter: VolumeFormatter(locale: Locale(identifier: "en_GB")),
             progressFormatter: ProgressFormatter()
         )
 
@@ -178,7 +178,7 @@ struct HydrationSummaryViewDataTests {
 
         let viewData = HydrationSummaryViewData(
             snapshot: snapshot,
-            volumeFormatter: VolumeFormatter(),
+            volumeFormatter: VolumeFormatter(locale: Locale(identifier: "en_GB")),
             progressFormatter: ProgressFormatter()
         )
 
