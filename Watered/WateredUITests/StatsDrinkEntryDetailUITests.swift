@@ -44,7 +44,7 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // THEN caffeine remains unknown, the regular preparation is shown and no shots are invented.
     @MainActor
     func testCoffeeShowsUnknownCaffeineAndRegularPreparation() {
-        let app = openDrinkDetail(drinkID: "latte")
+        let app = openDrinkDetail(drinkID: "latte", categoryID: "coffee")
 
         assertUnknownCaffeine(in: app, preparation: "Regular")
 
@@ -58,7 +58,7 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // THEN the decaf preparation remains visible without claiming a zero caffeine amount.
     @MainActor
     func testDecafShowsUnknownCaffeineAndDecafPreparation() {
-        let app = openDrinkDetail(drinkID: "decaf-coffee")
+        let app = openDrinkDetail(drinkID: "decaf-coffee", categoryID: "coffee")
 
         assertUnknownCaffeine(in: app, preparation: "Decaf")
     }
@@ -77,8 +77,12 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
 
     // Logs the selected bundled drink in isolated storage and opens its saved Stats detail.
     @MainActor
-    private func openDrinkDetail(drinkID: String, initialUnit: String = "ml") -> XCUIApplication {
-        let app = logDrink(drinkID: drinkID, initialUnit: initialUnit)
+    private func openDrinkDetail(
+        drinkID: String,
+        categoryID: String = "water",
+        initialUnit: String = "ml"
+    ) -> XCUIApplication {
+        let app = logDrink(drinkID: drinkID, categoryID: categoryID, initialUnit: initialUnit)
         let historyRow = savedDrinkRow(in: app)
         historyRow.tap()
         XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: readinessTimeout))
@@ -87,7 +91,11 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
 
     // Submits a drink through Add Drink without navigating into its detail as part of setup.
     @MainActor
-    private func logDrink(drinkID: String, initialUnit: String) -> XCUIApplication {
+    private func logDrink(
+        drinkID: String,
+        categoryID: String = "water",
+        initialUnit: String
+    ) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = [
@@ -105,6 +113,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(addButton.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(addButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         addButton.tap()
+
+        let categories = app.scrollViews["addDrinkCategoryScrollView"]
+        XCTAssertTrue(categories.waitForExistence(timeout: readinessTimeout))
+        let category = categories.buttons["addDrinkCategoryScrollView.\(categoryID)"]
+        XCTAssertTrue(category.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        category.tap()
+        XCTAssertTrue(category.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
 
         let types = app.scrollViews["addDrinkTypeScrollView"]
         XCTAssertTrue(types.waitForExistence(timeout: readinessTimeout))

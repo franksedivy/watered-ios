@@ -27,6 +27,11 @@ final class AddDrinkFailureUITests: XCTestCase {
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
         addButton.tap()
 
+        let water = app.scrollViews["addDrinkCategoryScrollView"]
+            .buttons["addDrinkCategoryScrollView.water"]
+        XCTAssertTrue(water.wait(for: \.isHittable, toEqual: true, timeout: 10))
+        water.tap()
+
         let volumeWheel = app.pickerWheels.firstMatch
         XCTAssertTrue(volumeWheel.waitForExistence(timeout: 3))
         volumeWheel.adjust(toPickerWheelValue: "500 ml")

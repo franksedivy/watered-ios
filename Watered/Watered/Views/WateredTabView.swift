@@ -217,19 +217,6 @@ struct WateredTabView: View {
         return store.recentDrinkOptions(in: catalogue)
     }
     
-    /// The available sheet heights for the current Add Drink content.
-    ///
-    /// Without recent drinks, the sheet uses the smaller system height.
-    /// With recents, it retains the existing taller layout. Both configurations
-    /// allow expansion to full height.
-    private var addDrinkPresentationDetents: Set<PresentationDetent> {
-        if recentDrinkOptions.isEmpty {
-            return [.fraction(0.50), .large]
-        }
-        
-        return [.fraction(0.64), .large]
-    }
-
     // MARK: - Transitions
     //
     // Purpose:
@@ -360,6 +347,7 @@ struct WateredTabView: View {
                             + "Saved drinks can still be viewed in Stats."
                         )
                     )
+                    .presentationDetents([.medium, .large])
                     .onAppear {
                         wateredLog("Catalogue loading failed: \(error.localizedDescription)")
                     }
@@ -371,7 +359,6 @@ struct WateredTabView: View {
                     in: addDrinkTransition
                 )
             )
-            .presentationDetents(addDrinkPresentationDetents)
             .presentationDragIndicator(.visible)
             .alert("Could not save your drink", isPresented: $isShowingDrinkSaveError) {
                 Button("OK", role: .cancel) {}

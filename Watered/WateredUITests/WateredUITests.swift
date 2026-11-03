@@ -45,6 +45,16 @@ final class WateredUITests: XCTestCase {
         return app
     }
 
+    // Chooses Water explicitly so form-submission tests do not rely on a starting category.
+    @MainActor
+    private func selectWaterCategory(in app: XCUIApplication) {
+        let water = app.scrollViews["addDrinkCategoryScrollView"]
+            .buttons["addDrinkCategoryScrollView.water"]
+        XCTAssertTrue(water.wait(for: \.isHittable, toEqual: true, timeout: 10))
+        water.tap()
+        XCTAssertTrue(water.wait(for: \.isSelected, toEqual: true, timeout: 10))
+    }
+
     // Reveals a detail row through bounded scrolling as the inspection data grows.
     @MainActor
     private func revealDrinkDetailElement(_ element: XCUIElement, in app: XCUIApplication) {
@@ -122,6 +132,7 @@ final class WateredUITests: XCTestCase {
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 2))
         
         addDrinkButton.tap()
+        selectWaterCategory(in: app)
         
         let addDrinkSubmitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(addDrinkSubmitButton.waitForExistence(timeout: 2))
@@ -151,6 +162,7 @@ final class WateredUITests: XCTestCase {
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 2))
         
         addDrinkButton.tap()
+        selectWaterCategory(in: app)
         
         let volumePickerWheel = app.pickerWheels.firstMatch
         XCTAssertTrue(volumePickerWheel.waitForExistence(timeout: 2))
@@ -184,6 +196,7 @@ final class WateredUITests: XCTestCase {
             XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 2))
             
             addDrinkButton.tap()
+            selectWaterCategory(in: app)
             
             let addDrinkSubmitButton = app.buttons["addDrinkSubmitButton"]
             XCTAssertTrue(addDrinkSubmitButton.waitForExistence(timeout: 2))
@@ -208,6 +221,7 @@ final class WateredUITests: XCTestCase {
         let addDrinkButton = app.buttons["addDrinkActionButton"]
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
         addDrinkButton.tap()
+        selectWaterCategory(in: app)
         
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout:3))
@@ -232,6 +246,8 @@ final class WateredUITests: XCTestCase {
         addDrinkButton.tap()
         XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
         XCTAssertTrue(recentDrinksRow.waitForExistence(timeout: 3))
+        XCTAssertFalse(submitButton.isEnabled)
+        XCTAssertFalse(app.scrollViews["addDrinkTypeScrollView"].exists)
         
         let firstRecentDrinkButton = recentDrinksRow.buttons.firstMatch
         XCTAssertTrue(firstRecentDrinkButton.waitForExistence(timeout: 3))
@@ -256,6 +272,7 @@ final class WateredUITests: XCTestCase {
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
         XCTAssertTrue(addButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
         addButton.tap()
+        selectWaterCategory(in: app)
 
         let mineralWater = app.buttons["addDrinkTypeScrollView.mineral-water"]
         XCTAssertTrue(mineralWater.waitForExistence(timeout: 3))
@@ -302,6 +319,7 @@ final class WateredUITests: XCTestCase {
             XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
             XCTAssertTrue(addDrinkButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
             addDrinkButton.tap()
+            selectWaterCategory(in: app)
             
             XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
             submitButton.tap()
@@ -364,6 +382,7 @@ final class WateredUITests: XCTestCase {
         let addDrinkButton = app.buttons["addDrinkActionButton"]
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
         addDrinkButton.tap()
+        selectWaterCategory(in: app)
         
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout:3))
@@ -421,6 +440,7 @@ final class WateredUITests: XCTestCase {
         for _ in 0..<2 {
             XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
             addDrinkButton.tap()
+            selectWaterCategory(in: app)
             XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
             submitButton.tap()
             XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
@@ -471,6 +491,7 @@ final class WateredUITests: XCTestCase {
         let addDrinkButton = app.buttons["addDrinkActionButton"]
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
         addDrinkButton.tap()
+        selectWaterCategory(in: app)
 
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout: 3))

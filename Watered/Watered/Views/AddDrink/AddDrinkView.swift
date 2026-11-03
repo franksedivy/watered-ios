@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Presents catalogue selection, preparation and volume before handing a new entry to its parent.
+/// Presents category, drink type, preparation and volume before submitting a new entry.
 ///
 /// The parent owns persistence, success analytics, error recovery and sheet dismissal.
 struct AddDrinkView: View {
@@ -16,6 +16,8 @@ struct AddDrinkView: View {
     private let recentDrinkOptions: [RecentDrinkOption]
     private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
+    /// The category whose drinks expand inline; nil until the user chooses one.
+    @State private var selectedCategoryID: String?
     @State private var selectedDrinkID: String?
     @State private var selectedCaffeineVariant: CaffeineVariant
     @State private var selectedShotCount: Int
@@ -23,6 +25,8 @@ struct AddDrinkView: View {
     @State private var isShowingPreparationError = false
 
     /// Creates the form from a validated catalogue and currently available shortcuts.
+    ///
+    /// Starts without a selection and keeps Volume visible while categories expand inline.
     ///
     /// - Parameters:
     ///   - catalogue: Definitions available for new logs.
@@ -40,22 +44,36 @@ struct AddDrinkView: View {
         self.recentDrinkOptions = recentDrinkOptions
         self.onAddDrink = onAddDrink
 
-        let firstDrink = catalogue.orderedCategories.lazy.flatMap { category in
-            catalogue.activeDrinks(inCategoryID: category.id)
-        }.first
-        _selectedDrinkID = State(initialValue: firstDrink?.id)
-        _selectedCaffeineVariant = State(initialValue: firstDrink?.defaultCaffeineVariant ?? .regular)
-        _selectedShotCount = State(initialValue: firstDrink?.shotConfiguration?.defaultCount ?? 1)
+        _selectedCategoryID = State(initialValue: nil)
+        _selectedDrinkID = State(initialValue: nil)
+        _selectedCaffeineVariant = State(initialValue: .regular)
+        _selectedShotCount = State(initialValue: 1)
         _selectedVolumeValue = State(initialValue: Self.defaultVolumeValue(for: defaultUnit))
     }
 
-    /// Active definitions in the catalogue's category and drink ordering.
-    private var availableDrinks: [DrinkDefinition] {
-        catalogue.orderedCategories.flatMap { category in
-            catalogue.activeDrinks(inCategoryID: category.id)
+    /// Reserves space for Type and Volume, plus shortcuts when available.
+    private var preferredPresentationDetent: PresentationDetent {
+        return .fraction(recentDrinkOptions.isEmpty ? 0.68 : 0.82)
+    }
+
+    /// Categories containing active drinks, preserving the catalogue's display order.
+    ///
+    /// Empty categories and categories containing only retired drinks are hidden.
+    private var availableCategories: [DrinkCategory] {
+        return catalogue.orderedCategories.filter { category in
+            return !catalogue.activeDrinks(inCategoryID: category.id).isEmpty
         }
     }
 
+    /// Active definitions in the selected category, preserving their configured order.
+    private var availableDrinks: [DrinkDefinition] {
+        guard let categoryID = selectedCategoryID else {
+            return []
+        }
+        return catalogue.activeDrinks(inCategoryID: categoryID)
+    }
+
+    /// The active selected drink, or nil when the category has no valid selection.
     private var selectedDefinition: DrinkDefinition? {
         availableDrinks.first { definition in
             definition.id == selectedDrinkID
@@ -83,11 +101,37 @@ struct AddDrinkView: View {
         }
     }
 
+    /// Inserts a category's drinks after its pill and waits for a drink selection.
+    ///
+    /// Preserves the volume. Tapping the selected category also leaves
+    /// its current drink and preparation untouched.
+    ///
+    /// - Parameter category: The catalogue category selected in the Type row.
+    private func selectCategory(_ category: DrinkCategory) {
+        guard category.id != selectedCategoryID,
+              !catalogue.activeDrinks(inCategoryID: category.id).isEmpty else {
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            selectedCategoryID = category.id
+            selectedDrinkID = nil
+            selectedCaffeineVariant = .regular
+            selectedShotCount = 1
+        }
+        wateredLog("Add Drink category changed to \(category.id)")
+    }
+
     /// Selects an active definition and starts from its supported preparation defaults.
+    ///
+    /// The selected volume remains unchanged when the drink type changes.
+    ///
+    /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
-        selectedDrinkID = definition.id
-        selectedCaffeineVariant = definition.defaultCaffeineVariant
-        selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
+        withAnimation(.easeInOut(duration: 0.25)) {
+            selectedDrinkID = definition.id
+            selectedCaffeineVariant = definition.defaultCaffeineVariant
+            selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
+        }
         wateredLog("Add Drink selection changed to \(definition.id)")
     }
 
@@ -101,7 +145,8 @@ struct AddDrinkView: View {
             drinkID: definition.id,
             volumeValue: selectedVolumeValue,
             unit: defaultUnit,
-            caffeineVariant: selectedCaffeineVariant,
+            caffeineVariant:
+                selectedCaffeineVariant,
             shotCount: definition.shotConfiguration == nil ? nil : selectedShotCount
         )
         do {
@@ -130,6 +175,69 @@ struct AddDrinkView: View {
         }
     }
 
+    /// Keeps the volume wheel outside the scrolling selection sections.
+    private var volumeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Volume")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 16)
+
+            Picker("Volume", selection: $selectedVolumeValue) {
+                ForEach(volumeOptions, id: \.self) { volumeOption in
+                    Text("\(Int(volumeOption)) \(defaultUnit.rawValue)").tag(volumeOption)
+                }
+            }
+            .pickerStyle(.wheel)
+            .labelsHidden()
+            .frame(height: 216)
+            .accessibilityIdentifier("addDrinkVolumePicker")
+            .accessibilityLabel("Drink volume")
+            .accessibilityValue("\(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
+            .accessibilityHint("Adjusts the amount for the drink being added.")
+            .onChange(of: selectedVolumeValue) { previousValue, newValue in
+                wateredLog(
+                    "Add Drink volume changed from \(previousValue) to \(newValue) "
+                    + "\(defaultUnit.rawValue)"
+                )
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
+    }
+
+    /// Expands drink choices directly after their category without replacing its pill.
+    private var typeRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(availableCategories) { category in
+                    AddDrinkPillButton(
+                        label: category.name,
+                        isSelected: selectedCategoryID == category.id,
+                        accessibilityIdentifier: "addDrinkCategoryScrollView.\(category.id)",
+                        onSelect: { selectCategory(category) }
+                    )
+
+                    if selectedCategoryID == category.id {
+                        ForEach(availableDrinks) { definition in
+                            AddDrinkPillButton(
+                                label: definition.name,
+                                isSelected: selectedDrinkID == definition.id,
+                                accessibilityIdentifier: "addDrinkTypeScrollView.\(definition.id)",
+                                onSelect: { selectDrink(definition) }
+                            )
+                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        }
+                    }
+                }
+            }
+        }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        .accessibilityIdentifier("addDrinkTypeScrollView")
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -146,14 +254,8 @@ struct AddDrinkView: View {
                     }
                 }
 
-                Section("Drink type") {
-                    AddDrinkPillRow(
-                        options: availableDrinks,
-                        selectedID: selectedDrinkID,
-                        accessibilityIdentifier: "addDrinkTypeScrollView",
-                        optionLabel: { definition in return definition.name },
-                        onSelect: { definition in selectDrink(definition) }
-                    )
+                Section("Type") {
+                    typeRow
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 }
@@ -183,26 +285,9 @@ struct AddDrinkView: View {
                     }
                 }
 
-                Section("Volume") {
-                    Picker("Volume", selection: $selectedVolumeValue) {
-                        ForEach(volumeOptions, id: \.self) { volumeOption in
-                            Text("\(Int(volumeOption)) \(defaultUnit.rawValue)").tag(volumeOption)
-                        }
-                    }
-                    .pickerStyle(.wheel)
-                    .accessibilityIdentifier("addDrinkVolumePicker")
-                    .accessibilityLabel("Drink volume")
-                    .accessibilityValue("\(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
-                    .accessibilityHint("Adjusts the amount for the drink being added.")
-                    .onChange(of: selectedVolumeValue) { previousValue, newValue in
-                        wateredLog(
-                            "Add Drink volume changed from \(previousValue) to \(newValue) "
-                            + "\(defaultUnit.rawValue)"
-                        )
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                volumeSection
             }
             .accessibilityIdentifier("addDrinkScreen")
             .navigationTitle("Add drink")
@@ -230,6 +315,7 @@ struct AddDrinkView: View {
                 wateredLog("Add Drink sheet appeared with unit \(defaultUnit.rawValue)")
             }
         }
+        .presentationDetents([preferredPresentationDetent, .large])
     }
 }
 
