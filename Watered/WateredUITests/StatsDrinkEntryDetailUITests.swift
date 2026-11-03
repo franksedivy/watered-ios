@@ -173,9 +173,32 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(unitButton.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         unitButton.tap()
         XCTAssertTrue(unitButton.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
-        app.navigationBars["Profile"].swipeDown()
+        dismissProfile(in: app)
+    }
+
+    // Drags from Profile's top edge toward the bottom of the screen. A second attempt
+    // handles a sheet that settles instead of dismissing; neither attempt changes settings.
+    @MainActor
+    private func dismissProfile(in app: XCUIApplication) {
+        let navigationBar = app.navigationBars["Profile"]
+        XCTAssertTrue(navigationBar.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+
+        for _ in 0..<2 {
+            let start = navigationBar.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            start.press(forDuration: 0.1, thenDragTo: end)
+
+            if navigationBar.waitForNonExistence(timeout: readinessTimeout) {
+                break
+            }
+        }
+
+        let picker = app.segmentedControls["displayUnitPicker"]
         XCTAssertTrue(picker.waitForNonExistence(timeout: readinessTimeout))
-        XCTAssertTrue(app.navigationBars["Profile"].waitForNonExistence(timeout: readinessTimeout))
+        XCTAssertTrue(navigationBar.waitForNonExistence(timeout: readinessTimeout))
+        XCTAssertTrue(app.buttons["profileButton"].wait(
+            for: \.isHittable, toEqual: true, timeout: readinessTimeout
+        ))
     }
 
     // Confirms both volume rows use the selected unit while the saved ratio stays dimensionless.
