@@ -19,6 +19,9 @@ struct ProfileView: View {
     
     /// The parent's goal draft, committed only when the Profile sheet closes.
     @Binding var dailyHydrationGoal: HydrationGoal
+
+    /// Closes Profile through the parent's existing goal-commit-on-dismiss boundary.
+    @Environment(\.dismiss) private var dismiss
     
     #if DEBUG
     // MARK: - Developer Actions
@@ -32,8 +35,6 @@ struct ProfileView: View {
     /// Presents an error when the parent cannot complete the deletion.
     @State private var isShowingDrinkResetError = false
     
-    /// Dismisses the Profile sheet after a successful drink-history reset.
-    @Environment(\.dismiss) private var dismiss
     #endif
     
     /// Formats the goal in the selected display unit without mutating the goal draft.
@@ -129,6 +130,15 @@ struct ProfileView: View {
             }
             .navigationTitle("Profile")
             .accessibilityIdentifier("profileScreen")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done", systemImage: "checkmark") {
+                        dismiss()
+                    }
+                    .labelStyle(.iconOnly)
+                    .accessibilityIdentifier("profileDoneButton")
+                }
+            }
         }
     }
 }
