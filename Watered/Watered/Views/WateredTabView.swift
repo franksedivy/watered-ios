@@ -158,6 +158,9 @@ struct WateredTabView: View {
     /// Controls the alert shown when saving a submitted drink fails.
     @State private var isShowingDrinkSaveError = false
 
+    /// Recent-menu submissions happen without an Add Drink sheet to host an alert.
+    @State private var isShowingRecentDrinkError = false
+
     // Purpose: Controls whether the Profile sheet is visible.
     //
     // UI role:
@@ -301,7 +304,10 @@ struct WateredTabView: View {
                 refreshActiveCalendarDay()
             }
 
-            AddDrinkActionButton {
+            AddDrinkActionButton(
+                recentDrinks: recentDrinkOptions,
+                onSelectRecent: addRecentDrink
+            ) {
                 wateredLog("Add Drink flow opened")
                 isShowingAddDrinkSheet = true
                 analytics.track(.addDrinkOpened)
@@ -315,6 +321,11 @@ struct WateredTabView: View {
             )
             .padding(.trailing, 12)
             .padding(.bottom, -26)
+            .alert("Could not add recent drink", isPresented: $isShowingRecentDrinkError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your drink wasn't saved. Touch and hold Add drink to try again, or tap it to choose another drink.")
+            }
 
 
             if shouldShowFirstDrinkPrompt {
@@ -518,12 +529,29 @@ struct WateredTabView: View {
         store.loadDrinkEntries(remainingEntries)
     }
     
+    /// Repeats a supported shortcut with a fresh identity, time and current catalogue rules.
+    /// Uses the same save boundary and recent-submission analytics as the former sheet shortcuts.
+    private func addRecentDrink(_ option: RecentDrinkOption) {
+        guard case .success(let catalogue) = catalogueResult else {
+            isShowingRecentDrinkError = true
+            return
+        }
+        do {
+            let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+            let entry = try option.drinkEntry(using: resolver)
+            addDrinkEntry(entry, method: .recent)
+        } catch {
+            wateredLog("Recent drink preparation failed: \(error.localizedDescription)")
+            isShowingRecentDrinkError = true
+        }
+    }
+
     /// Submits a drink and closes the sheet only after success.
     ///
     /// - Parameters:
     ///  - entry: The submitted drink
     ///  - method: Whether subission came from the form or a recent-drink shortcut.
-    /// - Important: On failure, the sheet satys open and presents a save-error alert.
+    /// - Important: Failures preserve the sheet draft or report directly from the recent menu.
     private func addDrinkEntry(_ entry: DrinkEntry, method: AddDrinkSubmissionMethod) {
         let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
         
@@ -536,7 +564,11 @@ struct WateredTabView: View {
             isShowingAddDrinkSheet = false
         } catch {
             wateredLog("Drink save failed: \(error.localizedDescription)")
-            isShowingDrinkSaveError = true
+            if isShowingAddDrinkSheet {
+                isShowingDrinkSaveError = true
+            } else {
+                isShowingRecentDrinkError = true
+            }
         }
     }
     
@@ -617,3 +649,4 @@ struct WateredTabView: View {
         catalogueResult: Result { try DrinkCatalogueLoader().load() }
     )
 }
+

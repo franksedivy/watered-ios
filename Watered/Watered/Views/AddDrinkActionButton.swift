@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Add Drink Action Button
 //
 // Purpose: Shows the primary add-drink action used near the app tab bar.
-// Input: Accepts an onTap closure from the parent view.
+// Input: Accepts tap and recent-drink actions from the parent view.
 // Returns: A small circular SwiftUI button.
 //
 // UI role:
@@ -23,9 +23,17 @@ struct AddDrinkActionButton: View {
     // Purpose: Stores the action that runs when the button is tapped.
     // Input: Supplied by the parent view that owns the add-drink sheet state.
     private let onTap: () -> Void
+    private let recentDrinks: [RecentDrinkOption]
+    private let onSelectRecent: (RecentDrinkOption) -> Void
 
     // MARK: - Initialisation
-    init(onTap: @escaping () -> Void) {
+    init(
+        recentDrinks: [RecentDrinkOption] = [],
+        onSelectRecent: @escaping (RecentDrinkOption) -> Void = { _ in },
+        onTap: @escaping () -> Void
+    ) {
+        self.recentDrinks = Array(recentDrinks.prefix(3))
+        self.onSelectRecent = onSelectRecent
         self.onTap = onTap
     }
 
@@ -41,10 +49,28 @@ struct AddDrinkActionButton: View {
         .buttonBorderShape(.circle)
         .accessibilityLabel("Add drink")
         .accessibilityIdentifier("addDrinkActionButton")
-        .accessibilityHint("Opens the Add Drink form.")
+        .accessibilityHint("Opens the Add Drink form. Touch and hold for recent drinks.")
+        .contextMenu {
+            Section("Recent drinks") {
+                if recentDrinks.isEmpty {
+                    Button("No recent drinks yet", action: {})
+                        .disabled(true)
+                } else {
+                    ForEach(recentDrinks) { option in
+                        Button {
+                            onSelectRecent(option)
+                        } label: {
+                            Text(option.label)
+                        }
+                        .accessibilityHint("Adds this drink again now.")
+                    }
+                }
+            }
+        }
     }
 }
 
 #Preview {
     AddDrinkActionButton(onTap: {})
 }
+

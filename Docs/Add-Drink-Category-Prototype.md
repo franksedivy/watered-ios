@@ -36,3 +36,18 @@ without a card tap; select Coffee; refine a drink; re-tap its category; switch
 categories after changing volume; dismiss and reopen; retry a failed save; check
 large text and manual sheet dragging. Verify that the volume never resets during
 selection and the saved drink matches the highlighted card.
+
+## Recent drinks on long press
+
+A normal tap on the floating plus still opens Add Drink. Touch and hold opens a
+native context menu with up to three most recent distinct, currently supported
+shortcuts. Each label includes its original volume, unit and any preparation.
+Choosing one immediately logs that drink again with a fresh identity and current
+time, using the same persistence, current catalogue rules and recent analytics
+as the previous shortcuts. Empty history shows a disabled “No recent drinks yet”
+row. Unsupported or retired drinks remain excluded by the existing store logic.
+
+Failures display an alert outside the sheet and do not update history or record
+success analytics. Manual review should cover zero/one/three-plus recents, long
+press cancellation, normal tap, repeating a drink, and a failed save followed by
+retry. No UI tests were added or run for this change.
