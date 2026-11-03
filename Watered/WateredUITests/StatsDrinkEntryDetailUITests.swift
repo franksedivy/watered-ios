@@ -109,13 +109,7 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         let types = app.scrollViews["addDrinkTypeScrollView"]
         XCTAssertTrue(types.waitForExistence(timeout: readinessTimeout))
         let selectedDrink = types.buttons["addDrinkTypeScrollView.\(drinkID)"]
-        for _ in 0..<8 {
-            if selectedDrink.exists && selectedDrink.isHittable {
-                break
-            }
-            types.swipeLeft()
-        }
-        XCTAssertTrue(selectedDrink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        revealDrink(selectedDrink, in: types, app: app)
         selectedDrink.tap()
         XCTAssertTrue(selectedDrink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
 
@@ -125,6 +119,47 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         submitButton.tap()
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: readinessTimeout))
         return app
+    }
+
+    // Moves half a viewport at a controlled speed and reverses if the target was passed.
+    // The eager pill row exposes offscreen frames, so direction comes from the actual drink.
+    @MainActor
+    private func revealDrink(_ drink: XCUIElement, in row: XCUIElement, app: XCUIApplication) {
+        XCTAssertTrue(drink.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(row.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+
+        for _ in 0..<20 {
+            if drink.isHittable {
+                break
+            }
+
+            let targetIsToTheLeft = drink.frame.midX < row.frame.midX
+            let start = row.coordinate(withNormalizedOffset: CGVector(
+                dx: targetIsToTheLeft ? 0.25 : 0.75, dy: 0.5
+            ))
+            let end = row.coordinate(withNormalizedOffset: CGVector(
+                dx: targetIsToTheLeft ? 0.75 : 0.25, dy: 0.5
+            ))
+            start.press(
+                forDuration: 0.1,
+                thenDragTo: end,
+                withVelocity: .slow,
+                thenHoldForDuration: 0.2
+            )
+        }
+
+        let isHittable = drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout)
+        if !isHittable {
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Drink selection could not reach \(drink.identifier)"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+            let hierarchy = XCTAttachment(string: row.debugDescription)
+            hierarchy.name = "Drink selection row"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+        }
+        XCTAssertTrue(isHittable, "Could not reach drink pill \(drink.identifier)")
     }
 
     // Returns the single saved row from this test's isolated store after opening Stats.
