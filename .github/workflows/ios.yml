@@ -38,6 +38,15 @@ jobs:
           bash Scripts/CI/test-run-ios-tests.sh 2>&1 |
             tee "$RUNNER_TEMP/watered-ios-ci/helper-checks.log"
 
+      - name: Inspect simulator runtime compatibility
+        run: |
+          xcrun simctl list runtimes available --json \
+            > "$RUNNER_TEMP/watered-ios-ci/simulator-runtimes.json"
+          jq '.runtimes[] | select(
+            .identifier == "com.apple.CoreSimulator.SimRuntime.iOS-27-0" or
+            .identifier == "com.apple.CoreSimulator.SimRuntime.iOS-27-1"
+          )' "$RUNNER_TEMP/watered-ios-ci/simulator-runtimes.json"
+
       - name: Prepare simulator
         run: |
           if ! xcrun simctl list devices available --json | jq -e \
