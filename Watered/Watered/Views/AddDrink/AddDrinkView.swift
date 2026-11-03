@@ -13,7 +13,6 @@ import SwiftUI
 struct AddDrinkView: View {
     private let catalogue: DrinkCatalogue
     private let defaultUnit: LiquidUnit
-    private let recentDrinkOptions: [RecentDrinkOption]
     private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
     /// The category whose drinks expand inline; nil until the user chooses one.
@@ -23,15 +22,19 @@ struct AddDrinkView: View {
     @State private var selectedShotCount: Int
     @State private var selectedVolumeValue: Double
     @State private var isShowingPreparationError = false
+    @State private var selectedDetent: PresentationDetent = .height(440)
+    @State private var isShowingPreparation = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Creates the form from a validated catalogue and currently available shortcuts.
+    /// Creates the form from a validated catalogue. Recent shortcuts are hidden for this prototype.
     ///
     /// Starts without a selection and keeps Volume visible while categories expand inline.
     ///
     /// - Parameters:
     ///   - catalogue: Definitions available for new logs.
     ///   - defaultUnit: The app's applied display unit.
-    ///   - recentDrinkOptions: Shortcuts filtered against the current catalogue.
+    ///   - recentDrinkOptions: Retained for caller compatibility; hidden in this prototype.
     ///   - onAddDrink: Receives a freshly resolved entry and its submission method.
     init(
         catalogue: DrinkCatalogue,
@@ -41,7 +44,6 @@ struct AddDrinkView: View {
     ) {
         self.catalogue = catalogue
         self.defaultUnit = defaultUnit
-        self.recentDrinkOptions = recentDrinkOptions
         self.onAddDrink = onAddDrink
 
         _selectedCategoryID = State(initialValue: nil)
@@ -51,9 +53,13 @@ struct AddDrinkView: View {
         _selectedVolumeValue = State(initialValue: Self.defaultVolumeValue(for: defaultUnit))
     }
 
-    /// Reserves space for Type and Volume, plus shortcuts when available.
-    private var preferredPresentationDetent: PresentationDetent {
-        return .fraction(recentDrinkOptions.isEmpty ? 0.68 : 0.82)
+    /// A category reveals its drink cards by raising the sheet, not replacing the volume wheel.
+    private var expandedDetent: PresentationDetent {
+        dynamicTypeSize.isAccessibilitySize ? .large : .height(600)
+    }
+
+    private var selectionAnimation: Animation? {
+        reduceMotion ? nil : .easeInOut(duration: 0.25)
     }
 
     /// Categories containing active drinks, preserving the catalogue's display order.
@@ -84,7 +90,7 @@ struct AddDrinkView: View {
     private var volumeOptions: [Double] {
         switch defaultUnit {
         case .milliliters:
-            return [150, 200, 250, 300, 330, 500, 600, 750, 1000]
+            return [150, 200, 250, 300, 330, 400, 500, 600, 750, 1000]
         case .usFluidOunces:
             return [6, 8, 10, 12, 16, 20, 24, 32]
         case .imperialFluidOunces:
@@ -101,22 +107,25 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Inserts a category's drinks after its pill and waits for a drink selection.
-    ///
-    /// Preserves the volume. Tapping the selected category also leaves
-    /// its current drink and preparation untouched.
-    ///
-    /// - Parameter category: The catalogue category selected in the Type row.
+    /// Chooses a transparent prototype default and preserves the volume.
+    /// Re-tapping the active category keeps any explicit drink/preparation selection.
     private func selectCategory(_ category: DrinkCategory) {
-        guard category.id != selectedCategoryID,
-              !catalogue.activeDrinks(inCategoryID: category.id).isEmpty else {
+        let drinks = catalogue.activeDrinks(inCategoryID: category.id)
+        guard let defaultDrink = AddDrinkCategoryDefaults.drink(in: category.id, from: drinks) else {
             return
         }
-        withAnimation(.easeInOut(duration: 0.25)) {
-            selectedCategoryID = category.id
-            selectedDrinkID = nil
-            selectedCaffeineVariant = .regular
-            selectedShotCount = 1
+        withAnimation(selectionAnimation) {
+            if selectedCategoryID != category.id {
+                selectedCategoryID = category.id
+                selectedDrinkID = defaultDrink.id
+                selectedCaffeineVariant = defaultDrink.defaultCaffeineVariant
+                selectedShotCount = defaultDrink.shotConfiguration?.defaultCount ?? 1
+                isShowingPreparation = false
+            }
+            // Do not shrink a sheet the user has already expanded manually.
+            if selectedDetent != .large {
+                selectedDetent = expandedDetent
+            }
         }
         wateredLog("Add Drink category changed to \(category.id)")
     }
@@ -127,7 +136,8 @@ struct AddDrinkView: View {
     ///
     /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
-        withAnimation(.easeInOut(duration: 0.25)) {
+        withAnimation(selectionAnimation) {
+            isShowingPreparation = false
             selectedDrinkID = definition.id
             selectedCaffeineVariant = definition.defaultCaffeineVariant
             selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
@@ -160,29 +170,12 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Repeats a shortcut using current rules and a new entry identity.
-    ///
-    /// - Parameter option: The tapped shortcut, selected by identity rather than label.
-    private func submitRecentDrink(_ option: RecentDrinkOption) {
-        do {
-            let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
-            let entry = try option.drinkEntry(using: resolver)
-            wateredLog("Recent drink submitted: \(entry.drinkID)")
-            onAddDrink(entry, .recent)
-        } catch {
-            wateredLog("Recent drink preparation failed: \(error.localizedDescription)")
-            isShowingPreparationError = true
-        }
-    }
-
     /// Keeps the volume wheel outside the scrolling selection sections.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.headline)
                 .accessibilityAddTraits(.isHeader)
-                .padding(.horizontal, 16)
 
             Picker("Volume", selection: $selectedVolumeValue) {
                 ForEach(volumeOptions, id: \.self) { volumeOption in
@@ -208,84 +201,143 @@ struct AddDrinkView: View {
         .padding(.bottom, 8)
     }
 
-    /// Expands drink choices directly after their category without replacing its pill.
-    private var typeRow: some View {
+    /// The category row stays in place while the optional details appear below it.
+    private var categoryRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(availableCategories) { category in
-                    AddDrinkPillButton(
-                        label: category.name,
-                        isSelected: selectedCategoryID == category.id,
-                        accessibilityIdentifier: "addDrinkCategoryScrollView.\(category.id)",
-                        onSelect: { selectCategory(category) }
-                    )
-
-                    if selectedCategoryID == category.id {
-                        ForEach(availableDrinks) { definition in
-                            AddDrinkPillButton(
-                                label: definition.name,
-                                isSelected: selectedDrinkID == definition.id,
-                                accessibilityIdentifier: "addDrinkTypeScrollView.\(definition.id)",
-                                onSelect: { selectDrink(definition) }
+                    Button {
+                        selectCategory(category)
+                    } label: {
+                        Label(category.name, systemImage: category.id == "water" ? "drop.fill" : "cup.and.saucer")
+                            .font(.callout)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .foregroundStyle(selectedCategoryID == category.id ? .white : categoryTint(category.id))
+                            .background(
+                                selectedCategoryID == category.id ? categoryTint(category.id) : Color.primary.opacity(0.06),
+                                in: Capsule()
                             )
-                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                        }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("addDrinkCategoryScrollView.\(category.id)")
+                    .accessibilityAddTraits(selectedCategoryID == category.id ? .isSelected : [])
+                    .accessibilityHint("Selects a default drink and reveals more choices.")
                 }
             }
+            .padding(.horizontal, 20)
+        }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        .accessibilityIdentifier("addDrinkCategoryScrollView")
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func categoryTint(_ categoryID: String) -> Color {
+        categoryID == "coffee" ? .brown : .blue
+    }
+
+    private var drinkRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 8) {
+                ForEach(availableDrinks) { definition in
+                    Button {
+                        selectDrink(definition)
+                    } label: {
+                        VStack(spacing: 8) {
+                            AddDrinkThumbnail(drinkID: definition.id, categoryID: definition.categoryID)
+                                .frame(width: 66, height: 66)
+                                .frame(width: 88, height: 88)
+                                .background(
+                                    selectedDrinkID == definition.id
+                                        ? categoryTint(definition.categoryID) : Color.primary.opacity(0.06),
+                                    in: RoundedRectangle(cornerRadius: 18)
+                                )
+                                .overlay(alignment: .topTrailing) {
+                                    if selectedDrinkID == definition.id {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.white, categoryTint(definition.categoryID))
+                                            .padding(5)
+                                    }
+                                }
+                            Text(definition.name)
+                                .font(.callout)
+                                .foregroundStyle(categoryTint(definition.categoryID))
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(width: 88)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(definition.name)
+                    .accessibilityIdentifier("addDrinkTypeScrollView.\(definition.id)")
+                    .accessibilityAddTraits(selectedDrinkID == definition.id ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 20)
         }
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .accessibilityIdentifier("addDrinkTypeScrollView")
+        // Reset the horizontal position when switching to another category.
+        .id(selectedCategoryID)
+    }
+
+    /// Preparation stays out of the fast path, without removing existing controls.
+    @ViewBuilder
+    private var preparationSection: some View {
+        if let definition = selectedDefinition,
+           definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil {
+            DisclosureGroup("Preparation", isExpanded: $isShowingPreparation) {
+                VStack(alignment: .leading, spacing: 12) {
+                    if definition.caffeineOptions.count > 1 {
+                        Text("Caffeine").font(.subheadline)
+                        Picker("Caffeine", selection: $selectedCaffeineVariant) {
+                            ForEach(definition.caffeineOptions, id: \.variant) { option in
+                                Text(option.variant.rawValue.capitalized).tag(option.variant)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .accessibilityIdentifier("addDrinkCaffeinePicker")
+                    }
+                    if let configuration = definition.shotConfiguration {
+                        Text("Shots").font(.subheadline)
+                        Picker("Shots", selection: $selectedShotCount) {
+                            ForEach(configuration.supportedCounts.sorted(), id: \.self) { count in
+                                Text("\(count)").tag(count)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .accessibilityIdentifier("addDrinkShotPicker")
+                    }
+                }
+                .padding(.top, 12)
+            }
+            .padding(.horizontal, 20)
+        }
     }
 
     var body: some View {
         NavigationStack {
-            Form {
-                if !recentDrinkOptions.isEmpty {
-                    Section("Recent drinks") {
-                        AddDrinkPillRow(
-                            options: recentDrinkOptions,
-                            accessibilityIdentifier: "addDrinkRecentsScrollView",
-                            optionLabel: { option in return option.label },
-                            onSelect: { option in submitRecentDrink(option) }
-                        )
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    }
-                }
+            VStack(alignment: .leading, spacing: 16) {
+                Text(selectedCategoryID == nil ? "Type" : "Select your drink")
+                    .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
+                    .padding(.horizontal, 20)
+                categoryRow
 
-                Section("Type") {
-                    typeRow
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
-
-                if let definition = selectedDefinition {
-                    if definition.caffeineOptions.count > 1 {
-                        Section("Preparation") {
-                            Picker("Caffeine", selection: $selectedCaffeineVariant) {
-                                ForEach(definition.caffeineOptions, id: \.variant) { option in
-                                    Text(option.variant.rawValue.capitalized).tag(option.variant)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .accessibilityIdentifier("addDrinkCaffeinePicker")
+                if selectedCategoryID != nil {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            drinkRow
+                            preparationSection
                         }
                     }
-                    if let configuration = definition.shotConfiguration {
-                        Section("Shots") {
-                            Picker("Shots", selection: $selectedShotCount) {
-                                ForEach(configuration.supportedCounts.sorted(), id: \.self) { count in
-                                    Text("\(count)").tag(count)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .accessibilityIdentifier("addDrinkShotPicker")
-                        }
-                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .transition(.opacity)
+                } else {
+                    Spacer(minLength: 0)
                 }
-
             }
+            .padding(.top, 16)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 volumeSection
             }
@@ -315,12 +367,23 @@ struct AddDrinkView: View {
                 wateredLog("Add Drink sheet appeared with unit \(defaultUnit.rawValue)")
             }
         }
-        .presentationDetents([preferredPresentationDetent, .large])
+        .presentationDetents([.height(440), .height(600), .large], selection: $selectedDetent)
+        .onChange(of: isShowingPreparation) { _, isExpanded in
+            if isExpanded {
+                withAnimation(selectionAnimation) { selectedDetent = .large }
+            }
+        }
+        .onChange(of: dynamicTypeSize) { _, size in
+            if size.isAccessibilitySize { selectedDetent = .large }
+        }
+        .onAppear {
+            if dynamicTypeSize.isAccessibilitySize { selectedDetent = .large }
+        }
     }
 }
 
 #if DEBUG
-#Preview("With Recent Drinks") {
+#Preview("Recents hidden") {
     let catalogue = try! DrinkCatalogueLoader().load()
     let entry = DrinkPreviewData.entry(drinkID: "still-water", amount: DrinkAmount(value: 300, unit: .milliliters))
     AddDrinkView(
@@ -331,7 +394,7 @@ struct AddDrinkView: View {
     )
 }
 
-#Preview("No Recent Drinks") {
+#Preview("Neutral selection") {
     AddDrinkView(
         catalogue: try! DrinkCatalogueLoader().load(),
         defaultUnit: .milliliters,
@@ -340,3 +403,4 @@ struct AddDrinkView: View {
     )
 }
 #endif
+
