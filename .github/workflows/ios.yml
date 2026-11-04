@@ -38,6 +38,24 @@ jobs:
           bash Scripts/CI/test-run-ios-tests.sh 2>&1 |
             tee "$RUNNER_TEMP/watered-ios-ci/helper-checks.log"
 
+      - name: Inspect simulator runtime compatibility
+        run: |
+          xcrun simctl list runtimes available --json \
+            > "$RUNNER_TEMP/watered-ios-ci/simulator-runtimes.json"
+          jq '.runtimes[] | select(
+            .identifier == "com.apple.CoreSimulator.SimRuntime.iOS-27-0" or
+            .identifier == "com.apple.CoreSimulator.SimRuntime.iOS-27-1"
+          )' "$RUNNER_TEMP/watered-ios-ci/simulator-runtimes.json"
+
+      - name: Prepare simulator
+        run: |
+          if ! xcrun simctl list devices available --json | jq -e \
+            --arg runtime "$IOS_SIMULATOR_RUNTIME" --arg name "$SIMULATOR_NAME" \
+            'any(.devices[$runtime][]?; .name == $name and .isAvailable == true)' > /dev/null; then
+            xcrun simctl create "$SIMULATOR_NAME" \
+              com.apple.CoreSimulator.SimDeviceType.iPhone-Air "$IOS_SIMULATOR_RUNTIME"
+          fi
+
       - name: Run unit and UI tests
         timeout-minutes: 40
         env:
