@@ -22,13 +22,14 @@ struct DrinkCatalogueLoaderTests {
             catalogue.drink(withID: "still-water")
         )
 
-        #expect(catalogue.schemaVersion == 1)
-        #expect(catalogue.version == "development-2")
-        #expect(catalogue.drinks.count == 16)
+        #expect(catalogue.schemaVersion == 2)
+        #expect(catalogue.version == "development-3")
+        #expect(catalogue.drinks.count == 11)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),
             DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 20)
         ])
+        #expect(catalogue.drink(withID: "mineral-water") == nil)
         #expect(water.categoryID == "water")
         #expect(!water.isRetired)
         #expect(catalogue.activeDrinks(inCategoryID: "water").contains(water))
@@ -58,14 +59,14 @@ struct DrinkCatalogueLoaderTests {
         let json = """
         {
             "manifestVersion": 1,
-            "schemaVersion": 2,
+            "schemaVersion": 3,
             "version": "test-1",
             "categories": []
         }
         """
         let loader = DrinkCatalogueLoader()
         let expectedError =
-            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(2)
+            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(3)
 
         #expect(throws: expectedError) {
             _ = try loader.load(
@@ -91,13 +92,12 @@ struct DrinkCatalogueLoaderTests {
     
     // GIVEN the approved water definitions in the bundled catalogue,
     // WHEN the catalogue is loaded,
-    // THEN all five drinks are active, correctly ordered and use the approved contribution ratios.
+    // THEN all four drinks are active, correctly ordered and use the approved contribution ratios.
     @Test func loadsReviewedWaterDefinitions() throws {
         let catalogue = try DrinkCatalogueLoader().load()
 
         let expectedDrinks: [(id: String, ratio: Double)] = [
             ("still-water", 1.0),
-            ("mineral-water", 1.0),
             ("sparkling-water", 1.0),
             ("infused-water", 1.0),
             ("coconut-water", 0.95)
@@ -145,11 +145,7 @@ struct DrinkCatalogueLoaderTests {
             ("espresso", 0.95, .regular),
             ("coffee-with-milk", 0.981, .regular),
             ("cold-brew", 0.99, .regular),
-            ("frappe", 0.99, .regular),
-            ("americano", 0.994, .regular),
-            ("mocha", 0.862, .regular),
-            ("decaf-coffee", 0.99, .decaf),
-            ("turkish-coffee", 0.95, .regular)
+            ("americano", 0.994, .regular)
         ]
 
         let activeCoffeeDrinks = catalogue.activeDrinks(
@@ -180,9 +176,39 @@ struct DrinkCatalogueLoaderTests {
                     CaffeineOption(
                         variant: expectedDrink.variant,
                         rule: .unknown
-                    )
+                    ),
+                    CaffeineOption(variant: .decaf, rule: .unknown)
                 ]
             )
+        }
+    }
+
+    // Preparation changes retain the cup volume and never invent caffeine estimates.
+    @Test func bundledCoffeePreparationsPreserveVolumeAndUnknownCaffeine() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+        let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+        let shotDrinks: Set<String> = ["latte", "cappuccino", "espresso", "americano"]
+        for drink in catalogue.activeDrinks(inCategoryID: "coffee") {
+            if shotDrinks.contains(drink.id) {
+                #expect(drink.shotConfiguration == ShotConfiguration(
+                    supportedCounts: [0, 1, 2, 3, 4], defaultCount: 2
+                ))
+            } else {
+                #expect(drink.shotConfiguration == nil)
+            }
+            let counts: [Int?] = drink.shotConfiguration?.supportedCounts.map { Optional($0) } ?? [nil]
+            for variant in CaffeineVariant.allCases {
+                for count in counts {
+                    let entry = try AddDrinkDraft(
+                        drinkID: drink.id, volumeValue: 330, unit: .milliliters,
+                        caffeineVariant: variant, shotCount: count
+                    ).drinkEntry(using: resolver)
+                    #expect(entry.amount.value == 330)
+                    #expect(entry.catalogueSnapshot.caffeineVariant == variant)
+                    #expect(entry.catalogueSnapshot.shotCount == count)
+                    #expect(entry.catalogueSnapshot.caffeineAmount == nil)
+                }
+            }
         }
     }
 }

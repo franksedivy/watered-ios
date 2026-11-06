@@ -14,7 +14,7 @@ import Foundation
 nonisolated struct ShotConfiguration: Codable, Equatable {
     /// The supported shot counts.
     ///
-    /// Values must be positive and unique, and the collection must not be empty.
+    /// Values must be nonnegative and unique, and the collection must not be empty.
     let supportedCounts: [Int]
     
     /// The initially selected shot count.

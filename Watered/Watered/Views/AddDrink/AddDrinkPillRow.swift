@@ -41,34 +41,40 @@ struct AddDrinkPillRow<Option: Identifiable>: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(options) { option in
-                    Button {
-                        onSelect(option)
-                    } label: {
-                        pillContent(for: option)
-                    }
-                    .buttonStyle(PillButtonStyle(isSelected: selectedID == option.id))
-                    .accessibilityIdentifier("\(accessibilityIdentifier).\(option.id)")
-                    .accessibilityAddTraits(selectedID == option.id ? .isSelected : [])
+                    AddDrinkPillButton(
+                        label: optionLabel(option),
+                        isSelected: selectedID == option.id,
+                        accessibilityIdentifier: "\(accessibilityIdentifier).\(option.id)",
+                        onSelect: { onSelect(option) }
+                    )
                 }
             }
         }
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .accessibilityIdentifier(accessibilityIdentifier)
     }
+}
 
-    /// Builds the shared capsule appearance for a selected or resting option.
-    ///
-    /// - Parameter option: The option whose identity determines selection.
-    /// - Returns: Its label with the existing pill styling.
-    private func pillContent(for option: Option) -> some View {
-        let isSelected = selectedID == option.id
-        return Text(optionLabel(option))
-            .font(.callout)
-            .foregroundStyle(isSelected ? .white : .primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.accentColor : Color.clear, in: Capsule())
-            .background(.thinMaterial, in: Capsule())
+/// A shared pill for shortcuts, categories and inline drink choices.
+struct AddDrinkPillButton: View {
+    let label: String
+    let isSelected: Bool
+    let accessibilityIdentifier: String
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            Text(label)
+                .font(.callout)
+                .foregroundStyle(isSelected ? .white : .primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.accentColor : Color.clear, in: Capsule())
+                .background(.thinMaterial, in: Capsule())
+        }
+        .buttonStyle(PillButtonStyle(isSelected: isSelected))
+        .accessibilityIdentifier(accessibilityIdentifier)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     /// Preserves the resting pill appearance and supplies pressed-state feedback.

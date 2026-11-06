@@ -154,9 +154,15 @@ struct WateredTabView: View {
     // Keeps AddDrinkView out of the tab bar while still allowing it to appear as a
     // focused add-drink flow above the current tab.
     @State private var isShowingAddDrinkSheet = false
+
+    /// Survives sheet dismissal, but is never written to persistent storage.
+    @State private var addDrinkDraft: AddDrinkSheetDraft?
     
     /// Controls the alert shown when saving a submitted drink fails.
     @State private var isShowingDrinkSaveError = false
+
+    /// Recent-menu submissions happen without an Add Drink sheet to host an alert.
+    @State private var isShowingRecentDrinkError = false
 
     // Purpose: Controls whether the Profile sheet is visible.
     //
@@ -217,19 +223,6 @@ struct WateredTabView: View {
         return store.recentDrinkOptions(in: catalogue)
     }
     
-    /// The available sheet heights for the current Add Drink content.
-    ///
-    /// Without recent drinks, the sheet uses the smaller system height.
-    /// With recents, it retains the existing taller layout. Both configurations
-    /// allow expansion to full height.
-    private var addDrinkPresentationDetents: Set<PresentationDetent> {
-        if recentDrinkOptions.isEmpty {
-            return [.fraction(0.50), .large]
-        }
-        
-        return [.fraction(0.64), .large]
-    }
-
     // MARK: - Transitions
     //
     // Purpose:
@@ -314,7 +307,10 @@ struct WateredTabView: View {
                 refreshActiveCalendarDay()
             }
 
-            AddDrinkActionButton {
+            AddDrinkActionButton(
+                recentDrinks: recentDrinkOptions,
+                onSelectRecent: addRecentDrink
+            ) {
                 wateredLog("Add Drink flow opened")
                 isShowingAddDrinkSheet = true
                 analytics.track(.addDrinkOpened)
@@ -328,6 +324,11 @@ struct WateredTabView: View {
             )
             .padding(.trailing, 12)
             .padding(.bottom, -26)
+            .alert("Could not add recent drink", isPresented: $isShowingRecentDrinkError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your drink wasn't saved. Touch and hold Add drink to try again, or tap it to choose another drink.")
+            }
 
 
             if shouldShowFirstDrinkPrompt {
@@ -349,6 +350,7 @@ struct WateredTabView: View {
                         catalogue: catalogue,
                         defaultUnit: displayUnit,
                         recentDrinkOptions: recentDrinkOptions,
+                        retainedDraft: $addDrinkDraft,
                         onAddDrink: addDrinkEntry
                     )
                 case .failure(let error):
@@ -360,6 +362,7 @@ struct WateredTabView: View {
                             + "Saved drinks can still be viewed in Stats."
                         )
                     )
+                    .presentationDetents([.medium, .large])
                     .onAppear {
                         wateredLog("Catalogue loading failed: \(error.localizedDescription)")
                     }
@@ -371,7 +374,6 @@ struct WateredTabView: View {
                     in: addDrinkTransition
                 )
             )
-            .presentationDetents(addDrinkPresentationDetents)
             .presentationDragIndicator(.visible)
             .alert("Could not save your drink", isPresented: $isShowingDrinkSaveError) {
                 Button("OK", role: .cancel) {}
@@ -531,12 +533,29 @@ struct WateredTabView: View {
         store.loadDrinkEntries(remainingEntries)
     }
     
+    /// Repeats a supported shortcut with a fresh identity, time and current catalogue rules.
+    /// Uses the same save boundary and recent-submission analytics as the former sheet shortcuts.
+    private func addRecentDrink(_ option: RecentDrinkOption) {
+        guard case .success(let catalogue) = catalogueResult else {
+            isShowingRecentDrinkError = true
+            return
+        }
+        do {
+            let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+            let entry = try option.drinkEntry(using: resolver)
+            addDrinkEntry(entry, method: .recent)
+        } catch {
+            wateredLog("Recent drink preparation failed: \(error.localizedDescription)")
+            isShowingRecentDrinkError = true
+        }
+    }
+
     /// Submits a drink and closes the sheet only after success.
     ///
     /// - Parameters:
     ///  - entry: The submitted drink
     ///  - method: Whether subission came from the form or a recent-drink shortcut.
-    /// - Important: On failure, the sheet satys open and presents a save-error alert.
+    /// - Important: Failures preserve the sheet draft or report directly from the recent menu.
     private func addDrinkEntry(_ entry: DrinkEntry, method: AddDrinkSubmissionMethod) {
         let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
         
@@ -546,10 +565,18 @@ struct WateredTabView: View {
                 method: method,
                 save: persistDrinkEntry
             )
+            if addDrinkDraft != nil {
+                addDrinkDraft = nil
+                wateredLog("Add Drink session draft cleared after successful save")
+            }
             isShowingAddDrinkSheet = false
         } catch {
             wateredLog("Drink save failed: \(error.localizedDescription)")
-            isShowingDrinkSaveError = true
+            if isShowingAddDrinkSheet {
+                isShowingDrinkSaveError = true
+            } else {
+                isShowingRecentDrinkError = true
+            }
         }
     }
     
@@ -630,3 +657,4 @@ struct WateredTabView: View {
         catalogueResult: Result { try DrinkCatalogueLoader().load() }
     )
 }
+

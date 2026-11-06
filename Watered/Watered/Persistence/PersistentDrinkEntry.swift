@@ -96,7 +96,7 @@ final class PersistentDrinkEntry {
         if let caffeineAmount, !caffeineAmount.isFinite || caffeineAmount < 0 {
             return nil
         }
-        if let shotCount, shotCount <= 0 {
+        if let shotCount, shotCount < 0 {
             return nil
         }
 

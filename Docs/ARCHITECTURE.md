@@ -1,6 +1,6 @@
 # Architecture
 
-Source baseline: `8c5533a` on `main`, checked 6 November 2026. This implementation map does not establish distribution or release readiness.
+Source baseline: main through `f47869c`, with the #104 interaction changes reviewed on 6 November 2026. This implementation map does not establish distribution or release readiness.
 
 ## Structure
 
@@ -41,9 +41,9 @@ Display-unit persistence is separate from goal changes. Settings `updatedAt` is 
 
 ## Catalogue and current UI boundary
 
-The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The inspected baseline contains five Water and eleven Coffee definitions, not the full planned catalogue.
+The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The current branch contains four Water and seven Coffee definitions under content development-3 / schema 2; the wider catalogue remains unfinished.
 
-Category defaults, illustrated drink cards and a long-press recent-drink menu are separate prototype work under [#104](https://github.com/franksedivy/watered-ios/issues/104), not part of this main-branch baseline.
+The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
 
 HealthKit export, widgets, a Watch app, iCloud sync and production analytics are outside the implemented baseline described here. Keep proposed systems separate from this implementation map until code exists.
 

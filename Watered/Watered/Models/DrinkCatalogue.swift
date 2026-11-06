@@ -56,13 +56,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// Caffeine variants must be unique per drink and include the configured default
     /// Caffiene concentrations and per-shot amounts must be finite and nonnegative.
     /// Per-shot caffeine rules require a shot configuration.
-    /// Shot configurations require nonempty, unique, positive counts and an avialable default
+    /// Shot configurations require nonempty, unique counts and an available default.
+    /// Schema 1 requires positive counts; schema 2 also permits zero.
     /// Category and drink IDs must be nonempty and contain no whitespace.
     ///
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
-        guard schemaVersion == 1 else {
+        guard schemaVersion == 1 || schemaVersion == 2 else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
@@ -182,12 +183,12 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
             
             if let configuration = drink.shotConfiguration {
                 let counts = configuration.supportedCounts
-                let containsOnlyPositiveCounts = counts.allSatisfy({ count in
-                    return count > 0
+                let containsOnlyNonnegativeCounts = counts.allSatisfy({ count in
+                    return count >= (schemaVersion == 1 ? 1 : 0)
                 })
                 
                 guard !counts.isEmpty,
-                      containsOnlyPositiveCounts,
+                      containsOnlyNonnegativeCounts,
                       Set(counts).count == counts.count,
                       counts.contains(configuration.defaultCount) else {
                     throw ValidationError.invalidShotConfiguration(

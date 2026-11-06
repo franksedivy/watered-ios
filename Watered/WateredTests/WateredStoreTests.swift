@@ -143,11 +143,13 @@ struct WateredStoreTests {
             amount: DrinkAmount(value: 300, unit: .milliliters),
             date: Date(timeIntervalSince1970: 200_000)
         )
-        let coffee = DrinkEntryFixture.make(
+        let catalogue = try DrinkCatalogueLoader().load()
+        let coffee = try AddDrinkDraft(
             drinkID: "latte",
-            drinkName: "Coffee",
-            hydrationRule: .ratio(0.99),
-            amount: DrinkAmount(value: 250, unit: .milliliters),
+            volumeValue: 250,
+            unit: .milliliters
+        ).drinkEntry(
+            using: DrinkCatalogueSnapshotResolver(catalogue: catalogue),
             date: Date(timeIntervalSince1970: 300_000)
         )
         let store = WateredStore(
