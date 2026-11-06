@@ -13,7 +13,10 @@ struct AddDrinkVolumeSelectionTests {
         #expect(selection.options(in: display).contains(selection.displayValue(in: display)))
         let locale = Locale(identifier: "en_GB")
         #expect(selection.label(for: selection.displayValue(in: display), in: display, locale: locale)
-            == VolumeFormatter(locale: locale).string(from: original.amount.volume, displayedAs: display))
+            == VolumeFormatter(locale: locale).string(
+                from: original.amount.volume, displayedAs: display,
+                fractionLength: display == .milliliters ? 0...0 : 0...3
+            ))
 
         // Wheel updates for its existing selection and repeated reopening must not recapture conversion.
         for _ in 0..<20 {
@@ -42,6 +45,16 @@ struct AddDrinkVolumeSelectionTests {
         selection.select(20, displayedAs: unit)
         #expect(selection.value == 20)
         #expect(selection.unit == unit)
+    }
+
+    @Test func metricDisplayRoundsWithoutChangingCapturedOunces() {
+        var selection = AddDrinkVolumeSelection(value: 12, unit: .usFluidOunces)
+        let displayedValue = selection.displayValue(in: .milliliters)
+        #expect(selection.label(for: displayedValue, in: .milliliters, locale: Locale(identifier: "en_GB"))
+            == "355 ml")
+        selection.select(displayedValue, displayedAs: .milliliters)
+        #expect(selection.value == 12)
+        #expect(selection.unit == .usFluidOunces)
     }
 
     @Test func convertedNonPresetIsSelectableWithoutRoundingAndNewPresetReplacesIt() {

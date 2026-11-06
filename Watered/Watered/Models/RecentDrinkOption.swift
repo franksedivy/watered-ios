@@ -60,7 +60,10 @@ nonisolated struct RecentDrinkOption: Identifiable {
 
     /// The displayed amount, current name and any preparation choices.
     func label(displayedAs unit: LiquidUnit, locale: Locale = .current) -> String {
-        let volume = VolumeFormatter(locale: locale).string(from: amount.volume, displayedAs: unit)
+        let volume = VolumeFormatter(locale: locale).string(
+            from: amount.volume, displayedAs: unit,
+            fractionLength: unit == .milliliters ? 0...0 : 0...3
+        )
         var text = "\(volume) of \(drinkName)"
         if showsCaffeineVariant {
             text += " (\(caffeineVariant.rawValue.capitalized))"

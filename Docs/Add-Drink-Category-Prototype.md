@@ -31,8 +31,9 @@ Reopening restores the draft and an appropriate sheet height. A successful save
 (including a recent shortcut) clears it; failed saves preserve it. App restart
 clears it. Fresh and restored forms display the applied Profile unit. A restored draft
 retains its exact captured amount and preparation; conversion affects presentation
-only. Non-preset converted amounts get their own wheel option, formatted to up to
-three decimal places. Display rounding is never saved. Selecting a different preset
+only. Non-preset converted amounts get their own wheel option. The picker and recent
+menu round millilitres to whole numbers (12 US fl oz displays as 355 ml); fluid
+ounces use up to three decimal places. Display rounding is never saved. Selecting a different preset
 replaces the amount in the current display unit. Repeated unit changes cannot
 accumulate rounding loss. Failed Profile persistence leaves the applied unit unchanged.
 This replaces the earlier neutral-on-every-open rule. It is distinct from persistent

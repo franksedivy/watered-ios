@@ -26,7 +26,8 @@ nonisolated struct AddDrinkVolumeSelection: Equatable {
     func label(for displayedValue: Double, in displayUnit: LiquidUnit, locale: Locale = .current) -> String {
         VolumeFormatter(locale: locale).string(
             from: Measurement(value: displayedValue, unit: displayUnit.foundationUnit),
-            displayedAs: displayUnit
+            displayedAs: displayUnit,
+            fractionLength: displayUnit == .milliliters ? 0...0 : 0...3
         )
     }
 

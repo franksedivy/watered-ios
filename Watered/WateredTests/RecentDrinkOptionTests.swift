@@ -132,7 +132,10 @@ struct RecentDrinkOptionTests {
         let option = try #require(store.recentDrinkOptions(in: catalogue).first)
         let originalID = option.id
         let locale = Locale(identifier: "en_GB")
-        let expected = VolumeFormatter(locale: locale).string(from: entry.amount.volume, displayedAs: display)
+        let expected = VolumeFormatter(locale: locale).string(
+            from: entry.amount.volume, displayedAs: display,
+            fractionLength: display == .milliliters ? 0...0 : 0...3
+        )
         #expect(option.label(displayedAs: display, locale: locale)
             == "\(expected) of Test Coffee (Decaf), 2 shots")
         let repeated = try option.drinkEntry(using: resolver)
