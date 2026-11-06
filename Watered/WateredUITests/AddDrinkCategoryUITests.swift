@@ -148,30 +148,84 @@ final class AddDrinkCategoryUITests: XCTestCase {
     }
 
     @MainActor
-    func testProfileUnitChangeDoesNotReinterpretUnsavedDraft() {
+    func testProfileUnitChangeConvertsDraftAndPreservesSavedVolumeAndPreparation() {
         let app = openAddDrink()
-        app.buttons["addDrinkCategoryScrollView.water"].tap()
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        let toggle = app.switches["addDrinkDecafToggle"]
+        XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        toggle.tap()
+        let shots = app.steppers["addDrinkShotStepper"]
+        shots.buttons["addDrinkShotStepper-Increment"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
-        let submit = app.buttons["addDrinkSubmitButton"]
         dismissAddDrinkSheet(in: app)
-        XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
-        let profile = app.buttons["profileButton"]
-        XCTAssertTrue(profile.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
-        profile.tap()
-        let picker = app.segmentedControls["displayUnitPicker"]
-        XCTAssertTrue(picker.waitForExistence(timeout: readinessTimeout))
-        picker.buttons["US fl oz"].tap()
-        app.buttons["profileDoneButton"].tap()
-        XCTAssertTrue(picker.waitForNonExistence(timeout: readinessTimeout))
+        changeAddDrinkDisplayUnit(to: "US fl oz", in: app)
         app.buttons["addDrinkActionButton"].tap()
+        let submit = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
-        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "500 ml")
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "16.907 US fl oz")
+        XCTAssertEqual(toggle.value as? String, "1")
+        XCTAssertEqual(shots.value as? String, "3")
+        XCTAssertTrue(app.buttons["addDrinkTypeScrollView.latte"].isSelected)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Converted draft retains 500 ml and coffee preparation"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
         submit.tap()
         XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
         app.buttons["addDrinkActionButton"].tap()
         XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
         XCTAssertFalse(submit.isEnabled)
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "12 US fl oz")
+        dismissAddDrinkSheet(in: app)
+        changeAddDrinkDisplayUnit(to: "ml", in: app)
+        XCTAssertTrue(app.staticTexts["todayTotalAmountText"].wait(
+            for: \.label, toEqual: "500 ml", timeout: readinessTimeout
+        ))
+        app.tabBars.buttons["Stats"].tap()
+        let row = app.collectionViews["statsDrinkHistoryList"].buttons["statsDrinkEntryLink"]
+        XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
+        row.tap()
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(detail.staticTexts["statsDrinkAmount"].label.contains("500 ml"))
+        XCTAssertTrue(detail.staticTexts["statsCaffeinePreparation"].label.contains("Decaf"))
+        XCTAssertTrue(detail.staticTexts["statsCaffeineShotCount"].label.contains("3"))
+    }
+
+    @MainActor
+    func testFreshFormUsesEachAppliedProfileUnit() {
+        let app = openAddDrink()
+        dismissAddDrinkSheet(in: app)
+        for (unit, expected) in [("US fl oz", "12 US fl oz"), ("imp fl oz", "8 fl oz"), ("ml", "330 ml")] {
+            changeAddDrinkDisplayUnit(to: unit, in: app)
+            app.buttons["addDrinkActionButton"].tap()
+            let wheel = app.pickerWheels.firstMatch
+            XCTAssertTrue(wheel.waitForExistence(timeout: readinessTimeout))
+            XCTAssertEqual(wheel.value as? String, expected)
+            XCTAssertFalse(app.buttons["addDrinkSubmitButton"].isEnabled)
+            dismissAddDrinkSheet(in: app)
+        }
+    }
+
+    @MainActor
+    func testSelectingPresetAfterConversionChangesPhysicalAmount() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.water"].tap()
+        app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        dismissAddDrinkSheet(in: app)
+        changeAddDrinkDisplayUnit(to: "US fl oz", in: app)
+        app.buttons["addDrinkActionButton"].tap()
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.waitForExistence(timeout: readinessTimeout))
+        XCTAssertEqual(wheel.value as? String, "16.907 US fl oz")
+        wheel.adjust(toPickerWheelValue: "16 US fl oz")
+        app.buttons["addDrinkSubmitButton"].tap()
+        XCTAssertTrue(app.buttons["addDrinkSubmitButton"].waitForNonExistence(timeout: readinessTimeout))
+        changeAddDrinkDisplayUnit(to: "ml", in: app)
+        app.tabBars.buttons["Stats"].tap()
+        let row = app.collectionViews["statsDrinkHistoryList"].buttons["statsDrinkEntryLink"]
+        XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(row.label.contains("473.176 ml"))
     }
 
     // Opens the sheet with an empty store and predictable units for category interaction checks.
@@ -210,5 +264,27 @@ extension XCTestCase {
             if submit.waitForNonExistence(timeout: 2) { return }
         }
         XCTFail("Dragging the sheet grabber should dismiss Add drink.")
+    }
+}
+
+extension XCTestCase {
+    @MainActor
+    func changeAddDrinkDisplayUnit(to unit: String, in app: XCUIApplication, fails: Bool = false) {
+        let profile = app.buttons["profileButton"]
+        XCTAssertTrue(profile.wait(for: \.isHittable, toEqual: true, timeout: 10))
+        profile.tap()
+        let picker = app.segmentedControls["displayUnitPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        picker.buttons[unit].tap()
+        if fails {
+            let alert = app.alerts["Could not save your display unit"]
+            XCTAssertTrue(alert.waitForExistence(timeout: 10))
+            alert.buttons["OK"].tap()
+            XCTAssertTrue(picker.buttons["ml"].wait(for: \.isSelected, toEqual: true, timeout: 10))
+        } else {
+            XCTAssertTrue(picker.buttons[unit].wait(for: \.isSelected, toEqual: true, timeout: 10))
+        }
+        app.buttons["profileDoneButton"].tap()
+        XCTAssertTrue(picker.waitForNonExistence(timeout: 10))
     }
 }

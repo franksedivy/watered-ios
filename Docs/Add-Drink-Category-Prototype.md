@@ -29,8 +29,12 @@ Reduce Motion suppresses the selection animation. Small screens may require scro
 Dismissing retains category, drink, preparation and volume including its unit.
 Reopening restores the draft and an appropriate sheet height. A successful save
 (including a recent shortcut) clears it; failed saves preserve it. App restart
-clears it. Profile unit changes do not reinterpret the unfinished amount: the
-restored draft keeps its captured unit, while a fresh form uses the current setting.
+clears it. Fresh and restored forms display the applied Profile unit. A restored draft
+retains its exact captured amount and preparation; conversion affects presentation
+only. Non-preset converted amounts get their own wheel option, formatted to up to
+three decimal places. Display rounding is never saved. Selecting a different preset
+replaces the amount in the current display unit. Repeated unit changes cannot
+accumulate rounding loss. Failed Profile persistence leaves the applied unit unchanged.
 This replaces the earlier neutral-on-every-open rule. It is distinct from persistent
 per-category last-used preferences, which remain deferred.
 
@@ -43,12 +47,19 @@ the sheet. Missing/retired drinks and unsupported preparations are excluded.
 
 Local persistence succeeds before history or success analytics change. A menu save
 failure shows an alert outside the sheet. Existing submission-boundary tests cover
-recent success/failure and analytics isolation. Shortcut labels still use the logged
-unit; current-display-unit formatting remains #133.
+recent success/failure and analytics isolation. Shortcut labels use the applied
+Profile unit through the shared volume formatter. Repeating retains the original
+amount and preparation; display conversion does not change shortcut identity,
+deduplication or historical entries.
 
 ## Verification
 
-The candidate adds catalogue/schema, zero-shot calculation/persistence, preparation,
+The #133 tests cover all source/display unit pairs, fresh/restored forms, converted
+non-preset amounts, preset changes, retained preparation, recent repetition and
+failed drink/settings saves. Screenshots are attached by the converted-draft and
+recent-menu UI tests. Hosted results must establish that these checks passed.
+
+The #104 candidate adds catalogue/schema, zero-shot calculation/persistence, preparation,
 draft restoration/clearing, failure-retry and restart coverage. UI coverage follows
 the long-press Recents interaction. The #138 millilitres test is re-enabled. Hosted
 CI results must be recorded against the exact commit; added tests are not evidence

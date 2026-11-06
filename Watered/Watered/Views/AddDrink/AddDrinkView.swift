@@ -23,7 +23,7 @@ struct AddDrinkSheetDraft: Equatable {
 struct AddDrinkView: View {
     @Binding private var retainedDraft: AddDrinkSheetDraft?
     private let catalogue: DrinkCatalogue
-    @State private var defaultUnit: LiquidUnit
+    private let defaultUnit: LiquidUnit
     private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
     /// The category whose drinks expand inline; nil until the user chooses one.
@@ -31,7 +31,7 @@ struct AddDrinkView: View {
     @State private var selectedDrinkID: String?
     @State private var selectedCaffeineVariant: CaffeineVariant
     @State private var selectedShotCount: Int
-    @State private var selectedVolumeValue: Double
+    @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
     @State private var selectedDetent: PresentationDetent = .height(440)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -55,7 +55,7 @@ struct AddDrinkView: View {
         onAddDrink: @escaping (DrinkEntry, AddDrinkSubmissionMethod) -> Void
     ) {
         self.catalogue = catalogue
-        self._defaultUnit = State(initialValue: retainedDraft.wrappedValue?.unit ?? defaultUnit)
+        self.defaultUnit = defaultUnit
         self._retainedDraft = retainedDraft
         self.onAddDrink = onAddDrink
 
@@ -64,7 +64,10 @@ struct AddDrinkView: View {
         _selectedDrinkID = State(initialValue: saved?.drinkID)
         _selectedCaffeineVariant = State(initialValue: saved?.caffeineVariant ?? .regular)
         _selectedShotCount = State(initialValue: saved?.shotCount ?? 1)
-        _selectedVolumeValue = State(initialValue: saved?.volumeValue ?? Self.defaultVolumeValue(for: defaultUnit))
+        _volumeSelection = State(initialValue: AddDrinkVolumeSelection(
+            value: saved?.volumeValue ?? AddDrinkVolumeSelection.defaultValue(for: defaultUnit),
+            unit: saved?.unit ?? defaultUnit
+        ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
         let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
         _selectedDetent = State(initialValue: saved?.categoryID == nil
@@ -75,7 +78,7 @@ struct AddDrinkView: View {
         AddDrinkSheetDraft(
             categoryID: selectedCategoryID, drinkID: selectedDrinkID,
             caffeineVariant: selectedCaffeineVariant, shotCount: selectedShotCount,
-            volumeValue: selectedVolumeValue, unit: defaultUnit
+            volumeValue: volumeSelection.value, unit: volumeSelection.unit
         )
     }
 
@@ -115,27 +118,6 @@ struct AddDrinkView: View {
     private var selectedDefinition: DrinkDefinition? {
         availableDrinks.first { definition in
             definition.id == selectedDrinkID
-        }
-    }
-
-    /// The existing shared volume presets, expressed in the applied app unit.
-    private var volumeOptions: [Double] {
-        switch defaultUnit {
-        case .milliliters:
-            return [150, 200, 250, 300, 330, 400, 500, 600, 750, 1000]
-        case .usFluidOunces:
-            return [6, 8, 10, 12, 16, 20, 24, 32]
-        case .imperialFluidOunces:
-            return [5, 8, 10, 12, 16, 20, 24, 32]
-        }
-    }
-
-    /// Supplies the shared starting volume for the applied unit.
-    private static func defaultVolumeValue(for unit: LiquidUnit) -> Double {
-        switch unit {
-        case .milliliters: return 330
-        case .usFluidOunces: return 12
-        case .imperialFluidOunces: return 8
         }
     }
 
@@ -186,8 +168,8 @@ struct AddDrinkView: View {
         }
         let draft = AddDrinkDraft(
             drinkID: definition.id,
-            volumeValue: selectedVolumeValue,
-            unit: defaultUnit,
+            volumeValue: volumeSelection.value,
+            unit: volumeSelection.unit,
             caffeineVariant:
                 selectedCaffeineVariant,
             shotCount: definition.shotConfiguration == nil ? nil : selectedShotCount
@@ -210,9 +192,12 @@ struct AddDrinkView: View {
                 .font(.headline)
                 .accessibilityAddTraits(.isHeader)
 
-            Picker("Volume", selection: $selectedVolumeValue) {
-                ForEach(volumeOptions, id: \.self) { volumeOption in
-                    Text("\(Int(volumeOption)) \(defaultUnit.rawValue)").tag(volumeOption)
+            Picker("Volume", selection: Binding(
+                get: { volumeSelection.displayValue(in: defaultUnit) },
+                set: { volumeSelection.select($0, displayedAs: defaultUnit) }
+            )) {
+                ForEach(volumeSelection.options(in: defaultUnit), id: \.self) { volumeOption in
+                    Text(volumeSelection.label(for: volumeOption, in: defaultUnit)).tag(volumeOption)
                 }
             }
             .pickerStyle(.wheel)
@@ -221,9 +206,11 @@ struct AddDrinkView: View {
             .clipped()
             .accessibilityIdentifier("addDrinkVolumePicker")
             .accessibilityLabel("Drink volume")
-            .accessibilityValue("\(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
+            .accessibilityValue(volumeSelection.label(
+                for: volumeSelection.displayValue(in: defaultUnit), in: defaultUnit
+            ))
             .accessibilityHint("Adjusts the amount for the drink being added.")
-            .onChange(of: selectedVolumeValue) { previousValue, newValue in
+            .onChange(of: volumeSelection) { previousValue, newValue in
                 wateredLog(
                     "Add Drink volume changed from \(previousValue) to \(newValue) "
                     + "\(defaultUnit.rawValue)"

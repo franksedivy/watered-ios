@@ -115,7 +115,37 @@ struct RecentDrinkOptionTests {
 
         #expect(options.count == 2)
         #expect(Set(options.map(\.id)).count == 2)
-        #expect(Set(options.map(\.label)).count == 1)
+        #expect(Set(options.map { $0.label(displayedAs: .milliliters) }).count == 1)
+    }
+
+    @Test(arguments: LiquidUnit.allCases, LiquidUnit.allCases)
+    func displayConversionPreservesRecentIdentityHistoryAndRepeatedPreparation(
+        source: LiquidUnit, display: LiquidUnit
+    ) throws {
+        let catalogue = makeCatalogue()
+        let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+        let entry = try AddDrinkDraft(
+            drinkID: "test-coffee", volumeValue: 500.123456789, unit: source,
+            caffeineVariant: .decaf, shotCount: 2
+        ).drinkEntry(using: resolver)
+        let store = WateredStore(entries: [entry])
+        let option = try #require(store.recentDrinkOptions(in: catalogue).first)
+        let originalID = option.id
+        let locale = Locale(identifier: "en_GB")
+        let expected = VolumeFormatter(locale: locale).string(from: entry.amount.volume, displayedAs: display)
+        #expect(option.label(displayedAs: display, locale: locale)
+            == "\(expected) of Test Coffee (Decaf), 2 shots")
+        let repeated = try option.drinkEntry(using: resolver)
+        #expect(option.id == originalID)
+        #expect(repeated.id != entry.id)
+        #expect(repeated.amount.value == entry.amount.value)
+        #expect(repeated.amount.unit == source)
+        #expect(repeated.catalogueSnapshot.caffeineVariant == .decaf)
+        #expect(repeated.catalogueSnapshot.shotCount == 2)
+        store.addDrinkEntry(repeated)
+        #expect(store.recentDrinkOptions(in: catalogue).count == 1)
+        #expect(entry.amount.value == 500.123456789)
+        #expect(entry.amount.unit == source)
     }
 
     private func makeCatalogue(

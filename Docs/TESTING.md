@@ -39,6 +39,14 @@ Select scenarios relevant to the change; use the full applicable set during rele
 - Log a drink; confirm amount, preparation, Today totals and saved details agree. Relaunch to verify persistence using a disposable persistent store.
 - Fail a save and retry: preserve the user's selection, prevent duplicate entries and avoid false success feedback.
 - Repeat a supported recent drink; check fresh identity/time and current estimates. Check unsupported or retired definitions remain excluded from shortcuts while saved history stays readable.
+- Restore a 500 ml unsaved coffee with decaf and three shots after switching Profile
+  to US fl oz: the wheel shows 16.907 US fl oz, with preparation retained. Cycle units
+  and return to ml; saving/repeating must still produce 500 ml. Choosing 16 US fl oz
+  deliberately changes the amount to approximately 473.176 ml.
+- Check fresh Add Drink forms in all three units, converted recent-menu labels, and
+  failed drink/unit saves. Failed unit persistence must leave form/menu units unchanged.
+  `AddDrinkVolumeSelectionTests` and `RecentDrinkOptionTests` cover all unit pairs;
+  Add Drink UI suites cover the picker, preparation, saved amounts and long-press menu.
 - Change display units and a Profile goal; dismiss and reopen. Verify unchanged goals do not add history, and failed persistence does not change applied values.
 - Delete a drink; check history and totals. Exercise any delete-all flow only on disposable data with explicit confirmation.
 - Check affected layouts with large Dynamic Type, VoiceOver, Reduce Motion, sheet dragging and relevant light/dark appearances.
