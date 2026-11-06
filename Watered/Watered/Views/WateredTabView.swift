@@ -154,6 +154,9 @@ struct WateredTabView: View {
     // Keeps AddDrinkView out of the tab bar while still allowing it to appear as a
     // focused add-drink flow above the current tab.
     @State private var isShowingAddDrinkSheet = false
+
+    /// Survives sheet dismissal, but is never written to persistent storage.
+    @State private var addDrinkDraft: AddDrinkSheetDraft?
     
     /// Controls the alert shown when saving a submitted drink fails.
     @State private var isShowingDrinkSaveError = false
@@ -347,6 +350,7 @@ struct WateredTabView: View {
                         catalogue: catalogue,
                         defaultUnit: displayUnit,
                         recentDrinkOptions: recentDrinkOptions,
+                        retainedDraft: $addDrinkDraft,
                         onAddDrink: addDrinkEntry
                     )
                 case .failure(let error):
@@ -561,6 +565,10 @@ struct WateredTabView: View {
                 method: method,
                 save: persistDrinkEntry
             )
+            if addDrinkDraft != nil {
+                addDrinkDraft = nil
+                wateredLog("Add Drink session draft cleared after successful save")
+            }
             isShowingAddDrinkSheet = false
         } catch {
             wateredLog("Drink save failed: \(error.localizedDescription)")

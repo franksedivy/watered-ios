@@ -20,11 +20,6 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // THEN history and detail show its converted volume while retaining the saved hydration ratio.
     @MainActor
     func testSavedImperialDrinkReformatsInMillilitres() throws {
-        // Temporary quarantine for #138; re-enable when #104's new Add Drink screen lands.
-        try XCTSkipIf(
-            true,
-            "Add Drink UI automation timeout (#138). Re-enable with the new Add Drink screen in #104."
-        )
         assertDisplayUnitChange(
             initialUnit: "imp fl oz",
             initialAmount: "8 fl oz",
@@ -46,12 +41,12 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     }
 
     // GIVEN regular coffee with an unknown estimate, when its saved detail is opened,
-    // THEN caffeine remains unknown, the regular preparation is shown and no shots are invented.
+    // THEN caffeine remains unknown, the regular preparation and configured default shots are shown.
     @MainActor
     func testCoffeeShowsUnknownCaffeineAndRegularPreparation() {
         let app = openDrinkDetail(drinkID: "latte", categoryID: "coffee")
 
-        assertUnknownCaffeine(in: app, preparation: "Regular")
+        assertUnknownCaffeine(in: app, preparation: "Regular", shots: 2)
 
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Stats caffeine details"
@@ -63,9 +58,9 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     // THEN the decaf preparation remains visible without claiming a zero caffeine amount.
     @MainActor
     func testDecafShowsUnknownCaffeineAndDecafPreparation() {
-        let app = openDrinkDetail(drinkID: "decaf-coffee", categoryID: "coffee")
+        let app = openDrinkDetail(drinkID: "latte", categoryID: "coffee", decaf: true)
 
-        assertUnknownCaffeine(in: app, preparation: "Decaf")
+        assertUnknownCaffeine(in: app, preparation: "Decaf", shots: 2)
     }
 
     // GIVEN a drink with an explicitly zero caffeine estimate, when its detail is opened,
@@ -85,9 +80,10 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     private func openDrinkDetail(
         drinkID: String,
         categoryID: String = "water",
-        initialUnit: String = "ml"
+        initialUnit: String = "ml",
+        decaf: Bool = false
     ) -> XCUIApplication {
-        let app = logDrink(drinkID: drinkID, categoryID: categoryID, initialUnit: initialUnit)
+        let app = logDrink(drinkID: drinkID, categoryID: categoryID, initialUnit: initialUnit, decaf: decaf)
         let historyRow = savedDrinkRow(in: app)
         historyRow.tap()
         XCTAssertTrue(app.collectionViews["statsDrinkEntryDetailList"].waitForExistence(timeout: readinessTimeout))
@@ -99,7 +95,8 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
     private func logDrink(
         drinkID: String,
         categoryID: String = "water",
-        initialUnit: String
+        initialUnit: String,
+        decaf: Bool = false
     ) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -132,6 +129,12 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         revealDrink(selectedDrink, in: types, app: app)
         selectedDrink.tap()
         XCTAssertTrue(selectedDrink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+
+        if decaf {
+            let toggle = app.switches["addDrinkDecafToggle"]
+            XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            toggle.tap()
+        }
 
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout: readinessTimeout))
@@ -265,7 +268,7 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
 
     // Checks the captured preparation and preserves the distinction between unknown and zero.
     @MainActor
-    private func assertUnknownCaffeine(in app: XCUIApplication, preparation: String) {
+    private func assertUnknownCaffeine(in app: XCUIApplication, preparation: String, shots: Int) {
         let detail = app.collectionViews["statsDrinkEntryDetailList"]
         XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
         let amount = detail.staticTexts["statsCaffeineAmount"]
@@ -274,6 +277,6 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         XCTAssertTrue(amount.label.contains("Unknown"))
         XCTAssertTrue(variant.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(variant.label.contains(preparation))
-        XCTAssertFalse(detail.staticTexts["statsCaffeineShotCount"].exists)
+        XCTAssertTrue(detail.staticTexts["statsCaffeineShotCount"].label.contains("\(shots)"))
     }
 }

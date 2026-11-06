@@ -15,9 +15,25 @@
                 "rule": {
                     "kind": "unknown"
                 }
+            },
+            {
+                "variant": "decaf",
+                "rule": {
+                    "kind": "unknown"
+                }
             }
         ],
-        "defaultCaffeineVariant": "regular"
+        "defaultCaffeineVariant": "regular",
+        "shotConfiguration": {
+            "supportedCounts": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "defaultCount": 2
+        }
     },
     {
         "id": "cappuccino",
@@ -35,9 +51,25 @@
                 "rule": {
                     "kind": "unknown"
                 }
+            },
+            {
+                "variant": "decaf",
+                "rule": {
+                    "kind": "unknown"
+                }
             }
         ],
-        "defaultCaffeineVariant": "regular"
+        "defaultCaffeineVariant": "regular",
+        "shotConfiguration": {
+            "supportedCounts": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "defaultCount": 2
+        }
     },
     {
         "id": "iced-coffee",
@@ -52,6 +84,12 @@
         "caffeineOptions": [
             {
                 "variant": "regular",
+                "rule": {
+                    "kind": "unknown"
+                }
+            },
+            {
+                "variant": "decaf",
                 "rule": {
                     "kind": "unknown"
                 }
@@ -75,9 +113,25 @@
                 "rule": {
                     "kind": "unknown"
                 }
+            },
+            {
+                "variant": "decaf",
+                "rule": {
+                    "kind": "unknown"
+                }
             }
         ],
-        "defaultCaffeineVariant": "regular"
+        "defaultCaffeineVariant": "regular",
+        "shotConfiguration": {
+            "supportedCounts": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "defaultCount": 2
+        }
     },
     {
         "id": "coffee-with-milk",
@@ -92,6 +146,12 @@
         "caffeineOptions": [
             {
                 "variant": "regular",
+                "rule": {
+                    "kind": "unknown"
+                }
+            },
+            {
+                "variant": "decaf",
                 "rule": {
                     "kind": "unknown"
                 }
@@ -115,23 +175,9 @@
                 "rule": {
                     "kind": "unknown"
                 }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
-    },
-    {
-        "id": "frappe",
-        "name": "Frappe",
-        "categoryID": "coffee",
-        "sortOrder": 70,
-        "isRetired": false,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0.99
-        },
-        "caffeineOptions": [
+            },
             {
-                "variant": "regular",
+                "variant": "decaf",
                 "rule": {
                     "kind": "unknown"
                 }
@@ -143,7 +189,7 @@
         "id": "americano",
         "name": "Americano",
         "categoryID": "coffee",
-        "sortOrder": 80,
+        "sortOrder": 70,
         "isRetired": false,
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -155,41 +201,7 @@
                 "rule": {
                     "kind": "unknown"
                 }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
-    },
-    {
-        "id": "mocha",
-        "name": "Mocha",
-        "categoryID": "coffee",
-        "sortOrder": 90,
-        "isRetired": false,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0.862
-        },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "unknown"
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
-    },
-    {
-        "id": "decaf-coffee",
-        "name": "Decaf coffee",
-        "categoryID": "coffee",
-        "sortOrder": 100,
-        "isRetired": false,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0.99
-        },
-        "caffeineOptions": [
+            },
             {
                 "variant": "decaf",
                 "rule": {
@@ -197,26 +209,16 @@
                 }
             }
         ],
-        "defaultCaffeineVariant": "decaf"
-    },
-    {
-        "id": "turkish-coffee",
-        "name": "Turkish coffee",
-        "categoryID": "coffee",
-        "sortOrder": 110,
-        "isRetired": false,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0.95
-        },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "unknown"
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
+        "defaultCaffeineVariant": "regular",
+        "shotConfiguration": {
+            "supportedCounts": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "defaultCount": 2
+        }
     }
 ]

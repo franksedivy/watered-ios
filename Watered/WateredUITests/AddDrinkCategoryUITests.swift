@@ -70,6 +70,116 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertFalse(types.buttons["addDrinkTypeScrollView.still-water"].isSelected)
     }
 
+    // Changing preparation keeps the chosen cup volume and hides unsupported controls.
+    @MainActor
+    func testCoffeePreparationPreservesVolume() {
+        let app = openAddDrink()
+        let wheel = app.pickerWheels.firstMatch
+        wheel.adjust(toPickerWheelValue: "500 ml")
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        let toggle = app.switches["addDrinkDecafToggle"]
+        XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        toggle.tap()
+        XCTAssertEqual(toggle.value as? String, "1")
+        let shots = app.steppers["addDrinkShotStepper"]
+        XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
+        XCTAssertEqual(shots.value as? String, "2")
+        shots.buttons["Increment"].tap()
+        XCTAssertEqual(shots.value as? String, "3")
+        for expected in [2, 1, 0] {
+            shots.buttons["Decrement"].tap()
+            XCTAssertEqual(shots.value as? String, "\(expected)")
+            XCTAssertEqual(wheel.value as? String, "500 ml")
+        }
+        XCTAssertFalse(shots.buttons["Decrement"].isEnabled)
+        XCTAssertEqual(wheel.value as? String, "500 ml")
+        app.buttons["addDrinkCategoryScrollView.water"].tap()
+        XCTAssertFalse(toggle.exists)
+        XCTAssertFalse(shots.exists)
+        XCTAssertEqual(wheel.value as? String, "500 ml")
+    }
+
+    // Dismissing retains the unsaved preparation; successfully saving clears it.
+    @MainActor
+    func testDismissedDraftRestoresAndSuccessfulSaveClearsIt() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        let toggle = app.switches["addDrinkDecafToggle"]
+        XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        toggle.tap()
+        let shots = app.steppers["addDrinkShotStepper"]
+        shots.buttons["Increment"].tap()
+        app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+
+        let submit = app.buttons["addDrinkSubmitButton"]
+        for _ in 0..<3 {
+            if !submit.exists { break }
+            app.navigationBars["Add drink"].swipeDown()
+        }
+        XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
+        app.buttons["addDrinkActionButton"].tap()
+        XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
+        XCTAssertEqual(toggle.value as? String, "1")
+        XCTAssertEqual(shots.value as? String, "3")
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "500 ml")
+        XCTAssertTrue(app.buttons["addDrinkTypeScrollView.latte"].isSelected)
+
+        submit.tap()
+        XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
+        app.buttons["addDrinkActionButton"].tap()
+        XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
+        XCTAssertFalse(submit.isEnabled)
+        XCTAssertFalse(app.scrollViews["addDrinkTypeScrollView"].exists)
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "330 ml")
+    }
+
+    @MainActor
+    func testAppRestartDiscardsUnsavedDraft() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        app.terminate()
+        app.launch()
+        let add = app.buttons["addDrinkActionButton"]
+        XCTAssertTrue(add.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        add.tap()
+        let submit = app.buttons["addDrinkSubmitButton"]
+        XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
+        XCTAssertFalse(submit.isEnabled)
+        XCTAssertFalse(app.scrollViews["addDrinkTypeScrollView"].exists)
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "330 ml")
+    }
+
+    @MainActor
+    func testProfileUnitChangeDoesNotReinterpretUnsavedDraft() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.water"].tap()
+        app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        let submit = app.buttons["addDrinkSubmitButton"]
+        for _ in 0..<3 {
+            if !submit.exists { break }
+            app.navigationBars["Add drink"].swipeDown()
+        }
+        XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
+        let profile = app.buttons["profileButton"]
+        XCTAssertTrue(profile.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        profile.tap()
+        let picker = app.segmentedControls["displayUnitPicker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: readinessTimeout))
+        picker.buttons["US fl oz"].tap()
+        app.buttons["profileDoneButton"].tap()
+        XCTAssertTrue(picker.waitForNonExistence(timeout: readinessTimeout))
+        app.buttons["addDrinkActionButton"].tap()
+        XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "500 ml")
+        submit.tap()
+        XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
+        app.buttons["addDrinkActionButton"].tap()
+        XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
+        XCTAssertFalse(submit.isEnabled)
+        XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "12 US fl oz")
+    }
+
     // Opens the sheet with an empty store and predictable units for category interaction checks.
     @MainActor
     private func openAddDrink() -> XCUIApplication {

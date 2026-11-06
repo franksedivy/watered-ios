@@ -62,6 +62,7 @@ struct AddDrinkActionButton: View {
                         } label: {
                             Text(option.label)
                         }
+                        .accessibilityIdentifier("recentDrink.\(option.drinkID)")
                         .accessibilityHint("Adds this drink again now.")
                     }
                 }

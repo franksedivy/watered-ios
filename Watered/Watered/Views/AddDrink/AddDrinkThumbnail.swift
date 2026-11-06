@@ -4,9 +4,9 @@
 //
 
 import SwiftUI
+import UIKit
 
-/// Provisional, asset-free top-down drink illustrations for the selection prototype.
-/// Replace with catalogue artwork later without changing selection or persistence.
+/// Displays bundled artwork named by catalogue ID, with an illustration when artwork is absent.
 struct AddDrinkThumbnail: View {
     let drinkID: String
     let categoryID: String
@@ -26,6 +26,20 @@ struct AddDrinkThumbnail: View {
     }
 
     var body: some View {
+        Group {
+            if let artwork = UIImage(named: drinkID) {
+                Image(uiImage: artwork)
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                placeholder
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var placeholder: some View {
         ZStack {
             Circle()
                 .fill(.white.opacity(0.8))
@@ -51,7 +65,6 @@ struct AddDrinkThumbnail: View {
                 .rotationEffect(.degrees(-30))
                 .padding(8)
         }
-        .accessibilityHidden(true)
     }
 
     @ViewBuilder

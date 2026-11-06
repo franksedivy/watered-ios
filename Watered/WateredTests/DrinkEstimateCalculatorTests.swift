@@ -11,6 +11,15 @@ import Testing
 
 @MainActor
 struct DrinkEstimateCalculatorTests {
+    // Zero is a known count for a known per-shot rule; negatives remain invalid.
+    @Test func zeroShotsProduceZeroForKnownPerShotRule() throws {
+        let amount = DrinkAmount(value: 330, unit: .milliliters)
+        #expect(try DrinkEstimateCalculator.caffeineAmount(for: amount, rule: .perShot(amount: 60), shotCount: 0) == 0)
+        #expect(throws: DrinkEstimateCalculator.CalculationError.invalidShotCount) {
+            _ = try DrinkEstimateCalculator.caffeineAmount(for: amount, rule: .perShot(amount: 60), shotCount: -1)
+        }
+    }
+
     // GIVEN a 250 ml drink with a contribution ratio of 0.906,
     // WHEN its hydration contribution is calculated,
     // THEN the result is 226.5 ml.

@@ -74,6 +74,15 @@ struct PersistentDrinkEntryTests {
         #expect(restored.catalogueSnapshot.caffeineAmount == 0)
     }
 
+    @Test func persistentEntryPreservesZeroShotsAndRejectsNegativeShots() throws {
+        let record = PersistentDrinkEntry(drinkEntry: makeEntry())
+        record.shotCount = 0
+        let restored = try #require(record.drinkEntry())
+        #expect(restored.catalogueSnapshot.shotCount == 0)
+        record.shotCount = -1
+        #expect(record.drinkEntry() == nil)
+    }
+
     private func makeEntry() -> DrinkEntry {
         let snapshot = DrinkCatalogueSnapshot(
             drinkID: "missing-from-current-catalogue",

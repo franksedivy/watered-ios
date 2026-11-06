@@ -201,6 +201,19 @@ struct DrinkPreparationTests {
         }
     }
 
+    // Schema 2 permits zero; schema 1 retains its original positive-shot contract.
+    @Test func schemaTwoAcceptsZeroShotPreparation() throws {
+        let drink = DrinkDefinition(
+            id: "test-coffee", name: "Coffee", categoryID: "coffee", sortOrder: 0,
+            isRetired: false, shotConfiguration: ShotConfiguration(supportedCounts: [0, 1], defaultCount: 0)
+        )
+        let catalogue = DrinkCatalogue(
+            schemaVersion: 2, version: "test", categories: [DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 0)],
+            drinks: [drink]
+        )
+        try catalogue.validate()
+    }
+
     // GIVEN a non-default per-shot option without shot configuration, when validated,
     // THEN the catalogue rejects it even though the default option needs no shots.
     @Test func rejectsMissingShotConfiguration() {

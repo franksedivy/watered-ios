@@ -212,8 +212,7 @@ final class WateredUITests: XCTestCase {
     }
     
     // Given an empty history, when a drink is logged and its recent shortcut
-    // is tapped, then Recents appears, another drink is added, and the sheet
-    // closes without requiring the submit button again.
+    // is tapped in the long-press menu, then another drink is added without opening the sheet.
     @MainActor
     func testAddingRecentDrinkUpdatesTodayTotalAmount() throws {
         let app = launchIsolatedApp()
@@ -243,20 +242,11 @@ final class WateredUITests: XCTestCase {
             "The first drink should bring today's total to 330 ml"
         )
         
-        addDrinkButton.tap()
-        XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
-        XCTAssertTrue(recentDrinksRow.waitForExistence(timeout: 3))
-        XCTAssertFalse(submitButton.isEnabled)
-        XCTAssertFalse(app.scrollViews["addDrinkTypeScrollView"].exists)
-        
-        let firstRecentDrinkButton = recentDrinksRow.buttons.firstMatch
-        XCTAssertTrue(firstRecentDrinkButton.waitForExistence(timeout: 3))
-        firstRecentDrinkButton.tap()
-        
-        XCTAssertTrue(
-            submitButton.waitForNonExistence(timeout: 3),
-            "Tapping a recent drink should close the sheet"
-        )
+        addDrinkButton.press(forDuration: 1)
+        let recent = app.buttons["recentDrink.still-water"]
+        XCTAssertTrue(recent.waitForExistence(timeout: 5))
+        recent.tap()
+        XCTAssertFalse(submitButton.exists, "Repeating from the menu should not open the form")
         XCTAssertTrue(
             totalAmountText.wait(for: \.label, toEqual: "660 ml", timeout: 3),
             "Repeating the 330 ml drink should bring today's total to 660 ml"
@@ -274,12 +264,12 @@ final class WateredUITests: XCTestCase {
         addButton.tap()
         selectWaterCategory(in: app)
 
-        let mineralWater = app.buttons["addDrinkTypeScrollView.mineral-water"]
-        XCTAssertTrue(mineralWater.waitForExistence(timeout: 3))
-        XCTAssertTrue(mineralWater.wait(for: \.isHittable, toEqual: true, timeout: 3))
-        mineralWater.tap()
+        let sparklingWater = app.buttons["addDrinkTypeScrollView.sparkling-water"]
+        XCTAssertTrue(sparklingWater.waitForExistence(timeout: 3))
+        XCTAssertTrue(sparklingWater.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        sparklingWater.tap()
         XCTAssertTrue(
-            mineralWater.wait(for: \.isSelected, toEqual: true, timeout: 3),
+            sparklingWater.wait(for: \.isSelected, toEqual: true, timeout: 3),
             app.debugDescription
         )
 
@@ -292,7 +282,7 @@ final class WateredUITests: XCTestCase {
         let historyRow = app.buttons.matching(identifier: "statsDrinkEntryLink").firstMatch
         XCTAssertTrue(historyRow.waitForExistence(timeout: 3))
         historyRow.tap()
-        XCTAssertTrue(app.navigationBars["Mineral water"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Sparkling water"].waitForExistence(timeout: 3))
 
         let ratio = app.descendants(matching: .any)
             .matching(identifier: "statsHydrationRatio").firstMatch

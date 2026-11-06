@@ -7,12 +7,23 @@
 
 import SwiftUI
 
+/// An unsaved form retained by the app shell only for the current session.
+struct AddDrinkSheetDraft: Equatable {
+    var categoryID: String?
+    var drinkID: String?
+    var caffeineVariant: CaffeineVariant
+    var shotCount: Int
+    var volumeValue: Double
+    var unit: LiquidUnit
+}
+
 /// Presents category, drink type, preparation and volume before submitting a new entry.
 ///
 /// The parent owns persistence, success analytics, error recovery and sheet dismissal.
 struct AddDrinkView: View {
+    @Binding private var retainedDraft: AddDrinkSheetDraft?
     private let catalogue: DrinkCatalogue
-    private let defaultUnit: LiquidUnit
+    @State private var defaultUnit: LiquidUnit
     private let onAddDrink: (DrinkEntry, AddDrinkSubmissionMethod) -> Void
 
     /// The category whose drinks expand inline; nil until the user chooses one.
@@ -23,39 +34,60 @@ struct AddDrinkView: View {
     @State private var selectedVolumeValue: Double
     @State private var isShowingPreparationError = false
     @State private var selectedDetent: PresentationDetent = .height(440)
-    @State private var isShowingPreparation = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Creates the form from a validated catalogue. Recent shortcuts are hidden for this prototype.
     ///
-    /// Starts without a selection and keeps Volume visible while categories expand inline.
+    /// Restores an unsaved session draft, otherwise starts without a selection.
     ///
     /// - Parameters:
     ///   - catalogue: Definitions available for new logs.
     ///   - defaultUnit: The app's applied display unit.
     ///   - recentDrinkOptions: Retained for caller compatibility; hidden in this prototype.
+    ///   - retainedDraft: Session-only storage owned by the app shell.
     ///   - onAddDrink: Receives a freshly resolved entry and its submission method.
     init(
         catalogue: DrinkCatalogue,
         defaultUnit: LiquidUnit,
         recentDrinkOptions: [RecentDrinkOption],
+        retainedDraft: Binding<AddDrinkSheetDraft?> = .constant(nil),
         onAddDrink: @escaping (DrinkEntry, AddDrinkSubmissionMethod) -> Void
     ) {
         self.catalogue = catalogue
-        self.defaultUnit = defaultUnit
+        self._defaultUnit = State(initialValue: retainedDraft.wrappedValue?.unit ?? defaultUnit)
+        self._retainedDraft = retainedDraft
         self.onAddDrink = onAddDrink
 
-        _selectedCategoryID = State(initialValue: nil)
-        _selectedDrinkID = State(initialValue: nil)
-        _selectedCaffeineVariant = State(initialValue: .regular)
-        _selectedShotCount = State(initialValue: 1)
-        _selectedVolumeValue = State(initialValue: Self.defaultVolumeValue(for: defaultUnit))
+        let saved = retainedDraft.wrappedValue
+        _selectedCategoryID = State(initialValue: saved?.categoryID)
+        _selectedDrinkID = State(initialValue: saved?.drinkID)
+        _selectedCaffeineVariant = State(initialValue: saved?.caffeineVariant ?? .regular)
+        _selectedShotCount = State(initialValue: saved?.shotCount ?? 1)
+        _selectedVolumeValue = State(initialValue: saved?.volumeValue ?? Self.defaultVolumeValue(for: defaultUnit))
+        let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
+        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
+        _selectedDetent = State(initialValue: saved?.categoryID == nil
+            ? .height(440) : .height(hasPreparation ? 720 : 600))
     }
 
-    /// A category reveals its drink cards by raising the sheet, not replacing the volume wheel.
+    private var currentDraft: AddDrinkSheetDraft {
+        AddDrinkSheetDraft(
+            categoryID: selectedCategoryID, drinkID: selectedDrinkID,
+            caffeineVariant: selectedCaffeineVariant, shotCount: selectedShotCount,
+            volumeValue: selectedVolumeValue, unit: defaultUnit
+        )
+    }
+
+    /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
     private var expandedDetent: PresentationDetent {
-        dynamicTypeSize.isAccessibilitySize ? .large : .height(600)
+        if dynamicTypeSize.isAccessibilitySize { return .large }
+        return hasPreparationOptions ? .height(720) : .height(600)
+    }
+
+    private var hasPreparationOptions: Bool {
+        guard let definition = selectedDefinition else { return false }
+        return definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil
     }
 
     private var selectionAnimation: Animation? {
@@ -120,7 +152,6 @@ struct AddDrinkView: View {
                 selectedDrinkID = defaultDrink.id
                 selectedCaffeineVariant = defaultDrink.defaultCaffeineVariant
                 selectedShotCount = defaultDrink.shotConfiguration?.defaultCount ?? 1
-                isShowingPreparation = false
             }
             // Do not shrink a sheet the user has already expanded manually.
             if selectedDetent != .large {
@@ -137,10 +168,12 @@ struct AddDrinkView: View {
     /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
         withAnimation(selectionAnimation) {
-            isShowingPreparation = false
             selectedDrinkID = definition.id
             selectedCaffeineVariant = definition.defaultCaffeineVariant
             selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
+            if selectedDetent != .large {
+                selectedDetent = expandedDetent
+            }
         }
         wateredLog("Add Drink selection changed to \(definition.id)")
     }
@@ -170,7 +203,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Keeps the volume wheel outside the scrolling selection sections.
+    /// Bounds the wheel below preparation so its drawing and hit area cannot overlap controls.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
@@ -185,6 +218,7 @@ struct AddDrinkView: View {
             .pickerStyle(.wheel)
             .labelsHidden()
             .frame(height: 216)
+            .clipped()
             .accessibilityIdentifier("addDrinkVolumePicker")
             .accessibilityLabel("Drink volume")
             .accessibilityValue("\(Int(selectedVolumeValue)) \(defaultUnit.rawValue)")
@@ -252,13 +286,6 @@ struct AddDrinkView: View {
                                         ? categoryTint(definition.categoryID) : Color.primary.opacity(0.06),
                                     in: RoundedRectangle(cornerRadius: 18)
                                 )
-                                .overlay(alignment: .topTrailing) {
-                                    if selectedDrinkID == definition.id {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.white, categoryTint(definition.categoryID))
-                                            .padding(5)
-                                    }
-                                }
                             Text(definition.name)
                                 .font(.callout)
                                 .foregroundStyle(categoryTint(definition.categoryID))
@@ -281,66 +308,81 @@ struct AddDrinkView: View {
         .id(selectedCategoryID)
     }
 
-    /// Preparation stays out of the fast path, without removing existing controls.
+    /// Shows only the preparation choices supported by the selected definition.
     @ViewBuilder
     private var preparationSection: some View {
-        if let definition = selectedDefinition,
-           definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil {
-            DisclosureGroup("Preparation", isExpanded: $isShowingPreparation) {
-                VStack(alignment: .leading, spacing: 12) {
-                    if definition.caffeineOptions.count > 1 {
-                        Text("Caffeine").font(.subheadline)
-                        Picker("Caffeine", selection: $selectedCaffeineVariant) {
-                            ForEach(definition.caffeineOptions, id: \.variant) { option in
-                                Text(option.variant.rawValue.capitalized).tag(option.variant)
-                            }
+        if let definition = selectedDefinition, hasPreparationOptions {
+            VStack(spacing: 12) {
+                if definition.caffeineOptions.contains(where: { $0.variant == .regular }),
+                   definition.caffeineOptions.contains(where: { $0.variant == .decaf }) {
+                    Toggle(isOn: Binding(
+                        get: { selectedCaffeineVariant == .decaf },
+                        set: { isDecaf in
+                            let variant: CaffeineVariant = isDecaf ? .decaf : .regular
+                            guard variant != selectedCaffeineVariant else { return }
+                            selectedCaffeineVariant = variant
+                            wateredLog("Add Drink decaf changed to \(isDecaf ? "enabled" : "disabled")")
                         }
-                        .pickerStyle(.segmented)
-                        .accessibilityIdentifier("addDrinkCaffeinePicker")
-                    }
-                    if let configuration = definition.shotConfiguration {
-                        Text("Shots").font(.subheadline)
-                        Picker("Shots", selection: $selectedShotCount) {
-                            ForEach(configuration.supportedCounts.sorted(), id: \.self) { count in
-                                Text("\(count)").tag(count)
-                            }
+                    )) {
+                        Label {
+                            Text("Decaffeinated")
+                        } icon: {
+                            Image(systemName: selectedCaffeineVariant == .decaf ? "bolt.slash" : "bolt")
+                                .foregroundStyle(.brown)
                         }
-                        .pickerStyle(.segmented)
-                        .accessibilityIdentifier("addDrinkShotPicker")
                     }
+                    .accessibilityIdentifier("addDrinkDecafToggle")
                 }
-                .padding(.top, 12)
+                if let configuration = definition.shotConfiguration {
+                    if definition.caffeineOptions.count > 1 {
+                        Divider()
+                    }
+                    let counts = configuration.supportedCounts.sorted()
+                    Stepper(value: Binding(
+                        get: { counts.firstIndex(of: selectedShotCount) ?? 0 },
+                        set: { index in
+                            let count = counts[index]
+                            guard count != selectedShotCount else { return }
+                            wateredLog("Add Drink shots changed from \(selectedShotCount) to \(count)")
+                            selectedShotCount = count
+                        }
+                    ), in: 0...(counts.count - 1)) {
+                        Label {
+                            Text("Shots: \(selectedShotCount)")
+                        } icon: {
+                            Image(systemName: "cup.and.saucer")
+                                .foregroundStyle(.brown)
+                        }
+                    }
+                    .accessibilityIdentifier("addDrinkShotStepper")
+                    .accessibilityValue("\(selectedShotCount)")
+                }
             }
+            .padding(16)
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+            .tint(categoryTint(definition.categoryID))
             .padding(.horizontal, 20)
         }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(selectedCategoryID == nil ? "Type" : "Select your drink")
-                    .font(.headline)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.horizontal, 20)
-                categoryRow
-
-                if selectedCategoryID != nil {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            drinkRow
-                            preparationSection
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(selectedCategoryID == nil ? "Type" : "Select your drink")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, 20)
+                    categoryRow
+                    if selectedCategoryID != nil {
+                        drinkRow
+                        preparationSection
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .transition(.opacity)
-                } else {
-                    Spacer(minLength: 0)
+                    volumeSection
                 }
+                .padding(.top, 16)
             }
-            .padding(.top, 16)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                volumeSection
-            }
+            .scrollBounceBehavior(.basedOnSize)
             .accessibilityIdentifier("addDrinkScreen")
             .navigationTitle("Add drink")
             .navigationSubtitle("Now, change time")
@@ -365,14 +407,17 @@ struct AddDrinkView: View {
             }
             .onAppear {
                 wateredLog("Add Drink sheet appeared with unit \(defaultUnit.rawValue)")
+                if retainedDraft != nil {
+                    wateredLog("Add Drink restored unsaved session draft")
+                } else {
+                    wateredLog("Add Drink opened with a fresh draft")
+                }
             }
         }
-        .presentationDetents([.height(440), .height(600), .large], selection: $selectedDetent)
-        .onChange(of: isShowingPreparation) { _, isExpanded in
-            if isExpanded {
-                withAnimation(selectionAnimation) { selectedDetent = .large }
-            }
+        .onChange(of: currentDraft) { _, draft in
+            retainedDraft = draft
         }
+        .presentationDetents([.height(440), .height(600), .height(720), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

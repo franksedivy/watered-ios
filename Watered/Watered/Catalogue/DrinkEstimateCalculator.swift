@@ -68,7 +68,7 @@ nonisolated enum DrinkEstimateCalculator {
     /// - Parameters:
     ///   - amount: The consumed liquid amount, which mus tbe positive and finite
     ///   - rule: The caffeine rule to apply.
-    ///   - shotCount: The positive shot count required by a per-shot rule.
+    ///   - shotCount: The nonnegative shot count required by a per-shot rule.
     /// - Returns: Estimated caffeine in milligrams, or nil for an unknown rule.
     /// - Throws: A claculation error for invalid inputs or a non-finite result.
     static func caffeineAmount(
@@ -94,7 +94,7 @@ nonisolated enum DrinkEstimateCalculator {
             guard perShotAmount.isFinite && perShotAmount >= 0 else {
                 throw CalculationError.invalidCaffeineRule
             }
-            guard let shotCount = shotCount, shotCount > 0 else {
+            guard let shotCount = shotCount, shotCount >= 0 else {
                 throw CalculationError.invalidShotCount
             }
             caffeine = perShotAmount * Double(shotCount)

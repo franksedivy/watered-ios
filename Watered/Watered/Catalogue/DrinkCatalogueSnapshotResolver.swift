@@ -16,7 +16,7 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
     }
     
     /// Identifies the calculation logic used to produce saved estimates.
-    static let calculationVersion = "1"
+    static let calculationVersion = "2"
     
     private let catalogue: DrinkCatalogue
     

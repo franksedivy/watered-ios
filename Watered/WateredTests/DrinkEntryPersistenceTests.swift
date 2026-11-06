@@ -11,6 +11,48 @@ import Testing
 
 @MainActor
 struct DrinkEntryPersistenceTests {
+    // GIVEN Mineral water saved before its removal, when history is loaded with the new catalogue,
+    // THEN its captured facts survive while it cannot appear in new-drink shortcuts.
+    @Test func removedMineralWaterRemainsInSavedHistoryButNotRecents() throws {
+        let container = try ModelContainer(
+            for: PersistentDrinkEntry.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        context.autosaveEnabled = false
+        let snapshot = DrinkCatalogueSnapshot(
+            drinkID: "mineral-water",
+            drinkName: "Mineral water",
+            caffeineVariant: .regular,
+            shotCount: nil,
+            hydrationContribution: 330,
+            caffeineAmount: 0,
+            catalogueVersion: "development-2",
+            calculationVersion: "1",
+            catalogueSchemaVersion: 1
+        )
+        let entry = DrinkEntry(
+            amount: DrinkAmount(value: 330, unit: .milliliters),
+            date: Date(timeIntervalSince1970: 1000),
+            catalogueSnapshot: snapshot
+        )
+        try DrinkEntryPersistence.save(entry, in: context)
+
+        let records = try ModelContext(container).fetch(FetchDescriptor<PersistentDrinkEntry>())
+        let restored = try #require(records.first?.drinkEntry())
+        let catalogue = try DrinkCatalogueLoader().load()
+        let store = WateredStore(entries: [restored])
+
+        #expect(records.count == 1)
+        #expect(restored.id == entry.id)
+        #expect(restored.amount.value == 330)
+        #expect(restored.amount.unit == .milliliters)
+        #expect(restored.loggedAt == entry.loggedAt)
+        #expect(restored.catalogueSnapshot == snapshot)
+        #expect(catalogue.drink(withID: "mineral-water") == nil)
+        #expect(store.entries.count == 1)
+        #expect(store.recentDrinkOptions(in: catalogue).isEmpty)
+    }
     
     // GIVEN an empty store, when a drink is saved,
     // THEN a separate context reads one record with its identity, amount, dates, and source
