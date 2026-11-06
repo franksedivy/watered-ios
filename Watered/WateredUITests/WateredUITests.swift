@@ -243,7 +243,8 @@ final class WateredUITests: XCTestCase {
         )
         
         addDrinkButton.press(forDuration: 1)
-        let recent = app.buttons["recentDrink.still-water"]
+        // Native context-menu actions expose their visible label, not the SwiftUI identifier.
+        let recent = app.buttons["330 ml of Still water"]
         XCTAssertTrue(recent.waitForExistence(timeout: 5))
         recent.tap()
         XCTAssertFalse(submitButton.exists, "Repeating from the menu should not open the form")

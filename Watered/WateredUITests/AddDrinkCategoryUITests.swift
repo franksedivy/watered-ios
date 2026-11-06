@@ -84,14 +84,14 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let shots = app.steppers["addDrinkShotStepper"]
         XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
         XCTAssertEqual(shots.value as? String, "2")
-        shots.buttons["Increment"].tap()
+        shots.buttons["addDrinkShotStepper-Increment"].tap()
         XCTAssertEqual(shots.value as? String, "3")
         for expected in [2, 1, 0] {
-            shots.buttons["Decrement"].tap()
+            shots.buttons["addDrinkShotStepper-Decrement"].tap()
             XCTAssertEqual(shots.value as? String, "\(expected)")
             XCTAssertEqual(wheel.value as? String, "500 ml")
         }
-        XCTAssertFalse(shots.buttons["Decrement"].isEnabled)
+        XCTAssertFalse(shots.buttons["addDrinkShotStepper-Decrement"].isEnabled)
         XCTAssertEqual(wheel.value as? String, "500 ml")
         app.buttons["addDrinkCategoryScrollView.water"].tap()
         XCTAssertFalse(toggle.exists)
@@ -108,14 +108,11 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         toggle.tap()
         let shots = app.steppers["addDrinkShotStepper"]
-        shots.buttons["Increment"].tap()
+        shots.buttons["addDrinkShotStepper-Increment"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
 
         let submit = app.buttons["addDrinkSubmitButton"]
-        for _ in 0..<3 {
-            if !submit.exists { break }
-            app.navigationBars["Add drink"].swipeDown()
-        }
+        dismissAddDrinkSheet(in: app)
         XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
         app.buttons["addDrinkActionButton"].tap()
         XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
@@ -156,10 +153,7 @@ final class AddDrinkCategoryUITests: XCTestCase {
         app.buttons["addDrinkCategoryScrollView.water"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
         let submit = app.buttons["addDrinkSubmitButton"]
-        for _ in 0..<3 {
-            if !submit.exists { break }
-            app.navigationBars["Add drink"].swipeDown()
-        }
+        dismissAddDrinkSheet(in: app)
         XCTAssertTrue(submit.waitForNonExistence(timeout: readinessTimeout))
         let profile = app.buttons["profileButton"]
         XCTAssertTrue(profile.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
@@ -199,5 +193,22 @@ final class AddDrinkCategoryUITests: XCTestCase {
             app.scrollViews["addDrinkCategoryScrollView"].waitForExistence(timeout: readinessTimeout)
         )
         return app
+    }
+}
+
+// Drag the native grabber beyond the sheet, rather than swiping inside its toolbar.
+extension XCTestCase {
+    @MainActor
+    func dismissAddDrinkSheet(in app: XCUIApplication) {
+        let submit = app.buttons["addDrinkSubmitButton"]
+        for _ in 0..<3 {
+            let grabber = app.buttons["Sheet Grabber"]
+            XCTAssertTrue(grabber.waitForExistence(timeout: 5))
+            grabber.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+                .press(forDuration: 0.1, thenDragTo:
+                    app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98)))
+            if submit.waitForNonExistence(timeout: 2) { return }
+        }
+        XCTFail("Dragging the sheet grabber should dismiss Add drink.")
     }
 }

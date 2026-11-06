@@ -27,15 +27,15 @@ final class AddDrinkFailureUITests: XCTestCase {
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
         addButton.tap()
 
-        let water = app.scrollViews["addDrinkCategoryScrollView"]
+        let coffee = app.scrollViews["addDrinkCategoryScrollView"]
             .buttons["addDrinkCategoryScrollView.coffee"]
-        XCTAssertTrue(water.wait(for: \.isHittable, toEqual: true, timeout: 10))
-        water.tap()
+        XCTAssertTrue(coffee.wait(for: \.isHittable, toEqual: true, timeout: 10))
+        coffee.tap()
         let decaf = app.switches["addDrinkDecafToggle"]
         XCTAssertTrue(decaf.wait(for: \.isHittable, toEqual: true, timeout: 10))
         decaf.tap()
         let shots = app.steppers["addDrinkShotStepper"]
-        shots.buttons["Increment"].tap()
+        shots.buttons["addDrinkShotStepper-Increment"].tap()
 
         let volumeWheel = app.pickerWheels.firstMatch
         XCTAssertTrue(volumeWheel.waitForExistence(timeout: 3))
@@ -52,10 +52,7 @@ final class AddDrinkFailureUITests: XCTestCase {
         XCTAssertTrue(saveAlert.waitForNonExistence(timeout: 3))
         XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
         XCTAssertEqual(volumeWheel.value as? String, "500 ml")
-        for _ in 0..<3 {
-            if !submitButton.exists { break }
-            app.navigationBars["Add drink"].swipeDown()
-        }
+        dismissAddDrinkSheet(in: app)
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: 10))
         addButton.tap()
         XCTAssertTrue(decaf.waitForExistence(timeout: 10))
