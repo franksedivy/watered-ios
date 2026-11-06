@@ -51,7 +51,7 @@ final class ProfileUITests: XCTestCase {
         XCTAssertEqual(goalText.label, "Daily goal: 2700 ml")
     }
 
-    // GIVEN an isolated app, when the goal is edited several times and Profile is dismissed,
+    // GIVEN an isolated app, when the goal is edited several times and Done closes Profile,
     // THEN reopening Profile shows the final selected goal.
     @MainActor
     func testDismissingProfileCommitsFinalGoal() throws {
@@ -87,7 +87,9 @@ final class ProfileUITests: XCTestCase {
 
         let profileNavigationBar = app.navigationBars["Profile"]
         XCTAssertTrue(profileNavigationBar.waitForExistence(timeout: 3))
-        profileNavigationBar.swipeDown()
+        let doneButton = profileNavigationBar.buttons["profileDoneButton"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 3))
+        doneButton.tap()
         XCTAssertTrue(goalText.waitForNonExistence(timeout: 3))
 
         XCTAssertTrue(profileButton.waitForExistence(timeout: 3))

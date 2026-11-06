@@ -34,8 +34,21 @@ Update documentation alongside behaviour or architecture changes.
 ## Project Principles
 Model-first, small commits, tests, clean separation of concerns.
 
+See the [project principles](Docs/PRINCIPLES.md) for their rationale, product principles and applications of Apple’s design principles.
+
 ## Documentation
-Implementation details and decisions live in the wiki:
+
+Repository guidance:
+- [Project principles](Docs/PRINCIPLES.md)
+- [Agent guidance](AGENTS.md)
+- [Contributing](CONTRIBUTING.md)
+- [Architecture](Docs/ARCHITECTURE.md)
+- [Testing](Docs/TESTING.md) and [Continuous Integration](Docs/Continuous-Integration.md)
+- [Releasing](Docs/RELEASING.md)
+- [Decision-record template](Docs/decisions/TEMPLATE.md) and [handoff template](Docs/handoffs/TEMPLATE.md)
+
+The wiki retains research, narrative and historical implementation context. Repository guidance is the current reference for principles, architecture and workflow; reconcile overlapping wiki pages as they are updated.
+
 - [Architecture Overview](https://github.com/franksedivy/watered/wiki/Architecture-Overview)
 - [Decision Log](https://github.com/franksedivy/watered/wiki/Decision-Log)
 - [Persistence](https://github.com/franksedivy/watered/wiki/Persistence)
