@@ -18,6 +18,20 @@ nonisolated struct CaffeineOption: Codable, Equatable, Identifiable {
     /// The caffeine estimation rule for this prepapration.
     let rule: CaffeineRule
     
+    init(variant: CaffeineVariant, rule: CaffeineRule) {
+        self.variant = variant
+        self.rule = rule
+    }
+
+    private enum CodingKeys: String, CodingKey { case variant, rule }
+
+    init(from decoder: any Decoder) throws {
+        try CatalogueObjectKeys.require(decoder, allowed: ["variant", "rule"])
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        variant = try container.decode(CaffeineVariant.self, forKey: .variant)
+        rule = try container.decode(CaffeineRule.self, forKey: .rule)
+    }
+
     /// The option's identitiy within a single drink definition.
     ///
     /// A drink mus tnot contain multiple options for the same variant.

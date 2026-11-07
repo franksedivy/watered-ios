@@ -64,6 +64,7 @@ nonisolated struct DrinkCatalogueLoader {
         let decoder = JSONDecoder()
         let manifest = try decoder.decode(Manifest.self, from: data)
         try manifest.validate()
+        decoder.userInfo[.catalogueSchemaVersion] = manifest.schemaVersion
 
         var drinks: [DrinkDefinition] = []
         for source in manifest.categories {

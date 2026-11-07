@@ -7,8 +7,8 @@ as a folder resource. Files are not discovered by scanning the directory.
 ## Versions
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
-- `schemaVersion` identifies the assembled catalogue data contract, currently `2`.
-- `version` identifies the catalogue content release, currently `development-4`.
+- `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
+- `version` identifies the catalogue content release, currently `development-5`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -34,6 +34,58 @@ fail the load rather than exposing a partial catalogue. Unlisted files are ignor
 
 Only the four Water and seven Coffee definitions are approved in this slice.
 The remaining catalogue population, estimates and metadata review stay in #101.
+
+## Caffeine and alcohol structure (schema 3, #102)
+
+Every definition explicitly declares `caffeine` and `alcohol`. Neither missing fields
+nor `null` mean zero. Water uses:
+
+```json
+"caffeine": { "kind": "none" },
+"alcohol": { "kind": "none" }
+```
+
+`none` means known absence; `unknown` means no supported content estimate. Both kinds
+contain only `kind`. Coffee groups its preparation choices and default together:
+
+```json
+"caffeine": {
+    "kind": "options",
+    "defaultVariant": "regular",
+    "options": [
+        { "variant": "regular", "rule": { "kind": "perShot", "amount": 60 } },
+        { "variant": "decaf", "rule": { "kind": "perShot", "amount": 5 } }
+    ]
+},
+"alcohol": { "kind": "none" }
+```
+
+The existing `shotConfiguration` remains on shot-based drink definitions. Options
+must be nonempty, have unique variants and include the default. Numeric caffeine
+rules remain finite, nonnegative mg per shot or mg per 100 ml. An option may retain
+an explicitly unknown rule. Schema 3 rejects shot configuration without a per-shot rule.
+
+Alcohol uses `{"kind":"abv","value":0.05}` for a known 5% ABV, or
+`{"kind":"unknown"}` when unsupported. ABV must be a finite fraction from 0 to 1.
+Alcohol content does not automatically select a hydration policy. A separately
+selected `hydrationContributionRule: {"kind":"alcohol"}` requires known ABV and
+uses that single value with the existing calculation. Do not also supply
+`defaultABV` in the hydration object. This is schema support, not approval of an
+alcohol coefficient, an alcoholic seed drink, custom ABV UI or HealthKit mapping.
+
+Schema 3 rejects old top-level caffeine fields, parent booleans, extra fields in
+content objects, contradictory numeric rule fields and missing required values.
+The loader still reads schema 1/2 definitions with their original caffeine fields
+and alcohol hydration ABV. Where those definitions did not declare alcohol, it
+stays unknown. New encoding uses the nested structure.
+
+The in-memory definition exposes derived preparation adapters so water can still
+resolve a known zero and repeat existing `regular` snapshots. There is no extra
+stored caffeine flag or duplicate authored ABV. Saved entries do not persist these
+catalogue definitions: their snapshot and database formats are unchanged. No
+history rewrite or database migration accompanies schema 3. New logs and supported
+repeats capture `development-5` / schema 3; older snapshots retain their original
+versions, preparation and known or unknown estimates.
 
 ## Calculation compatibility
 
@@ -78,8 +130,9 @@ percentages display rounded toward negative infinity to at most one decimal;
 calculation precision and saved estimates are unchanged. Daily progress formatting
 is separate. Milk customisation, alcohol policy and HealthKit mapping remain deferred.
 
-Only content changes: manifest version 1, schema 2 and calculation version 2 remain
-unchanged. Existing saved unknown caffeine stays unknown. Supported repeats create
+The coffee-value update in `development-4` changed content only. The subsequent
+`development-5` structure update uses schema 3; manifest version 1 and calculation
+version 2 remain unchanged. Existing saved unknown caffeine stays unknown. Supported repeats create
 new entries with current estimates and retain the original selected shots, even if
 the default changed. Older Iced coffee snapshots have no shot count, so they remain
 readable but are excluded from Recents as unsupported preparations; no shots are

@@ -53,6 +53,7 @@ nonisolated enum CaffeineRule: Equatable, Codable {
         
         switch kind {
         case .perVolume:
+            try CatalogueObjectKeys.require(decoder, allowed: ["kind", "concentration"])
             let concentration = try container.decode(
                 Double.self,
                 forKey: .concentration
@@ -60,10 +61,12 @@ nonisolated enum CaffeineRule: Equatable, Codable {
             self = .perVolume(concentration: concentration)
             
         case .perShot:
+            try CatalogueObjectKeys.require(decoder, allowed: ["kind", "amount"])
             let amount = try container.decode(Double.self, forKey: .amount)
             self = .perShot(amount: amount)
             
         case .unknown:
+            try CatalogueObjectKeys.require(decoder, allowed: ["kind"])
             self = .unknown
         }
     }

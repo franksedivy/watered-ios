@@ -9,23 +9,6 @@
             "kind": "ratio",
             "ratio": 0.906
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 60
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular",
         "shotConfiguration": {
             "supportedCounts": [
                 0,
@@ -35,6 +18,29 @@
                 4
             ],
             "defaultCount": 2
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 60
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 5
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
         }
     },
     {
@@ -47,23 +53,6 @@
             "kind": "ratio",
             "ratio": 0.91
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 60
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular",
         "shotConfiguration": {
             "supportedCounts": [
                 0,
@@ -73,6 +62,29 @@
                 4
             ],
             "defaultCount": 1
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 60
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 5
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
         }
     },
     {
@@ -85,23 +97,6 @@
             "kind": "ratio",
             "ratio": 0.99
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 60
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular",
         "shotConfiguration": {
             "supportedCounts": [
                 0,
@@ -111,6 +106,29 @@
                 4
             ],
             "defaultCount": 2
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 60
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 5
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
         }
     },
     {
@@ -123,23 +141,6 @@
             "kind": "ratio",
             "ratio": 0.95
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 60
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular",
         "shotConfiguration": {
             "supportedCounts": [
                 0,
@@ -149,6 +150,29 @@
                 4
             ],
             "defaultCount": 1
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 60
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 5
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
         }
     },
     {
@@ -161,23 +185,29 @@
             "kind": "ratio",
             "ratio": 0.981
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perVolume",
-                    "concentration": 40
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 40
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 2
+                    }
                 }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perVolume",
-                    "concentration": 2
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
     },
     {
         "id": "cold-brew",
@@ -189,23 +219,29 @@
             "kind": "ratio",
             "ratio": 0.99
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perVolume",
-                    "concentration": 50
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 50
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 5
+                    }
                 }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perVolume",
-                    "concentration": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
     },
     {
         "id": "americano",
@@ -217,23 +253,6 @@
             "kind": "ratio",
             "ratio": 0.994
         },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 60
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "perShot",
-                    "amount": 5
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular",
         "shotConfiguration": {
             "supportedCounts": [
                 0,
@@ -243,6 +262,29 @@
                 4
             ],
             "defaultCount": 2
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 60
+                    }
+                },
+                {
+                    "variant": "decaf",
+                    "rule": {
+                        "kind": "perShot",
+                        "amount": 5
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
         }
     }
 ]
