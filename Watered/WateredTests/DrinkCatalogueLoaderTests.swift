@@ -23,7 +23,7 @@ struct DrinkCatalogueLoaderTests {
         )
 
         #expect(catalogue.schemaVersion == 2)
-        #expect(catalogue.version == "development-3")
+        #expect(catalogue.version == "development-4")
         #expect(catalogue.drinks.count == 11)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),
@@ -132,7 +132,7 @@ struct DrinkCatalogueLoaderTests {
     // GIVEN the approved coffee definitions in the bundled catalogue,
     // WHEN the catalogue is loaded,
     // THEN the drinks have the expected order, contribution ratios and caffeine preparations,
-    // with unreviewed caffeine amounts remaining explicitly unknown.
+    // with reviewed regular and decaf estimates.
     @Test func loadsReviewedCoffeeDefinitions() throws {
         let catalogue = try DrinkCatalogueLoader().load()
 
@@ -175,23 +175,26 @@ struct DrinkCatalogueLoaderTests {
                 drink.caffeineOptions == [
                     CaffeineOption(
                         variant: expectedDrink.variant,
-                        rule: .unknown
+                        rule: expectedDrink.id == "cold-brew" ? .perVolume(concentration: 50) :
+                            expectedDrink.id == "coffee-with-milk" ? .perVolume(concentration: 40) : .perShot(amount: 60)
                     ),
-                    CaffeineOption(variant: .decaf, rule: .unknown)
+                    CaffeineOption(variant: .decaf, rule: expectedDrink.id == "cold-brew" ? .perVolume(concentration: 5) :
+                        expectedDrink.id == "coffee-with-milk" ? .perVolume(concentration: 2) : .perShot(amount: 5))
                 ]
             )
         }
     }
 
-    // Preparation changes retain the cup volume and never invent caffeine estimates.
-    @Test func bundledCoffeePreparationsPreserveVolumeAndUnknownCaffeine() throws {
+    // Preparation changes retain cup volume and hydration while resolving caffeine independently.
+    @Test func bundledCoffeePreparationsPreserveVolumeAndResolveCaffeine() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
-        let shotDrinks: Set<String> = ["latte", "cappuccino", "espresso", "americano"]
+        let shotDrinks: Set<String> = ["latte", "cappuccino", "espresso", "americano", "iced-coffee"]
         for drink in catalogue.activeDrinks(inCategoryID: "coffee") {
             if shotDrinks.contains(drink.id) {
                 #expect(drink.shotConfiguration == ShotConfiguration(
-                    supportedCounts: [0, 1, 2, 3, 4], defaultCount: 2
+                    supportedCounts: [0, 1, 2, 3, 4],
+                    defaultCount: ["espresso", "cappuccino"].contains(drink.id) ? 1 : 2
                 ))
             } else {
                 #expect(drink.shotConfiguration == nil)
@@ -206,7 +209,12 @@ struct DrinkCatalogueLoaderTests {
                     #expect(entry.amount.value == 330)
                     #expect(entry.catalogueSnapshot.caffeineVariant == variant)
                     #expect(entry.catalogueSnapshot.shotCount == count)
-                    #expect(entry.catalogueSnapshot.caffeineAmount == nil)
+                    let regular = variant == .regular
+                    let expected = count.map { Double($0) * (regular ? 60 : 5) }
+                        ?? (drink.id == "cold-brew" ? (regular ? 165 : 16.5) : (regular ? 132 : 6.6))
+                    #expect(abs(try #require(entry.catalogueSnapshot.caffeineAmount) - expected) < 0.000001)
+                    #expect(entry.catalogueSnapshot.hydrationContribution ==
+                        (try DrinkEstimateCalculator.hydrationContribution(for: entry.amount, rule: drink.hydrationContributionRule)))
                 }
             }
         }

@@ -40,13 +40,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         )
     }
 
-    // GIVEN regular coffee with an unknown estimate, when its saved detail is opened,
-    // THEN caffeine remains unknown, the regular preparation and configured default shots are shown.
+    // GIVEN regular coffee with a reviewed estimate, when its saved detail is opened,
+    // THEN caffeine shows the saved estimate, the regular preparation and configured default shots are shown.
     @MainActor
-    func testCoffeeShowsUnknownCaffeineAndRegularPreparation() {
+    func testCoffeeShowsEstimatedCaffeineAndRegularPreparation() {
         let app = openDrinkDetail(drinkID: "latte", categoryID: "coffee")
 
-        assertUnknownCaffeine(in: app, preparation: "Regular", shots: 2)
+        assertCaffeine(in: app, preparation: "Regular", shots: 2, milligrams: 120)
 
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Stats caffeine details"
@@ -54,13 +54,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
         add(screenshot)
     }
 
-    // GIVEN decaf coffee with an unknown estimate, when its saved detail is opened,
+    // GIVEN decaf coffee with a reviewed estimate, when its saved detail is opened,
     // THEN the decaf preparation remains visible without claiming a zero caffeine amount.
     @MainActor
-    func testDecafShowsUnknownCaffeineAndDecafPreparation() {
+    func testDecafShowsEstimatedCaffeineAndDecafPreparation() {
         let app = openDrinkDetail(drinkID: "latte", categoryID: "coffee", decaf: true)
 
-        assertUnknownCaffeine(in: app, preparation: "Decaf", shots: 2)
+        assertCaffeine(in: app, preparation: "Decaf", shots: 2, milligrams: 10)
     }
 
     // GIVEN a drink with an explicitly zero caffeine estimate, when its detail is opened,
@@ -268,13 +268,13 @@ final class StatsDrinkEntryDetailUITests: XCTestCase {
 
     // Checks the captured preparation and preserves the distinction between unknown and zero.
     @MainActor
-    private func assertUnknownCaffeine(in app: XCUIApplication, preparation: String, shots: Int) {
+    private func assertCaffeine(in app: XCUIApplication, preparation: String, shots: Int, milligrams: Int) {
         let detail = app.collectionViews["statsDrinkEntryDetailList"]
         XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
         let amount = detail.staticTexts["statsCaffeineAmount"]
         let variant = detail.staticTexts["statsCaffeinePreparation"]
         XCTAssertTrue(amount.waitForExistence(timeout: readinessTimeout))
-        XCTAssertTrue(amount.label.contains("Unknown"))
+        XCTAssertTrue(amount.label.contains("\(milligrams) mg"))
         XCTAssertTrue(variant.waitForExistence(timeout: readinessTimeout))
         XCTAssertTrue(variant.label.contains(preparation))
         XCTAssertTrue(detail.staticTexts["statsCaffeineShotCount"].label.contains("\(shots)"))

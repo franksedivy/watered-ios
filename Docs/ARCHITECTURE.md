@@ -48,7 +48,7 @@ unit used by fresh/restored Add Drink forms and the recent menu. Settings `updat
 
 ## Catalogue and current UI boundary
 
-The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The current branch contains four Water and seven Coffee definitions under content development-3 / schema 2; the wider catalogue remains unfinished.
+The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The current branch contains four Water and seven Coffee definitions under content development-4 / schema 2; the wider catalogue remains unfinished.
 
 The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
 

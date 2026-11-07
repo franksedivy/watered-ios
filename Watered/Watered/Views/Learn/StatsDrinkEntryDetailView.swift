@@ -49,7 +49,7 @@ struct StatsDrinkEntryDetailView: View {
             return "Unknown"
         }
         let fraction = ratio.formatted(.number.precision(.fractionLength(0...6)))
-        let percentage = ratio.formatted(.percent.precision(.fractionLength(0...2)))
+        let percentage = ProgressFormatter().contributionPercentageString(from: ratio)
         return "\(fraction) (\(percentage))"
     }
 
