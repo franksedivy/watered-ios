@@ -32,12 +32,19 @@ Recents include only current, supported definitions and preparations, deduplicat
 `HydrationTracker` uses the entries supplied by its caller; calendar-day filtering is outside the tracker. Consumed volume and estimated hydration are different totals. Unknown hydration propagates as `nil`; zero and negative values remain meaningful. Breakdown grouping uses stable catalogue IDs and a deterministic latest name.
 
 `HydrationSnapshot` is a derived summary, distinct from the immutable `DrinkCatalogueSnapshot` saved with a drink. View data formats the summary and applies display clamping without rewriting saved estimates. Volume conversion and formatting live in `Utilities/`.
+`ViewData/AddDrinkVolumeSelection` retains an exact amount and source unit while
+preparing the Add Drink wheel in the applied Profile unit. Converted non-preset
+values are included without snapping; only a changed wheel selection replaces the
+amount. Session drafts and submission retain the captured value/unit rather than
+rounded display text. Recent labels use the same volume formatter with the applied
+unit; shortcut identity and repetition retain the original amount and preparation.
 
 ## Settings and goal history
 
 SwiftData stores drink entries, app settings and goal-change records. `AppSettingsPersistence.loadOrCreate` creates first-run settings and a baseline goal record together. Profile edits use a draft; dismissal saves the final changed goal once. Unchanged goals create no additional record. A failed goal save preserves the applied goal.
 
-Display-unit persistence is separate from goal changes. Settings `updatedAt` is not the timestamp of a specific goal change. Retaining goal history does not by itself prove that every historical screen applies historical goals.
+Display-unit persistence is separate from goal changes. Failed saves preserve the applied
+unit used by fresh/restored Add Drink forms and the recent menu. Settings `updatedAt` is not the timestamp of a specific goal change. Retaining goal history does not by itself prove that every historical screen applies historical goals.
 
 ## Catalogue and current UI boundary
 

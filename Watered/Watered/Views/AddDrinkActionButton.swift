@@ -23,15 +23,18 @@ struct AddDrinkActionButton: View {
     // Purpose: Stores the action that runs when the button is tapped.
     // Input: Supplied by the parent view that owns the add-drink sheet state.
     private let onTap: () -> Void
+    private let displayUnit: LiquidUnit
     private let recentDrinks: [RecentDrinkOption]
     private let onSelectRecent: (RecentDrinkOption) -> Void
 
     // MARK: - Initialisation
     init(
         recentDrinks: [RecentDrinkOption] = [],
+        displayUnit: LiquidUnit = .milliliters,
         onSelectRecent: @escaping (RecentDrinkOption) -> Void = { _ in },
         onTap: @escaping () -> Void
     ) {
+        self.displayUnit = displayUnit
         self.recentDrinks = Array(recentDrinks.prefix(3))
         self.onSelectRecent = onSelectRecent
         self.onTap = onTap
@@ -60,7 +63,7 @@ struct AddDrinkActionButton: View {
                         Button {
                             onSelectRecent(option)
                         } label: {
-                            Text(option.label)
+                            Text(option.label(displayedAs: displayUnit))
                         }
                         .accessibilityIdentifier("recentDrink.\(option.drinkID)")
                         .accessibilityHint("Adds this drink again now.")

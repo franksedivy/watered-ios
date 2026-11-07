@@ -41,6 +41,11 @@ final class AddDrinkFailureUITests: XCTestCase {
         XCTAssertTrue(volumeWheel.waitForExistence(timeout: 3))
         volumeWheel.adjust(toPickerWheelValue: "500 ml")
 
+        dismissAddDrinkSheet(in: app)
+        changeAddDrinkDisplayUnit(to: "US fl oz", in: app)
+        addButton.tap()
+        XCTAssertTrue(volumeWheel.waitForExistence(timeout: 10))
+
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
         submitButton.tap()
@@ -51,19 +56,20 @@ final class AddDrinkFailureUITests: XCTestCase {
 
         XCTAssertTrue(saveAlert.waitForNonExistence(timeout: 3))
         XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
-        XCTAssertEqual(volumeWheel.value as? String, "500 ml")
+        XCTAssertEqual(volumeWheel.value as? String, "16.907 US fl oz")
         dismissAddDrinkSheet(in: app)
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: 10))
         addButton.tap()
         XCTAssertTrue(decaf.waitForExistence(timeout: 10))
         XCTAssertEqual(decaf.value as? String, "1")
         XCTAssertEqual(shots.value as? String, "3")
-        XCTAssertEqual(volumeWheel.value as? String, "500 ml")
+        XCTAssertEqual(volumeWheel.value as? String, "16.907 US fl oz")
 
         submitButton.tap()
 
         XCTAssertTrue(submitButton.waitForNonExistence(timeout: 3))
 
+        changeAddDrinkDisplayUnit(to: "ml", in: app)
         let totalAmount = app.staticTexts["todayTotalAmountText"]
         XCTAssertTrue(totalAmount.waitForExistence(timeout: 3))
         XCTAssertTrue(

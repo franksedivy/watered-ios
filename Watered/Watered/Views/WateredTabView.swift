@@ -309,6 +309,7 @@ struct WateredTabView: View {
 
             AddDrinkActionButton(
                 recentDrinks: recentDrinkOptions,
+                displayUnit: displayUnit,
                 onSelectRecent: addRecentDrink
             ) {
                 wateredLog("Add Drink flow opened")
