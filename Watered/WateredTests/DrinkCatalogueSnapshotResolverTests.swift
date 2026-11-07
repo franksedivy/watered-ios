@@ -29,7 +29,7 @@ struct DrinkCatalogueSnapshotResolverTests {
         #expect(snapshot.drinkName == "Latte")
         #expect(snapshot.caffeineVariant == .regular)
         #expect(snapshot.shotCount == 2)
-        #expect(snapshot.caffeineAmount == nil)
+        #expect(snapshot.caffeineAmount == 120)
 
         let contribution = try #require(snapshot.hydrationContribution)
 
