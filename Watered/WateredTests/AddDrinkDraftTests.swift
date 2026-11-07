@@ -42,7 +42,7 @@ struct AddDrinkDraftTests {
         #expect(entry.amount.value == 8)
         #expect(entry.amount.unit == .imperialFluidOunces)
         #expect(abs(contribution - expected) < 0.000001)
-        #expect(entry.catalogueSnapshot.caffeineAmount == nil)
+        #expect(entry.catalogueSnapshot.caffeineAmount == 120)
     }
 
     // GIVEN an unavailable selection, when the draft is submitted,

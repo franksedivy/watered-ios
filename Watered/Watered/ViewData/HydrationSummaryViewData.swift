@@ -158,7 +158,7 @@ nonisolated struct HydrationSummaryViewData {
                 let totalHydrationBaseValue = VolumeCalculation.baseValue(from: totalHydrationVolume)
                 
                 let hydrationImpactProgress = totalHydrationBaseValue / totalLiquidBaseValue
-                let hydrationImpact = progressFormatter.percentageString(from: hydrationImpactProgress)
+                let hydrationImpact = progressFormatter.contributionPercentageString(from: hydrationImpactProgress)
                 
                 hydrationImpactText = "Hydration impact: \(hydrationImpact)"
                 hydrationImpactStyle = HydrationImpactStyle(hydrationImpactProgress: hydrationImpactProgress)

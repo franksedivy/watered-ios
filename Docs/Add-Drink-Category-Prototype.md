@@ -14,9 +14,10 @@ in original colours with aspect-fit sizing. Missing artwork uses the illustrativ
 fallback. The selected card uses the category colour without a tick overlay.
 
 Preparation is visible beneath the drink cards. All seven coffees offer regular /
-decaf; Latte, Cappuccino, Espresso and Americano also offer 0–4 shots, defaulting to
-2. Shots never resize the drink. Caffeine estimates remain unknown, including decaf
-and zero-shot choices. The decaf icon changes from bolt to bolt.slash; preparation
+decaf; Latte, Cappuccino, Espresso, Americano and Iced coffee also offer 0–4 shots.
+Espresso and Cappuccino default to one; the others default to two. Shots never resize
+the drink or change its hydration ratio. Caffeine uses the reviewed per-shot or
+per-volume defaults in [Drink Catalogue Files](Drink-Catalogue-Files.md). The decaf icon changes from bolt to bolt.slash; preparation
 icons are brown. Milk options, time editing and a liquid-filled wheel are deferred.
 
 The clipped volume wheel, cards and preparation share one vertical scroll layout.

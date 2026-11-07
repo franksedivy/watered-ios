@@ -13,13 +13,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 60
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 5
                 }
             }
         ],
@@ -49,13 +51,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 60
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 5
                 }
             }
         ],
@@ -68,7 +72,7 @@
                 3,
                 4
             ],
-            "defaultCount": 2
+            "defaultCount": 1
         }
     },
     {
@@ -85,39 +89,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 60
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
-                }
-            }
-        ],
-        "defaultCaffeineVariant": "regular"
-    },
-    {
-        "id": "espresso",
-        "name": "Espresso",
-        "categoryID": "coffee",
-        "sortOrder": 40,
-        "isRetired": false,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0.95
-        },
-        "caffeineOptions": [
-            {
-                "variant": "regular",
-                "rule": {
-                    "kind": "unknown"
-                }
-            },
-            {
-                "variant": "decaf",
-                "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 5
                 }
             }
         ],
@@ -134,6 +114,44 @@
         }
     },
     {
+        "id": "espresso",
+        "name": "Espresso",
+        "categoryID": "coffee",
+        "sortOrder": 40,
+        "isRetired": false,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeineOptions": [
+            {
+                "variant": "regular",
+                "rule": {
+                    "kind": "perShot",
+                    "amount": 60
+                }
+            },
+            {
+                "variant": "decaf",
+                "rule": {
+                    "kind": "perShot",
+                    "amount": 5
+                }
+            }
+        ],
+        "defaultCaffeineVariant": "regular",
+        "shotConfiguration": {
+            "supportedCounts": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "defaultCount": 1
+        }
+    },
+    {
         "id": "coffee-with-milk",
         "name": "Coffee with milk",
         "categoryID": "coffee",
@@ -147,13 +165,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perVolume",
+                    "concentration": 40
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perVolume",
+                    "concentration": 2
                 }
             }
         ],
@@ -173,13 +193,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perVolume",
+                    "concentration": 50
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perVolume",
+                    "concentration": 5
                 }
             }
         ],
@@ -199,13 +221,15 @@
             {
                 "variant": "regular",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 60
                 }
             },
             {
                 "variant": "decaf",
                 "rule": {
-                    "kind": "unknown"
+                    "kind": "perShot",
+                    "amount": 5
                 }
             }
         ],

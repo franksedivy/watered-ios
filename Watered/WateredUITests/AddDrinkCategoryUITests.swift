@@ -99,6 +99,30 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertEqual(wheel.value as? String, "500 ml")
     }
 
+    @MainActor
+    func testShotBasedDrinkDefaultsAndIcedCoffeeControls() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        let types = app.scrollViews["addDrinkTypeScrollView"]
+        let shots = app.steppers["addDrinkShotStepper"]
+        for (id, count) in [("latte", 2), ("cappuccino", 1), ("iced-coffee", 2), ("espresso", 1), ("americano", 2)] {
+            let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+            for _ in 0..<6 where !drink.isHittable { types.swipeLeft() }
+            XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            drink.tap()
+            XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
+            XCTAssertEqual(shots.value as? String, "\(count)")
+            if id == "iced-coffee" {
+                shots.buttons["addDrinkShotStepper-Increment"].tap()
+                XCTAssertEqual(shots.value as? String, "3")
+                let screenshot = XCTAttachment(screenshot: app.screenshot())
+                screenshot.name = "Iced coffee shot selection"
+                screenshot.lifetime = .keepAlways
+                add(screenshot)
+            }
+        }
+    }
+
     // Dismissing retains the unsaved preparation; successfully saving clears it.
     @MainActor
     func testDismissedDraftRestoresAndSuccessfulSaveClearsIt() {
