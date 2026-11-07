@@ -44,7 +44,10 @@ final class ProfileUITests: XCTestCase {
             XCTAssertTrue(goalText.wait(for: \.label, toEqual: expectedGoal, timeout: 3))
         }
 
-        app.navigationBars["Profile"].swipeDown()
+        // Close explicitly so this unit-formatting test does not depend on a sheet drag.
+        let doneButton = app.navigationBars["Profile"].buttons["profileDoneButton"]
+        XCTAssertTrue(doneButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        doneButton.tap()
         XCTAssertTrue(goalText.waitForNonExistence(timeout: 3))
         profileButton.tap()
         XCTAssertTrue(goalText.waitForExistence(timeout: 3))
