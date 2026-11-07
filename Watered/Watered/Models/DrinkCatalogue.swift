@@ -28,6 +28,28 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// The drink definitions, including any retained retired definitions
     let drinks: [DrinkDefinition]
     
+    init(schemaVersion: Int, version: String, categories: [DrinkCategory], drinks: [DrinkDefinition]) {
+        self.schemaVersion = schemaVersion
+        self.version = version
+        self.categories = categories
+        self.drinks = drinks
+    }
+
+    private enum CodingKeys: String, CodingKey { case schemaVersion, version, categories, drinks }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decode(Int.self, forKey: .schemaVersion)
+        version = try container.decode(String.self, forKey: .version)
+        categories = try container.decode([DrinkCategory].self, forKey: .categories)
+        var definitions = try container.nestedUnkeyedContainer(forKey: .drinks)
+        var decoded: [DrinkDefinition] = []
+        while !definitions.isAtEnd {
+            decoded.append(try DrinkDefinition(from: definitions.superDecoder(), requiresContent: schemaVersion == 3))
+        }
+        drinks = decoded
+    }
+
     // MARK: - Validation
     
     /// A reason the app cannot use a decoded catalogue.
@@ -39,6 +61,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case invalidDefaultVolume(drinkID: String)
         case invalidHydrationRatio(drinkID: String)
         case invalidDefaultABV(drinkID: String)
+        case inconsistentAlcoholContent(drinkID: String)
         case duplicateCaffeineVariant(drinkID: String, variant: CaffeineVariant)
         case unavailableDefaultCaffeineVariant(drinkID: String, variant: CaffeineVariant)
         case invalidCaffeineValue(drinkID: String, variant: CaffeineVariant)
@@ -57,13 +80,13 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// Caffiene concentrations and per-shot amounts must be finite and nonnegative.
     /// Per-shot caffeine rules require a shot configuration.
     /// Shot configurations require nonempty, unique counts and an available default.
-    /// Schema 1 requires positive counts; schema 2 also permits zero.
+    /// Schema 1 requires positive counts; schemas 2 and 3 also permit zero.
     /// Category and drink IDs must be nonempty and contain no whitespace.
     ///
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
-        guard schemaVersion == 1 || schemaVersion == 2 else {
+        guard (1...3).contains(schemaVersion) else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
@@ -136,6 +159,17 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                 break
             }
             
+            if case .abv(let value) = drink.alcohol {
+                guard value.isFinite, (0...1).contains(value) else {
+                    throw ValidationError.invalidDefaultABV(drinkID: drink.id)
+                }
+            }
+            if case .alcohol(let value) = drink.hydrationContributionRule {
+                guard drink.alcohol == .abv(value) else {
+                    throw ValidationError.inconsistentAlcoholContent(drinkID: drink.id)
+                }
+            }
+
             var caffeineVariants = Set<CaffeineVariant>()
             
             for option in drink.caffeineOptions {
@@ -182,6 +216,14 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
             }
             
             if let configuration = drink.shotConfiguration {
+                if schemaVersion >= 3 {
+                    guard drink.caffeineOptions.contains(where: {
+                        if case .perShot = $0.rule { return true }
+                        return false
+                    }) else {
+                        throw ValidationError.invalidShotConfiguration(drinkID: drink.id)
+                    }
+                }
                 let counts = configuration.supportedCounts
                 let containsOnlyNonnegativeCounts = counts.allSatisfy({ count in
                     return count >= (schemaVersion == 1 ? 1 : 0)
