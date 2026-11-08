@@ -80,4 +80,5 @@ Green and White offer regular/decaf; Herbal has no preparation controls. See
 
 Selected drink image tiles use a 2-point category-color border over the neutral
 background: blue for Water, brown for Coffee and system mint for Tea. Category
-pills retain their colored fill when selected.
+pills retain their colored fill when selected. Drink names use the standard primary
+text color (black in light mode), independently of category tint.

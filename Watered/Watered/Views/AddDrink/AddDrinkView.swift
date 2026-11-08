@@ -287,7 +287,7 @@ struct AddDrinkView: View {
                                 }
                             Text(definition.name)
                                 .font(.callout)
-                                .foregroundStyle(categoryTint(definition.categoryID))
+                                .foregroundStyle(.primary)
                                 .multilineTextAlignment(.center)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(width: 88)
