@@ -336,6 +336,20 @@ final class AddDrinkCategoryUITests: XCTestCase {
                 XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
                 XCTAssertLessThanOrEqual(shots.frame.maxY, wheel.frame.minY)
             }
+            if category == "coffee" || category == "tea" {
+                let categoryY = button.frame.minY
+                let types = app.scrollViews["addDrinkTypeScrollView"]
+                let typeY = types.frame.minY
+                let id = category == "coffee" ? "cold-brew" : "herbal-tea"
+                let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+                for _ in 0..<6 where !drink.isHittable { types.swipeLeft() }
+                XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+                drink.tap()
+                XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+                XCTAssertEqual(button.frame.minY, categoryY, accuracy: 2)
+                XCTAssertEqual(types.frame.minY, typeY, accuracy: 2)
+                XCTAssertEqual(wheel.frame.maxY, originalBottom, accuracy: 2)
+            }
         }
         let grabber = app.buttons["Sheet Grabber"]
         grabber.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))

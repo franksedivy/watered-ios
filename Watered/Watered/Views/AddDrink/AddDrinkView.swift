@@ -69,8 +69,9 @@ struct AddDrinkView: View {
             unit: saved?.unit ?? defaultUnit,
             canApplyServingDefault: saved == nil
         ))
-        let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
-        _selectedDetent = State(initialValue: .height(Self.sheetHeight(for: definition)))
+        _selectedDetent = State(initialValue: .height(Self.sheetHeight(
+            for: saved?.categoryID, in: catalogue
+        )))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -81,17 +82,18 @@ struct AddDrinkView: View {
         )
     }
 
-    /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
+    /// Keeps all drinks in a category at one height, with space for its fullest preparation.
     private var expandedDetent: PresentationDetent {
         if dynamicTypeSize.isAccessibilitySize { return .large }
-        return .height(Self.sheetHeight(for: selectedDefinition))
+        return .height(Self.sheetHeight(for: selectedCategoryID, in: catalogue))
     }
 
-    /// Sizes fresh and restored sheets by their actual preparation controls.
-    private static func sheetHeight(for definition: DrinkDefinition?) -> CGFloat {
-        guard let definition else { return 480 }
-        if definition.shotConfiguration != nil { return 720 }
-        if definition.caffeineOptions.count > 1 { return 660 }
+    /// Sizes fresh and restored sheets once per category, not per selected drink.
+    private static func sheetHeight(for categoryID: String?, in catalogue: DrinkCatalogue) -> CGFloat {
+        guard let categoryID else { return 480 }
+        let drinks = catalogue.activeDrinks(inCategoryID: categoryID)
+        if drinks.contains(where: { $0.shotConfiguration != nil }) { return 720 }
+        if drinks.contains(where: { $0.caffeineOptions.count > 1 }) { return 660 }
         return 600
     }
 
