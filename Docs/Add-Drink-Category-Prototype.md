@@ -21,7 +21,8 @@ per-volume defaults in [Drink Catalogue Files](Drink-Catalogue-Files.md). The de
 icons are brown. Milk options, time editing and a liquid-filled wheel are deferred.
 
 The clipped volume wheel is anchored to the sheet's bottom safe area, outside the
-scrolling drink/preparation content. Changing drinks, preparation controls or sheet
+scrolling drink/preparation content. Its background remains transparent so the
+sheet's glass material continues behind the picker. Changing drinks, preparation controls or sheet
 height leaves the picker in the same bottom position; extra content grows above it
 and scrolls independently. The sheet starts at 480 points to fit the fixed picker
 and category row, expands to 600 without preparation or 720 with it, and allows

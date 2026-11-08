@@ -383,7 +383,6 @@ struct AddDrinkView: View {
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 volumeSection
-                    .background(.background)
             }
             .scrollBounceBehavior(.basedOnSize)
             .accessibilityIdentifier("addDrinkScreen")
