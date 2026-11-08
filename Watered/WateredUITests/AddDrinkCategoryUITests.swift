@@ -318,6 +318,7 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let wheel = app.pickerWheels.firstMatch
         XCTAssertTrue(wheel.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         let originalBottom = wheel.frame.maxY
+        var coffeeCategoryY: CGFloat = 0
         for category in ["water", "coffee", "tea", "water"] {
             let button = app.buttons["addDrinkCategoryScrollView.\(category)"]
             XCTAssertTrue(button.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
@@ -325,7 +326,12 @@ final class AddDrinkCategoryUITests: XCTestCase {
             XCTAssertTrue(button.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
             XCTAssertTrue(wheel.isHittable)
             XCTAssertEqual(wheel.frame.maxY, originalBottom, accuracy: 2)
+            if category == "tea" {
+                // A decaf-only tea sheet is shorter: its category row sits lower on screen.
+                XCTAssertGreaterThan(button.frame.minY, coffeeCategoryY + 20)
+            }
             if category == "coffee" {
+                coffeeCategoryY = button.frame.minY
                 let shots = app.steppers["addDrinkShotStepper"]
                 XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
                 XCTAssertLessThanOrEqual(shots.frame.maxY, wheel.frame.minY)

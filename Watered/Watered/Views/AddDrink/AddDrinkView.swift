@@ -70,9 +70,7 @@ struct AddDrinkView: View {
             canApplyServingDefault: saved == nil
         ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
-        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
-        _selectedDetent = State(initialValue: saved?.categoryID == nil
-            ? .height(480) : .height(hasPreparation ? 720 : 600))
+        _selectedDetent = State(initialValue: .height(Self.sheetHeight(for: definition)))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -86,7 +84,15 @@ struct AddDrinkView: View {
     /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
     private var expandedDetent: PresentationDetent {
         if dynamicTypeSize.isAccessibilitySize { return .large }
-        return hasPreparationOptions ? .height(720) : .height(600)
+        return .height(Self.sheetHeight(for: selectedDefinition))
+    }
+
+    /// Sizes fresh and restored sheets by their actual preparation controls.
+    private static func sheetHeight(for definition: DrinkDefinition?) -> CGFloat {
+        guard let definition else { return 480 }
+        if definition.shotConfiguration != nil { return 720 }
+        if definition.caffeineOptions.count > 1 { return 660 }
+        return 600
     }
 
     private var hasPreparationOptions: Bool {
@@ -419,7 +425,7 @@ struct AddDrinkView: View {
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(480), .height(600), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(480), .height(600), .height(660), .height(720), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

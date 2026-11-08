@@ -25,8 +25,9 @@ scrolling drink/preparation content. Its background remains transparent so the
 sheet's glass material continues behind the picker. Changing drinks, preparation controls or sheet
 height leaves the picker in the same bottom position; extra content grows above it
 and scrolls independently. The sheet starts at 480 points to fit the fixed picker
-and category row, expands to 600 without preparation or 720 with it, and allows
-manual full-height expansion. Accessibility text sizes use full height; Reduce
+and category row, expands to 600 without preparation, 660 for decaf-only drinks,
+or 720 when shot controls are available, and allows manual full-height expansion.
+Restored drafts use the same sizing rules. Accessibility text sizes use full height; Reduce
 Motion suppresses the selection animation. Small screens may require scrolling the
 upper content; the picker stays available.
 
