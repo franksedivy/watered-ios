@@ -180,6 +180,12 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                     )
                 }
                 
+                // Caffeine-free means known zero, never an unknown or positive estimate.
+                if option.variant == .caffeineFree,
+                   option.rule != .perVolume(concentration: 0) {
+                    throw ValidationError.invalidCaffeineValue(drinkID: drink.id, variant: option.variant)
+                }
+
                 switch option.rule {
                 case .perVolume(let concentration):
                     guard concentration.isFinite && concentration >= 0 else {

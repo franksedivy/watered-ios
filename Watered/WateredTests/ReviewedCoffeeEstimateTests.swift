@@ -19,7 +19,7 @@ struct ReviewedCoffeeEstimateTests {
         for volume in [250.0, 400.0, 500.0] {
             let converted = Measurement(value: volume, unit: UnitVolume.milliliters).converted(to: unit.foundationUnit)
             let amount = DrinkAmount(value: converted.value, unit: unit)
-            for variant in CaffeineVariant.allCases {
+            for variant in [CaffeineVariant.regular, .decaf] {
                 let regular = variant == .regular
                 for (id, concentration) in [("coffee-with-milk", regular ? 40.0 : 2.0), ("cold-brew", regular ? 50.0 : 5.0)] {
                     let snapshot = try resolver.resolve(drinkID: id, amount: amount, caffeineVariant: variant)
@@ -50,7 +50,7 @@ struct ReviewedCoffeeEstimateTests {
         let repeated = try recent.drinkEntry(using: DrinkCatalogueSnapshotResolver(catalogue: catalogue))
         #expect(repeated.id != restored.id)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 15)
-        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-6")
+        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-7")
         #expect(repeated.catalogueSnapshot.hydrationContribution == 226.5)
         #expect(record.drinkEntry()?.catalogueSnapshot == snapshot)
         #expect(store.entries.first?.catalogueSnapshot == snapshot)

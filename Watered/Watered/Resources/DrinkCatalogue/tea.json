@@ -121,5 +121,187 @@
         "alcohol": {
             "kind": "none"
         }
+    },
+    {
+        "id": "matcha",
+        "name": "Matcha",
+        "categoryID": "tea",
+        "sortOrder": 50,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.99
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 24.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "matcha-latte",
+        "name": "Matcha latte",
+        "categoryID": "tea",
+        "sortOrder": 60,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.92
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 24.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "bubble-milk-tea",
+        "name": "Bubble milk tea",
+        "categoryID": "tea",
+        "sortOrder": 70,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.93
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 24.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "bubble-fruit-tea",
+        "name": "Bubble fruit tea",
+        "categoryID": "tea",
+        "sortOrder": 80,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 12.0
+                    }
+                },
+                {
+                    "variant": "caffeine-free",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "yerba-mate",
+        "name": "Yerba mate",
+        "categoryID": "tea",
+        "sortOrder": 90,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.99
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 32.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "iced-tea",
+        "name": "Iced tea",
+        "categoryID": "tea",
+        "sortOrder": 100,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 8.0
+                    }
+                },
+                {
+                    "variant": "caffeine-free",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
     }
 ]

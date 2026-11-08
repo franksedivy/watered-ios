@@ -71,12 +71,7 @@ struct StatsDrinkEntryDetailView: View {
 
     /// The preparation captured when logging, independent of current catalogue options.
     private var caffeinePreparationText: String {
-        switch entry.catalogueSnapshot.caffeineVariant {
-        case .regular:
-            return "Regular"
-        case .decaf:
-            return "Decaf"
-        }
+        entry.catalogueSnapshot.caffeineVariant.displayName
     }
 
     /// The original schema version, without inferring it from the current catalogue.

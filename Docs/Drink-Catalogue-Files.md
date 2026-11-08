@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-6`.
+- `version` identifies the catalogue content release, currently `development-7`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains four Water, seven Coffee and four plain Tea definitions.
+The current seed contains four Water, seven Coffee and ten Tea definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -187,5 +187,91 @@ all hot- and cold-brewing methods extract identical caffeine.
 Schema 3, manifest 1 and calculation version 2 stay unchanged. Existing Water/Coffee
 content, saved snapshots and persistence formats are unchanged. Supported repeats
 create new entries with active rules; no historical recalculation or database reset.
-The remaining Tea proposals and other categories stay open under #101/#102; alcohol
+The subsequent six-tea batch is recorded below. Other categories stay open under #101/#102; alcohol
 policy and HealthKit mapping remain separate.
+
+## Remaining teas — approved 8 November 2026 (#99 / #101 / #102)
+
+Content `development-7` appends these six drinks after the four plain teas, in the
+order below. The full seed is now 21 drinks: four Water, seven Coffee and ten Tea.
+Black tea remains the Tea category default. Display names are exactly as listed.
+
+| ID | Display name | Serving default | Hydration credit | Caffeine / 250 ml | Optional preparation |
+| --- | --- | ---: | ---: | ---: | --- |
+| `matcha` | Matcha | 250 ml | 99% | 60 mg | None |
+| `matcha-latte` | Matcha latte | 250 ml | 92% | 60 mg | None |
+| `bubble-milk-tea` | Bubble milk tea | 250 ml | 93% | 60 mg | None |
+| `bubble-fruit-tea` | Bubble fruit tea | 250 ml | 95% | 30 mg | Caffeine-free: 0 mg |
+| `yerba-mate` | Yerba mate | 250 ml | 99% | 80 mg | None |
+| `iced-tea` | Iced tea | 330 ml | 95% | 20 mg | Caffeine-free: 0 mg |
+
+All start with regular caffeine. The two **Caffeine-free** toggles are off by default;
+these represent recipes without a caffeinated tea base, not decaffeinated tea.
+Hydration percentages stay fixed when the toggle changes. There are no shot,
+strength, temperature, flavour, sweetness, topping or refill controls. All declare
+no alcohol. Plain matcha, matcha latte and brewed yerba mate use the same estimates
+hot or cold. Iced tea specifically means a lightly sweetened bottled/canned drink,
+not ordinary brewed tea served cold or a mate energy drink.
+
+Bubble tea amounts cover drinkable liquid only, excluding pearls, jelly and ice
+left behind. Caffeine scales with volume at the assumed recipe strength. JSON uses
+24/24/24/12/32/8 mg per 100 ml respectively. A 330 ml regular Iced tea records
+330 ml intake, 313.5 ml hydration credit and 26.4 mg caffeine; caffeine-free records
+0 mg while retaining the same intake and credit. Serving defaults apply only while
+volume is untouched; explicit choices and restored drafts keep their physical amount.
+
+### Reference recipes and evidence limits
+
+These are approved product estimates, not measured universal hydration coefficients
+or brand averages. No extra caffeine penalty is applied to hydration.
+
+- **Matcha:** 2 g powder diluted to 250 ml water. The existing audit proposed 99%.
+  [Ippodo](https://ippodotea.com/collections/matcha) reports about 64 mg caffeine for
+  2 g powder; 60 mg is our rounded dose estimate. Our 250 ml dilution is a product
+  recipe assumption, not Ippodo's traditional serving volume.
+- **Matcha latte:** 2 g powder, 50 ml water and 200 ml milk. Water at 100% and the
+  existing generic milk accounting input at 90% give `(50 + 200 × 0.90) / 250 = 92%`.
+  The same powder dose gives 60 mg caffeine. This is our recipe, not the
+  [Ippodo latte recipe](https://ippodotea.com/blogs/recipes-to-brew-japanese-tea/matcha-latte-recipe),
+  which uses a stronger 3 g dose. No milk-type customization.
+- **Bubble milk tea:** the audit's reference liquid recipe is 150 ml lightly
+  sweetened tea at 95% plus 100 ml milk at 90%, giving 93%. Its 60 mg caffeine is a
+  separate stronger-tea assumption, not a dilution of our plain black-tea default.
+  [Gong cha black milk tea](https://www.gong-cha.co.kr/brand/menu/product_detail?category=001006&no=53)
+  lists 106 mg per 414 ml hot serving (about 64 mg/250 ml), supporting the ballpark.
+  Recipes using creamer, different tea strength or sugar quantities can differ.
+- **Bubble fruit tea:** brewed tea with fruit flavouring/syrup; caffeine-free uses
+  a fruit base without caffeinated tea. The 95% follows our lightly sweetened tea
+  accounting assumption. The 30 mg caffeine default is informed by
+  [Gong cha fruit-tea examples](https://www.gong-cha.co.kr/brand/menu/product_nutrition)
+  around 21–38 mg per 250 ml of cup capacity. Those cold servings can include ice
+  and are not a precise validation of the liquid-only estimate.
+- **Yerba mate:** plain brewed mate. The existing audit proposed 99%; a
+  [producer FAQ](https://yerbamatecastiellousa.com/pages/faqs) gives approximately
+  70–80 mg per 8-ounce cup. The agreed 80 mg/250 ml is a rounded generic estimate;
+  leaf quantity, brewing and repeated infusions vary substantially. No separate
+  refill calculation or bottled energy-style mate is represented.
+- **Iced tea:** lightly sweetened ready-to-drink tea. The existing audit proposed
+  95%; 20 mg/250 ml is an agreed generic assumption, not a demonstrated market
+  average. Brand strength varies: a
+  [Pure Leaf producer label](https://digitalassets.pepsico.com/m/26ce7d7e30d79725/original/00048500020630_L1.pdf)
+  lists 45 mg/355 ml, substantially higher. This evidence establishes variability,
+  not the selected 20 mg default. Caffeine-free is known zero for a caffeine-free base.
+
+### Compatibility and scope
+
+The additive `caffeine-free` variant has its own stored raw value, distinct from
+`regular` and `decaf`; validation requires a known zero per-volume rule. Existing
+raw values, stored fields and snapshots are unchanged. Manifest 1, schema 3 and
+calculation version 2 remain unchanged; the catalogue object shape is unchanged.
+Older app builds do not understand the new variant, so new catalogue content must
+ship with its supporting app code. No data migration, reset or historical
+recalculation is performed. Saved unknowns remain unknown; supported repeats create
+new entries under current rules. Recents label the preparation “Caffeine-free”.
+Stats retains its existing behaviour of hiding the caffeine section for known zero.
+
+This completes the agreed ten-entry Tea membership, not the wider catalogue under
+#101/#102 or integration verification under #105. New artwork uses existing
+fallbacks until supplied. Sheet positioning/animation remains separate in #149;
+alcohol and HealthKit mapping remain outside this batch. No PR is created without
+Frank's explicit request.
