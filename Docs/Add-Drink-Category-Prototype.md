@@ -77,3 +77,7 @@ Plain tea (#101) uses the standard SwiftUI `.mint` category tint and catalogue s
 untouched. Deliberate volume choices and restored drafts take precedence. Black,
 Green and White offer regular/decaf; Herbal has no preparation controls. See
 [reviewed tea defaults](Drink-Catalogue-Files.md#plain-tea--approved-8-november-2026-101--102).
+
+Selected drink image tiles use a 2-point category-color border over the neutral
+background: blue for Water, brown for Coffee and system mint for Tea. Category
+pills retain their colored fill when selected.

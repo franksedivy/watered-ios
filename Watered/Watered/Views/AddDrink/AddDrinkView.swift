@@ -276,10 +276,15 @@ struct AddDrinkView: View {
                                 .frame(width: 66, height: 66)
                                 .frame(width: 88, height: 88)
                                 .background(
-                                    selectedDrinkID == definition.id
-                                        ? categoryTint(definition.categoryID) : Color.primary.opacity(0.06),
+                                    Color.primary.opacity(0.06),
                                     in: RoundedRectangle(cornerRadius: 18)
                                 )
+                                .overlay {
+                                    if selectedDrinkID == definition.id {
+                                        RoundedRectangle(cornerRadius: 18)
+                                            .strokeBorder(categoryTint(definition.categoryID), lineWidth: 2)
+                                    }
+                                }
                             Text(definition.name)
                                 .font(.callout)
                                 .foregroundStyle(categoryTint(definition.categoryID))
