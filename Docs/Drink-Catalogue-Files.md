@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-5`.
+- `version` identifies the catalogue content release, currently `development-6`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-Only the four Water and seven Coffee definitions are approved in this slice.
+The current seed contains four Water, seven Coffee and four plain Tea definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -84,7 +84,7 @@ resolve a known zero and repeat existing `regular` snapshots. There is no extra
 stored caffeine flag or duplicate authored ABV. Saved entries do not persist these
 catalogue definitions: their snapshot and database formats are unchanged. No
 history rewrite or database migration accompanies schema 3. New logs and supported
-repeats capture `development-5` / schema 3; older snapshots retain their original
+repeats capture the active content version / schema 3; older snapshots retain their original
 versions, preparation and known or unknown estimates.
 
 ## Calculation compatibility
@@ -137,3 +137,55 @@ new entries with current estimates and retain the original selected shots, even 
 the default changed. Older Iced coffee snapshots have no shot count, so they remain
 readable but are excluded from Recents as unsupported preparations; no shots are
 invented for history. This slice does not close the wider research in #102.
+
+
+## Plain tea — approved 8 November 2026 (#101 / #102)
+
+Content `development-6` adds `tea.json`, category `tea` after Coffee, with Black,
+Green, White and Herbal tea in that order. The first entry, Black tea, is the category
+selection default. Each represents plain brewed tea without milk or sugar, with the
+same estimates hot or cold. There is no temperature, strength or steeping-time control.
+
+| ID | Serving default | Hydration credit | Regular caffeine / 250 ml | Decaf / 250 ml |
+| --- | ---: | ---: | ---: | ---: |
+| `black-tea` | 250 ml | 99% | 50 mg | 5 mg |
+| `green-tea` | 250 ml | 99% | 30 mg | 5 mg |
+| `white-tea` | 250 ml | 99% | 30 mg | 5 mg |
+| `herbal-tea` | 250 ml | 99% | 0 mg | Not applicable |
+
+Black, Green and White default to regular and support decaf. Their volume-based
+JSON concentrations are respectively 20, 12 and 12 mg/100 ml regular, and 2 mg/100 ml
+decaf. Herbal uses `caffeine: {"kind":"none"}` and has no decaf selector. It means
+caffeine-free infusions such as plain peppermint, chamomile or rooibos, excluding
+blends containing tea leaves, mate or added caffeine. All four declare no alcohol
+and have no shot configuration. Caffeine scales with physical volume; hydration
+stays at the fixed ratio. A 500 ml black tea resolves to 495 ml credit and 100 mg
+regular or 10 mg decaf caffeine. Raw intake remains 500 ml.
+
+A catalogue serving is applied while the form's volume remains untouched. Explicitly
+chosen amounts and restored drafts take precedence over serving defaults, including
+when changing drinks or display units. Exact 250 ml is retained in ounce displays
+rather than snapped to a preset. Existing fallback artwork and category symbol are
+used; final custom artwork is outside this slice.
+
+These are approved product defaults, not measured universal averages. The 99% is
+an accounting assumption, not a demonstrated 1% physiological loss or caffeine
+penalty. A [black-tea hydration trial](https://pubmed.ncbi.nlm.nih.gov/21450118/)
+found no significant difference from water under its studied conditions; this does
+not establish the chosen coefficient for all four teas.
+[Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/nutrition-and-healthy-eating/in-depth/caffeine/art-20049372)
+lists 48 mg black and 29 mg green per 237 ml, supporting rounded 50/30 mg references
+for 250 ml. White tea's 30 mg is an explicit shared assumption; a
+[brewed-tea study](https://pubmed.ncbi.nlm.nih.gov/19007524/) found overlapping caffeine
+amounts across tea types and less than 12 mg per serving in its decaf samples.
+[Bigelow's decaf green tea](https://www.bigelowtea.com/collections/bigelow-classics/products/green-tea-decaf-40-count)
+reports 1–8 mg; 5 mg per 250 ml is our shared decaf assumption, with limited direct
+evidence for decaf white tea. Herbal zero applies to the defined caffeine-free recipe.
+Serving temperature equivalence is a simplifying product rule, not a claim that
+all hot- and cold-brewing methods extract identical caffeine.
+
+Schema 3, manifest 1 and calculation version 2 stay unchanged. Existing Water/Coffee
+content, saved snapshots and persistence formats are unchanged. Supported repeats
+create new entries with active rules; no historical recalculation or database reset.
+The remaining Tea proposals and other categories stay open under #101/#102; alcohol
+policy and HealthKit mapping remain separate.

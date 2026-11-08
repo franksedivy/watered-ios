@@ -5,7 +5,7 @@
 A fresh sheet starts with no category selected and Save disabled. Selecting Water
 chooses Still water; selecting Coffee chooses Latte. If a preferred drink is not
 available, the first active drink is selected. Tapping the current category preserves
-its selection. Changing categories or drink types preserves volume and resets
+its selection. Changing categories or drink types preserves explicitly chosen/restored volume and resets
 preparation to the selected definition's defaults. Persistent last-used choices per
 category are not implemented in this slice.
 
@@ -71,3 +71,9 @@ Frank reviewed the artwork, preparation panel and sheet heights in the simulator
 Physical-device checks, VoiceOver, large Dynamic Type, dark appearance, Reduce Motion,
 and long-press menu failure presentation remain manual verification items. No release
 or complete #104 acceptance is implied by this document.
+
+
+Plain tea (#101) uses catalogue serving defaults of 250 ml while the volume remains
+untouched. Deliberate volume choices and restored drafts take precedence. Black,
+Green and White offer regular/decaf; Herbal has no preparation controls. See
+[reviewed tea defaults](Drink-Catalogue-Files.md#plain-tea--approved-8-november-2026-101--102).

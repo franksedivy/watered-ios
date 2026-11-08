@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "schemaVersion": 3,
-    "version": "development-5",
+    "version": "development-6",
     "categories": [
         {
             "id": "water",
@@ -14,6 +14,12 @@
             "name": "Coffee",
             "sortOrder": 20,
             "file": "coffee.json"
+        },
+        {
+            "id": "tea",
+            "name": "Tea",
+            "sortOrder": 30,
+            "file": "tea.json"
         }
     ]
 }

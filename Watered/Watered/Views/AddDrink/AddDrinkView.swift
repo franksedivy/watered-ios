@@ -66,7 +66,8 @@ struct AddDrinkView: View {
         _selectedShotCount = State(initialValue: saved?.shotCount ?? 1)
         _volumeSelection = State(initialValue: AddDrinkVolumeSelection(
             value: saved?.volumeValue ?? AddDrinkVolumeSelection.defaultValue(for: defaultUnit),
-            unit: saved?.unit ?? defaultUnit
+            unit: saved?.unit ?? defaultUnit,
+            canApplyServingDefault: saved == nil
         ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
         let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
@@ -121,7 +122,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Chooses a transparent prototype default and preserves the volume.
+    /// Chooses a prototype default, applying its serving only when volume is untouched.
     /// Re-tapping the active category keeps any explicit drink/preparation selection.
     private func selectCategory(_ category: DrinkCategory) {
         let drinks = catalogue.activeDrinks(inCategoryID: category.id)
@@ -132,6 +133,7 @@ struct AddDrinkView: View {
             if selectedCategoryID != category.id {
                 selectedCategoryID = category.id
                 selectedDrinkID = defaultDrink.id
+                volumeSelection.applyServingDefault(defaultDrink.defaultVolume)
                 selectedCaffeineVariant = defaultDrink.defaultCaffeineVariant
                 selectedShotCount = defaultDrink.shotConfiguration?.defaultCount ?? 1
             }
@@ -145,12 +147,13 @@ struct AddDrinkView: View {
 
     /// Selects an active definition and starts from its supported preparation defaults.
     ///
-    /// The selected volume remains unchanged when the drink type changes.
+    /// Deliberately selected and restored volumes remain unchanged when the drink type changes.
     ///
     /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
         withAnimation(selectionAnimation) {
             selectedDrinkID = definition.id
+            volumeSelection.applyServingDefault(definition.defaultVolume)
             selectedCaffeineVariant = definition.defaultCaffeineVariant
             selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
             if selectedDetent != .large {
