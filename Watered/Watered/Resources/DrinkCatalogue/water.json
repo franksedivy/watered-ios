@@ -1,7 +1,7 @@
 [
     {
         "id": "still-water",
-        "name": "Still water",
+        "name": "Still",
         "categoryID": "water",
         "sortOrder": 10,
         "isRetired": false,
@@ -18,7 +18,7 @@
     },
     {
         "id": "sparkling-water",
-        "name": "Sparkling water",
+        "name": "Sparkling",
         "categoryID": "water",
         "sortOrder": 20,
         "isRetired": false,
@@ -35,7 +35,7 @@
     },
     {
         "id": "infused-water",
-        "name": "Infused water",
+        "name": "Infused",
         "categoryID": "water",
         "sortOrder": 30,
         "isRetired": false,
@@ -52,7 +52,7 @@
     },
     {
         "id": "coconut-water",
-        "name": "Coconut water",
+        "name": "Coconut",
         "categoryID": "water",
         "sortOrder": 40,
         "isRetired": false,

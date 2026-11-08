@@ -177,7 +177,7 @@
     },
     {
         "id": "coffee-with-milk",
-        "name": "Coffee with milk",
+        "name": "White",
         "categoryID": "coffee",
         "sortOrder": 50,
         "isRetired": false,
