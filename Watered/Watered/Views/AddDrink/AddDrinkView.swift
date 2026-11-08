@@ -33,7 +33,7 @@ struct AddDrinkView: View {
     @State private var selectedShotCount: Int
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
-    @State private var selectedDetent: PresentationDetent = .height(440)
+    @State private var selectedDetent: PresentationDetent = .height(480)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -72,7 +72,7 @@ struct AddDrinkView: View {
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
         let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
         _selectedDetent = State(initialValue: saved?.categoryID == nil
-            ? .height(440) : .height(hasPreparation ? 720 : 600))
+            ? .height(480) : .height(hasPreparation ? 720 : 600))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -188,7 +188,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Bounds the wheel below preparation so its drawing and hit area cannot overlap controls.
+    /// A bottom-anchored wheel with bounded drawing and hit area, independent of preparation height.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
@@ -377,9 +377,13 @@ struct AddDrinkView: View {
                         drinkRow
                         preparationSection
                     }
-                    volumeSection
                 }
                 .padding(.top, 16)
+                .padding(.bottom, 16)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                volumeSection
+                    .background(.background)
             }
             .scrollBounceBehavior(.basedOnSize)
             .accessibilityIdentifier("addDrinkScreen")
@@ -416,7 +420,7 @@ struct AddDrinkView: View {
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(440), .height(600), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(480), .height(600), .height(720), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

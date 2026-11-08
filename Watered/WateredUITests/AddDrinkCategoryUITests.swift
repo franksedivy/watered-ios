@@ -312,6 +312,37 @@ final class AddDrinkCategoryUITests: XCTestCase {
         add(screenshot)
     }
 
+    @MainActor
+    func testVolumePickerStaysAnchoredAcrossPreparationAndSheetHeights() {
+        let app = openAddDrink()
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        let originalBottom = wheel.frame.maxY
+        for category in ["water", "coffee", "tea", "water"] {
+            let button = app.buttons["addDrinkCategoryScrollView.\(category)"]
+            XCTAssertTrue(button.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            button.tap()
+            XCTAssertTrue(button.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+            XCTAssertTrue(wheel.isHittable)
+            XCTAssertEqual(wheel.frame.maxY, originalBottom, accuracy: 2)
+            if category == "coffee" {
+                let shots = app.steppers["addDrinkShotStepper"]
+                XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
+                XCTAssertLessThanOrEqual(shots.frame.maxY, wheel.frame.minY)
+            }
+        }
+        let grabber = app.buttons["Sheet Grabber"]
+        grabber.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo:
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)))
+        XCTAssertTrue(wheel.isHittable)
+        XCTAssertEqual(wheel.frame.maxY, originalBottom, accuracy: 2)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Bottom-anchored volume picker at expanded sheet height"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
     // Opens the sheet with an empty store and predictable units for category interaction checks.
     @MainActor
     private func openAddDrink() -> XCUIApplication {
