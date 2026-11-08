@@ -33,7 +33,7 @@ struct AddDrinkView: View {
     @State private var selectedShotCount: Int
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
-    @State private var selectedDetent: PresentationDetent = .height(480)
+    @State private var selectedDetent: PresentationDetent = .height(440)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -69,9 +69,10 @@ struct AddDrinkView: View {
             unit: saved?.unit ?? defaultUnit,
             canApplyServingDefault: saved == nil
         ))
-        _selectedDetent = State(initialValue: .height(Self.sheetHeight(
-            for: saved?.categoryID, in: catalogue
-        )))
+        let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
+        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
+        _selectedDetent = State(initialValue: saved?.categoryID == nil
+            ? .height(440) : .height(hasPreparation ? 720 : 600))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -82,19 +83,10 @@ struct AddDrinkView: View {
         )
     }
 
-    /// Keeps all drinks in a category at one height, with space for its fullest preparation.
+    /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
     private var expandedDetent: PresentationDetent {
         if dynamicTypeSize.isAccessibilitySize { return .large }
-        return .height(Self.sheetHeight(for: selectedCategoryID, in: catalogue))
-    }
-
-    /// Sizes fresh and restored sheets once per category, not per selected drink.
-    private static func sheetHeight(for categoryID: String?, in catalogue: DrinkCatalogue) -> CGFloat {
-        guard let categoryID else { return 480 }
-        let drinks = catalogue.activeDrinks(inCategoryID: categoryID)
-        if drinks.contains(where: { $0.shotConfiguration != nil }) { return 720 }
-        if drinks.contains(where: { $0.caffeineOptions.count > 1 }) { return 660 }
-        return 600
+        return hasPreparationOptions ? .height(720) : .height(600)
     }
 
     private var hasPreparationOptions: Bool {
@@ -196,7 +188,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// A bottom-anchored wheel with bounded drawing and hit area, independent of preparation height.
+    /// Bounds the wheel below preparation so its drawing and hit area cannot overlap controls.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
@@ -385,12 +377,9 @@ struct AddDrinkView: View {
                         drinkRow
                         preparationSection
                     }
+                    volumeSection
                 }
                 .padding(.top, 16)
-                .padding(.bottom, 16)
-            }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                volumeSection
             }
             .scrollBounceBehavior(.basedOnSize)
             .accessibilityIdentifier("addDrinkScreen")
@@ -427,7 +416,7 @@ struct AddDrinkView: View {
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(480), .height(600), .height(660), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(440), .height(600), .height(720), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

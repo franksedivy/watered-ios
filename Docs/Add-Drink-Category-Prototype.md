@@ -9,9 +9,9 @@ its selection. Changing categories or drink types preserves explicitly chosen/re
 preparation to the selected definition's defaults. Persistent last-used choices per
 category are not implemented in this slice.
 
-Drinks use bundled PNG artwork named by catalogue ID where available, rendered
+The eleven current drinks use bundled PNG artwork named by catalogue ID, rendered
 in original colours with aspect-fit sizing. Missing artwork uses the illustrative
-fallback. The selected card uses a category-colored border without a tick overlay.
+fallback. The selected card uses the category colour without a tick overlay.
 
 Preparation is visible beneath the drink cards. All seven coffees offer regular /
 decaf; Latte, Cappuccino, Espresso, Americano and Iced coffee also offer 0–4 shots.
@@ -20,18 +20,10 @@ the drink or change its hydration ratio. Caffeine uses the reviewed per-shot or
 per-volume defaults in [Drink Catalogue Files](Drink-Catalogue-Files.md). The decaf icon changes from bolt to bolt.slash; preparation
 icons are brown. Milk options, time editing and a liquid-filled wheel are deferred.
 
-The clipped volume wheel is anchored to the sheet's bottom safe area, outside the
-scrolling drink/preparation content. Its background remains transparent so the
-sheet's glass material continues behind the picker. Changing drinks, preparation controls or sheet
-height leaves the picker in the same bottom position; extra content grows above it
-and scrolls independently. The sheet starts at 480 points to fit the fixed picker
-and category row, then uses one fixed height per category based on its fullest
-preparation: Water 600, Tea 660 and Coffee 720 points. Switching drinks within a
-category never changes that height, including Herbal tea or coffees without shots.
-Manual full-height expansion remains available. Restored drafts use the same
-category sizing rules. Accessibility text sizes use full height; Reduce
-Motion suppresses the selection animation. Small screens may require scrolling the
-upper content; the picker stays available.
+The clipped volume wheel, cards and preparation share one vertical scroll layout.
+The sheet starts at 440 points, expands to 600 without preparation or 720 with it,
+and allows manual full-height expansion. Accessibility text sizes use full height;
+Reduce Motion suppresses the selection animation. Small screens may require scrolling.
 
 ## Unsaved session draft
 
