@@ -257,7 +257,11 @@ struct AddDrinkView: View {
     }
 
     private func categoryTint(_ categoryID: String) -> Color {
-        categoryID == "coffee" ? .brown : .blue
+        switch categoryID {
+        case "coffee": return .brown
+        case "tea": return .mint
+        default: return .blue
+        }
     }
 
     private var drinkRow: some View {

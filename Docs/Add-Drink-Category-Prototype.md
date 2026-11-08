@@ -73,7 +73,7 @@ and long-press menu failure presentation remain manual verification items. No re
 or complete #104 acceptance is implied by this document.
 
 
-Plain tea (#101) uses catalogue serving defaults of 250 ml while the volume remains
+Plain tea (#101) uses the standard SwiftUI `.mint` category tint and catalogue serving defaults of 250 ml while the volume remains
 untouched. Deliberate volume choices and restored drafts take precedence. Black,
 Green and White offer regular/decaf; Herbal has no preparation controls. See
 [reviewed tea defaults](Drink-Catalogue-Files.md#plain-tea--approved-8-november-2026-101--102).
