@@ -39,6 +39,6 @@ Use [Testing](Docs/TESTING.md) to select checks. Agent-run simulator suites defa
 
 Report exactly what ran, on which revision/environment, and what remains unverified. Focused green tests are not a full-suite pass; simulator checks are not physical-device review. Do not repeat passed checks without a new change or unresolved concern.
 
-Before a commit, inspect the full diff and explicitly include intended new files. Keep commits focused. A PR should explain the problem, resulting behaviour and verification. Explicit agreement is required before merging or publishing a release; issue or PR approval does not itself authorize production release.
+Before a commit, inspect the full diff and explicitly include intended new files. Keep commits focused. Reference the relevant tickets in every commit message, including any related or parent tickets that the change contributes to, for example `Add reviewed tea estimates (#101, #102)`. A PR should explain the problem, resulting behaviour and verification. Explicit agreement is required before merging or publishing a release; issue or PR approval does not itself authorize production release.
 
 Finish with the changed behaviour, checks and result, limitations and any required next action. For unfinished work moving chats, use the [handoff template](Docs/handoffs/TEMPLATE.md). Do not mark incomplete work done because a time budget ended.
