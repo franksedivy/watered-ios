@@ -48,11 +48,13 @@ simulator_id="$(jq -er --arg runtime "$IOS_SIMULATOR_RUNTIME" --arg name "$SIMUL
 printf 'Testing Watered on %s (%s, %s).\n' \
   "$SIMULATOR_NAME" "$IOS_SIMULATOR_RUNTIME" "$simulator_id"
 
+# UI execution is temporarily disabled in CI by agreement; keep the shared local plan intact.
 # pipefail preserves a failing xcodebuild status while tee retains its output.
 xcodebuild test \
   -project Watered/Watered.xcodeproj \
   -scheme Watered \
   -testPlan Watered \
+  -only-testing:WateredTests \
   -configuration Debug \
   -destination "platform=iOS Simulator,id=$simulator_id" \
   -destination-timeout 120 \

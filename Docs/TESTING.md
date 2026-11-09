@@ -28,6 +28,11 @@ The helper's stub-based checks are safe locally and do not run the app or a simu
 bash Scripts/CI/test-run-ios-tests.sh
 ```
 
+CI temporarily runs only `WateredTests`, as agreed on 9 November 2026. All UI tests
+are excluded from hosted execution; they remain available locally. Reintroduce them
+in focused increments as the app matures. A green CI check is a unit-suite pass,
+not a full unit/UI-suite pass, and does not close unresolved UI issues (#155/#138).
+
 The shared [test plan](../Watered/Watered.xctestplan) includes unit and UI targets but excludes `WateredUITestsLaunchTests`. The Stats UI test `testSavedImperialDrinkReformatsInMillilitres` is re-enabled with #104; #138 still requires runtime evidence before closure. “Configured suite passed” must not imply excluded or skipped tests ran. New pushes cancel older runs on the same branch; report cancellation separately from a test failure.
 
 UI tests use `-uiTestingInMemory` with synthetic data. Debug failure hooks include `-uiTestingFailFirstDrinkSave` and `-uiTestingFailFirstDisplayUnitSave`, which require isolated storage. Release builds ignore test arguments. Do not use personal drink history or Health data for automated tests.

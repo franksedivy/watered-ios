@@ -107,7 +107,12 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let shots = app.steppers["addDrinkShotStepper"]
         for (id, count) in [("latte", 2), ("cappuccino", 1), ("iced-coffee", 2), ("espresso", 1), ("americano", 2)] {
             let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
-            for _ in 0..<6 where !drink.isHittable { types.swipeLeft() }
+            // Stop querying once visible; a filtered loop still resolves accessibility
+            // on every remaining iteration, which can exhaust the hosted test budget.
+            for _ in 0..<6 {
+                if drink.isHittable { break }
+                types.swipeLeft()
+            }
             XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
             drink.tap()
             XCTAssertTrue(shots.waitForExistence(timeout: readinessTimeout))
@@ -177,18 +182,22 @@ final class AddDrinkCategoryUITests: XCTestCase {
         app.buttons["addDrinkCategoryScrollView.coffee"].tap()
         let toggle = app.switches["addDrinkDecafToggle"]
         XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        XCTAssertTrue(waitForControlValue("0", in: toggle))
         toggle.tap()
+        XCTAssertTrue(waitForControlValue("1", in: toggle))
         let shots = app.steppers["addDrinkShotStepper"]
         shots.buttons["addDrinkShotStepper-Increment"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        XCTAssertEqual(toggle.value as? String, "1")
+        XCTAssertEqual(shots.value as? String, "3")
         dismissAddDrinkSheet(in: app)
         changeAddDrinkDisplayUnit(to: "US fl oz", in: app)
         app.buttons["addDrinkActionButton"].tap()
         let submit = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "16.907 US fl oz")
-        XCTAssertEqual(toggle.value as? String, "1")
-        XCTAssertEqual(shots.value as? String, "3")
+        XCTAssertTrue(waitForControlValue("1", in: toggle))
+        XCTAssertTrue(waitForControlValue("3", in: shots))
         XCTAssertTrue(app.buttons["addDrinkTypeScrollView.latte"].isSelected)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Converted draft retains 500 ml and coffee preparation"
@@ -408,6 +417,14 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(detail.staticTexts["statsDrinkAmount"].label.contains("500 ml"))
         XCTAssertTrue(detail.staticTexts["statsHydrationContribution"].label.contains("425 ml"))
         XCTAssertFalse(detail.staticTexts["statsCaffeineAmount"].exists)
+    }
+
+    @MainActor
+    private func waitForControlValue(_ value: String, in element: XCUIElement) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", value), object: element
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: readinessTimeout) == .completed
     }
 
     // Opens the sheet with an empty store and predictable units for category interaction checks.
