@@ -177,18 +177,22 @@ final class AddDrinkCategoryUITests: XCTestCase {
         app.buttons["addDrinkCategoryScrollView.coffee"].tap()
         let toggle = app.switches["addDrinkDecafToggle"]
         XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "0", timeout: readinessTimeout))
         toggle.tap()
+        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "1", timeout: readinessTimeout))
         let shots = app.steppers["addDrinkShotStepper"]
         shots.buttons["addDrinkShotStepper-Increment"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        XCTAssertEqual(toggle.value as? String, "1")
+        XCTAssertEqual(shots.value as? String, "3")
         dismissAddDrinkSheet(in: app)
         changeAddDrinkDisplayUnit(to: "US fl oz", in: app)
         app.buttons["addDrinkActionButton"].tap()
         let submit = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "16.907 US fl oz")
-        XCTAssertEqual(toggle.value as? String, "1")
-        XCTAssertEqual(shots.value as? String, "3")
+        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "1", timeout: readinessTimeout))
+        XCTAssertTrue(shots.wait(for: \.value, toEqual: "3", timeout: readinessTimeout))
         XCTAssertTrue(app.buttons["addDrinkTypeScrollView.latte"].isSelected)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Converted draft retains 500 ml and coffee preparation"
