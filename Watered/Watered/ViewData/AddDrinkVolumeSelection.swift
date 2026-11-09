@@ -4,6 +4,15 @@ import Foundation
 nonisolated struct AddDrinkVolumeSelection: Equatable {
     private(set) var value: Double
     private(set) var unit: LiquidUnit
+    /// Restored drafts and deliberately selected amounts must not be replaced by serving defaults.
+    var canApplyServingDefault = true
+
+    /// Uses a catalogue serving only while the amount is still an untouched default.
+    mutating func applyServingDefault(_ millilitres: Double?) {
+        guard canApplyServingDefault, let millilitres, millilitres.isFinite, millilitres > 0 else { return }
+        value = millilitres
+        unit = .milliliters
+    }
 
     var amount: DrinkAmount { DrinkAmount(value: value, unit: unit) }
 
@@ -36,6 +45,7 @@ nonisolated struct AddDrinkVolumeSelection: Equatable {
         guard displayedValue != displayValue(in: displayUnit) else { return }
         value = displayedValue
         unit = displayUnit
+        canApplyServingDefault = false
     }
 
     static func defaultValue(for unit: LiquidUnit) -> Double {

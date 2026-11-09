@@ -252,6 +252,66 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(row.label.contains("473.176 ml"))
     }
 
+    @MainActor
+    func testTeaDefaultsDecafAndSavedEstimates() {
+        let app = openAddDrink()
+        let tea = app.buttons["addDrinkCategoryScrollView.tea"]
+        XCTAssertTrue(tea.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        tea.tap()
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertEqual(wheel.value as? String, "250 ml")
+        XCTAssertTrue(app.buttons["addDrinkTypeScrollView.black-tea"].isSelected)
+        let toggle = app.switches["addDrinkDecafToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
+        XCTAssertEqual(toggle.value as? String, "0")
+        XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
+        toggle.tap()
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Plain tea with decaf and 250 ml default"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        app.buttons["addDrinkSubmitButton"].tap()
+        XCTAssertTrue(app.buttons["addDrinkSubmitButton"].waitForNonExistence(timeout: readinessTimeout))
+        app.tabBars.buttons["Stats"].tap()
+        let row = app.collectionViews["statsDrinkHistoryList"].buttons["statsDrinkEntryLink"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
+        row.tap()
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(detail.staticTexts["statsCaffeineAmount"].label.contains("5 mg"))
+        XCTAssertTrue(detail.staticTexts["statsHydrationContribution"].label.contains("247.5 ml"))
+        XCTAssertTrue(detail.staticTexts["statsCaffeinePreparation"].label.contains("Decaf"))
+    }
+
+    @MainActor
+    func testTeaTypesPreserveChosenVolumeAndHerbalHidesDecaf() {
+        let app = openAddDrink()
+        let wheel = app.pickerWheels.firstMatch
+        wheel.adjust(toPickerWheelValue: "500 ml")
+        app.buttons["addDrinkCategoryScrollView.tea"].tap()
+        let types = app.scrollViews["addDrinkTypeScrollView"]
+        let toggle = app.switches["addDrinkDecafToggle"]
+        for id in ["black-tea", "green-tea", "white-tea", "herbal-tea"] {
+            let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+            for _ in 0..<4 where !drink.isHittable { types.swipeLeft() }
+            XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            drink.tap()
+            XCTAssertEqual(wheel.value as? String, "500 ml")
+            XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
+            if id == "herbal-tea" {
+                XCTAssertFalse(toggle.exists)
+            } else {
+                XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
+                XCTAssertEqual(toggle.value as? String, "0")
+                toggle.tap()
+            }
+        }
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Herbal tea without caffeine controls"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
     // Opens the sheet with an empty store and predictable units for category interaction checks.
     @MainActor
     private func openAddDrink() -> XCUIApplication {
