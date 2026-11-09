@@ -313,24 +313,26 @@ struct AddDrinkView: View {
         if let definition = selectedDefinition, hasPreparationOptions {
             VStack(spacing: 12) {
                 if definition.caffeineOptions.contains(where: { $0.variant == .regular }),
-                   definition.caffeineOptions.contains(where: { $0.variant == .decaf }) {
+                   let alternative = definition.caffeineOptions.first(where: {
+                       $0.variant == .decaf || $0.variant == .caffeineFree
+                   })?.variant {
                     Toggle(isOn: Binding(
-                        get: { selectedCaffeineVariant == .decaf },
-                        set: { isDecaf in
-                            let variant: CaffeineVariant = isDecaf ? .decaf : .regular
+                        get: { selectedCaffeineVariant == alternative },
+                        set: { isEnabled in
+                            let variant: CaffeineVariant = isEnabled ? alternative : .regular
                             guard variant != selectedCaffeineVariant else { return }
                             selectedCaffeineVariant = variant
-                            wateredLog("Add Drink decaf changed to \(isDecaf ? "enabled" : "disabled")")
+                            wateredLog("Add Drink caffeine preparation changed to \(variant.rawValue)")
                         }
                     )) {
                         Label {
-                            Text("Decaffeinated")
+                            Text(alternative == .decaf ? "Decaffeinated" : "Caffeine-free")
                         } icon: {
-                            Image(systemName: selectedCaffeineVariant == .decaf ? "bolt.slash" : "bolt")
+                            Image(systemName: selectedCaffeineVariant == alternative ? "bolt.slash" : "bolt")
                                 .foregroundStyle(.brown)
                         }
                     }
-                    .accessibilityIdentifier("addDrinkDecafToggle")
+                    .accessibilityIdentifier(alternative == .decaf ? "addDrinkDecafToggle" : "addDrinkCaffeineFreeToggle")
                 }
                 if let configuration = definition.shotConfiguration {
                     if definition.caffeineOptions.count > 1 {

@@ -23,8 +23,8 @@ struct DrinkCatalogueLoaderTests {
         )
 
         #expect(catalogue.schemaVersion == 3)
-        #expect(catalogue.version == "development-6")
-        #expect(catalogue.drinks.count == 15)
+        #expect(catalogue.version == "development-7")
+        #expect(catalogue.drinks.count == 21)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),
             DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 20),
@@ -201,7 +201,7 @@ struct DrinkCatalogueLoaderTests {
                 #expect(drink.shotConfiguration == nil)
             }
             let counts: [Int?] = drink.shotConfiguration?.supportedCounts.map { Optional($0) } ?? [nil]
-            for variant in CaffeineVariant.allCases {
+            for variant in [CaffeineVariant.regular, .decaf] {
                 for count in counts {
                     let entry = try AddDrinkDraft(
                         drinkID: drink.id, volumeValue: 330, unit: .milliliters,

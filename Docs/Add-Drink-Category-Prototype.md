@@ -82,3 +82,10 @@ Selected drink image tiles use a 2-point category-color border over the neutral
 background: blue for Water, brown for Coffee and system mint for Tea. Category
 pills retain their colored fill when selected. Drink names use the standard primary
 text color (black in light mode), independently of category tint.
+
+The second Tea batch (#101/#102) adds Matcha, Matcha latte, Bubble milk tea,
+Bubble fruit tea, Yerba mate and Iced tea. All default to 250 ml except Iced tea
+at 330 ml, subject to the same untouched-volume rule. Only Bubble fruit tea and
+Iced tea offer a “Caffeine-free” toggle, off by default; the other four have no
+preparation controls. Decaf controls for Black/Green/White remain unchanged.
+The existing sheet layout and detents are retained; shifting elements are #149.

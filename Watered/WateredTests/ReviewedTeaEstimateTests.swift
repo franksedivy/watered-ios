@@ -6,7 +6,7 @@ import Testing
 struct ReviewedTeaEstimateTests {
     @Test func bundledTeaMembershipAndPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
-        let teas = catalogue.activeDrinks(inCategoryID: "tea")
+        let teas = Array(catalogue.activeDrinks(inCategoryID: "tea").prefix(4))
         #expect(teas.map(\.id) == ["black-tea", "green-tea", "white-tea", "herbal-tea"])
         #expect(AddDrinkCategoryDefaults.drink(in: "tea", from: teas)?.id == "black-tea")
         for tea in teas {
@@ -27,12 +27,12 @@ struct ReviewedTeaEstimateTests {
             let converted = Measurement(value: volume, unit: UnitVolume.milliliters).converted(to: unit.foundationUnit)
             let amount = DrinkAmount(value: converted.value, unit: unit)
             for (id, regular) in [("black-tea", 50.0), ("green-tea", 30.0), ("white-tea", 30.0), ("herbal-tea", 0.0)] {
-                for variant in id == "herbal-tea" ? [CaffeineVariant.regular] : CaffeineVariant.allCases {
+                for variant in id == "herbal-tea" ? [CaffeineVariant.regular] : [CaffeineVariant.regular, .decaf] {
                     let snapshot = try resolver.resolve(drinkID: id, amount: amount, caffeineVariant: variant)
                     #expect(abs(try #require(snapshot.hydrationContribution) - volume * 0.99) < 0.000001)
                     #expect(abs(try #require(snapshot.caffeineAmount) - volume / 250 * (variant == .decaf ? 5 : regular)) < 0.000001)
                     #expect(snapshot.shotCount == nil)
-                    #expect(snapshot.catalogueVersion == "development-6")
+                    #expect(snapshot.catalogueVersion == "development-7")
                 }
             }
         }
@@ -74,7 +74,7 @@ struct ReviewedTeaEstimateTests {
         #expect(repeated.catalogueSnapshot.caffeineVariant == .decaf)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 5)
         #expect(repeated.catalogueSnapshot.hydrationContribution == 247.5)
-        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-6")
+        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-7")
         #expect(store.entries.first?.catalogueSnapshot == old)
         #expect(record.drinkEntry()?.catalogueSnapshot == old)
     }

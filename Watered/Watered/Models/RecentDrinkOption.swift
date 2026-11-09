@@ -66,7 +66,7 @@ nonisolated struct RecentDrinkOption: Identifiable {
         )
         var text = "\(volume) of \(drinkName)"
         if showsCaffeineVariant {
-            text += " (\(caffeineVariant.rawValue.capitalized))"
+            text += " (\(caffeineVariant.displayName))"
         }
         if let shotCount {
             text += shotCount == 1 ? ", 1 shot" : ", \(shotCount) shots"

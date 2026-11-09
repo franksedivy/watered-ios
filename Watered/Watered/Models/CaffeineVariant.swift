@@ -7,9 +7,9 @@
 
 import Foundation
 
-/// Indetifies the caffeine preparation selected for a drink.
+/// Identifies the caffeine preparation selected for a drink.
 ///
-/// The dirnk definition determines which variants are avialable. Each supported variant has its own caffeine estimateion rule.
+/// The drink definition determines which variants are available. Each has its own caffeine rule.
 nonisolated enum CaffeineVariant: String, Codable, CaseIterable {
     /// The drink's regular preparation.
     case regular
@@ -18,4 +18,16 @@ nonisolated enum CaffeineVariant: String, Codable, CaseIterable {
     ///
     /// Selecting decaf does not imply zero caffeine.
     case decaf
+
+    /// A recipe without a caffeinated base; distinct from decaffeinated tea or coffee.
+    case caffeineFree = "caffeine-free"
+
+    /// Preparation text shared by saved details and recent-drink shortcuts.
+    var displayName: String {
+        switch self {
+        case .regular: return "Regular"
+        case .decaf: return "Decaf"
+        case .caffeineFree: return "Caffeine-free"
+        }
+    }
 }
