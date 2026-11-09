@@ -75,6 +75,8 @@ assert_status() {
 
 run_case success
 assert_status 0
+grep -Fxq -- '-only-testing:WateredTests' "$CASE_ROOT/arguments.txt"
+test "$(grep -c -- '^-only-testing:' "$CASE_ROOT/arguments.txt")" -eq 1
 grep -Fq -- '-testPlan' "$CASE_ROOT/arguments.txt"
 grep -Fxq -- 'Watered' "$CASE_ROOT/arguments.txt"
 grep -Fxq -- 'CODE_SIGNING_ALLOWED=NO' "$CASE_ROOT/arguments.txt"
@@ -122,7 +124,7 @@ abort 'Unexpected runner' unless job['runs-on'] == 'xcode-27'
 abort 'Unbounded timeout' unless job['timeout-minutes'] == 45
 abort 'Unexpected Xcode' unless job['env']['XCODE_VERSION'] == '27.1'
 abort 'Runner context is unavailable in job env' if job['env'].key?('CI_RUNNER_ENVIRONMENT')
-test_step = job['steps'].find { |step| step['name'] == 'Run unit and UI tests' }
+test_step = job['steps'].find { |step| step['name'] == 'Run unit tests' }
 abort 'Missing hosted-runner guard' unless test_step['env']['CI_RUNNER_ENVIRONMENT'] == '${{ runner.environment }}'
 actions = job['steps'].select { |step| step.key?('uses') }
 abort 'Unexpected action dependency' unless actions.size == 2 && actions.all? { |step|
