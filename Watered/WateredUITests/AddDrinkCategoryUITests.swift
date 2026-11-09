@@ -177,9 +177,9 @@ final class AddDrinkCategoryUITests: XCTestCase {
         app.buttons["addDrinkCategoryScrollView.coffee"].tap()
         let toggle = app.switches["addDrinkDecafToggle"]
         XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
-        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "0", timeout: readinessTimeout))
+        XCTAssertTrue(waitForControlValue("0", in: toggle))
         toggle.tap()
-        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "1", timeout: readinessTimeout))
+        XCTAssertTrue(waitForControlValue("1", in: toggle))
         let shots = app.steppers["addDrinkShotStepper"]
         shots.buttons["addDrinkShotStepper-Increment"].tap()
         app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
@@ -191,8 +191,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let submit = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submit.waitForExistence(timeout: readinessTimeout))
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "16.907 US fl oz")
-        XCTAssertTrue(toggle.wait(for: \.value, toEqual: "1", timeout: readinessTimeout))
-        XCTAssertTrue(shots.wait(for: \.value, toEqual: "3", timeout: readinessTimeout))
+        XCTAssertTrue(waitForControlValue("1", in: toggle))
+        XCTAssertTrue(waitForControlValue("3", in: shots))
         XCTAssertTrue(app.buttons["addDrinkTypeScrollView.latte"].isSelected)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Converted draft retains 500 ml and coffee preparation"
@@ -412,6 +412,14 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(detail.staticTexts["statsDrinkAmount"].label.contains("500 ml"))
         XCTAssertTrue(detail.staticTexts["statsHydrationContribution"].label.contains("425 ml"))
         XCTAssertFalse(detail.staticTexts["statsCaffeineAmount"].exists)
+    }
+
+    @MainActor
+    private func waitForControlValue(_ value: String, in element: XCUIElement) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", value), object: element
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: readinessTimeout) == .completed
     }
 
     // Opens the sheet with an empty store and predictable units for category interaction checks.
