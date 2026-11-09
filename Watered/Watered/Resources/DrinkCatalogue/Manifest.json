@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "schemaVersion": 3,
-    "version": "development-10",
+    "version": "development-11",
     "categories": [
         {
             "id": "water",
@@ -44,6 +44,12 @@
             "name": "Sports & Energy",
             "sortOrder": 70,
             "file": "sports-energy.json"
+        },
+        {
+            "id": "milk-alternatives",
+            "name": "Milk & Alternatives",
+            "sortOrder": 80,
+            "file": "milk-alternatives.json"
         }
     ]
 }
