@@ -89,3 +89,12 @@ at 330 ml, subject to the same untouched-volume rule. Only Bubble fruit tea and
 Iced tea offer a “Caffeine-free” toggle, off by default; the other four have no
 preparation controls. Decaf controls for Black/Green/White remain unchanged.
 The existing sheet layout and detents are retained; shifting elements are #149.
+
+## Juices batch (#99 / #101 / #102)
+
+Juices follows Tea, using iOS orange and `takeoutbag.and.cup.and.straw`. Fruit juice,
+Vegetable juice, Smoothie and Aloe vera drink appear in that order, all with a 250 ml
+default and no preparation options. The selected border and primary drink-name text
+follow existing styling. Missing artwork uses the existing fallback. See
+[approved juice estimates](Drink-Catalogue-Files.md#juices--approved-9-november-2026-99--101--102).
+Sheet sizing, spacing and volume-picker positioning remain unchanged under #149.
