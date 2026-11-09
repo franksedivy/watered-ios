@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   ios-tests:
-    name: iOS Tests
+    name: iOS Unit Tests
     runs-on: xcode-27
     timeout-minutes: 45
     defaults:
@@ -56,7 +56,7 @@ jobs:
               com.apple.CoreSimulator.SimDeviceType.iPhone-Air "$IOS_SIMULATOR_RUNTIME"
           fi
 
-      - name: Run unit and UI tests
+      - name: Run unit tests
         timeout-minutes: 40
         env:
           CI_RUNNER_ENVIRONMENT: ${{ runner.environment }}

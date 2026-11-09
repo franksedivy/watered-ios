@@ -16,7 +16,7 @@ Requires Xcode 27 or later and an iOS 27 or later simulator or device.
 3. Use Product > Test to run the test suite.
 
 ## Automated Tests
-GitHub Actions runs unit and UI tests on branch pushes, using a hosted iOS
+GitHub Actions runs unit tests on branch pushes, using a hosted iOS
 simulator rather than local simulators. See [Continuous Integration](Docs/Continuous-Integration.md)
 for the pinned toolchain, manual runs, test-result artifacts and coverage limits.
 
