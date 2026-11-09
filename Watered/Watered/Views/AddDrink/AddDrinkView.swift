@@ -233,7 +233,16 @@ struct AddDrinkView: View {
                     Button {
                         selectCategory(category)
                     } label: {
-                        Label(category.name, systemImage: categorySymbol(category.id))
+                        Label {
+                            Text(category.name)
+                        } icon: {
+                            if category.id == "soft-drinks" {
+                                Image("coke.bottle.outline")
+                                    .renderingMode(.template)
+                            } else {
+                                Image(systemName: categorySymbol(category.id))
+                            }
+                        }
                             .font(.callout)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)

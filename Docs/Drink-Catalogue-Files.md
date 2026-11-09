@@ -393,8 +393,8 @@ separately reviews sugar and hydration; it does not change these defaults.
 ### Presentation and preserved history
 
 Soft Drinks uses `Color.purple` and existing selection borders/primary name text.
-Frank supplies the custom category symbol; until integrated, the existing generic
-category symbol remains. Drink artwork uses existing fallbacks until supplied.
+The category loads the custom symbol asset `coke.bottle.outline` as a template image
+so it follows the pill tint. All six drink artwork sets use their catalogue IDs.
 No sheet layout, positioning or animation changes under #149 are included.
 
 All 25 prior definitions and persistence fields are unchanged. Existing saved facts
