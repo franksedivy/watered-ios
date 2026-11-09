@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-8`.
+- `version` identifies the catalogue content release, currently `development-9`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 25 drinks: four Water, seven Coffee, ten Tea and four Juices definitions.
+The current seed contains 31 drinks: four Water, seven Coffee, ten Tea, four Juices and six Soft Drinks definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -337,3 +337,67 @@ defaults apply only to untouched volume; chosen and restored amounts remain inta
 No database reset, HealthKit mapping, alcohol-policy or #149 sheet-layout change is
 included. Tests cover catalogue membership, units, saved-fact round trips, repeats,
 no preparation controls, volume defaults and saved hydration totals.
+
+## Soft Drinks — approved 9 November 2026 (#99 / #101 / #102)
+
+Content `development-9` adds `soft-drinks.json` after Juices, bringing the seed to
+31 drinks. Manifest 1, schema 3 and calculation version 2 remain unchanged.
+
+| ID / name, in order | Hydration | Caffeine / 250 ml | Default | Preparation |
+| --- | ---: | ---: | ---: | --- |
+| `cola` / Cola | 90% | 25 mg | 330 ml | Caffeine-free toggle, off by default; enabled gives 0 mg |
+| `lemonade` / Lemonade | 90% | 0 mg | 330 ml | None |
+| `tonic-water` / Tonic water | 90% | 0 mg | 200 ml | None |
+| `fruit-soda` / Fruit soda | 90% | 0 mg | 330 ml | None |
+| `ginger-beer` / Ginger beer | 90% | 0 mg | 330 ml | None |
+| `squash` / Squash | 95% | 0 mg | 250 ml | None |
+
+All entries cover regular and sugar-free versions without sugar/flavour controls.
+Cola also covers diet/light versions using the generic caffeine estimate. Lemonade
+means ready-to-drink lemon/lemon-lime soft drink. Tonic includes slimline/flavoured
+variants consumed without alcohol. Fruit soda means caffeine-free fruit-flavoured
+fizzy drinks, excluding Cola/Lemonade and caffeinated formulations. Ginger beer is
+non-alcoholic ready-to-drink ginger beer, not the audit's ginger ale example.
+Squash includes cordial prepared at the manufacturer's dilution; log the total
+prepared volume, never neat concentrate. Caffeinated concentrates are excluded.
+
+### Evidence and assumptions
+
+Hydration ratios are approved generic Watered accounting assumptions, not measured
+fluid loss, physiological retention fractions or universal water-content values.
+90% follows the audit's provisional soft-drink convention; applying it to ginger
+beer is a new approved assumption. Squash retains the audit's prepared-drink 95%
+placeholder; no component calculation is claimed. Sugar-free versions share these
+scores by product decision. [#152](https://github.com/franksedivy/watered-ios/issues/152)
+separately reviews sugar and hydration; it does not change these defaults.
+
+- [Coca-Cola's caffeine figures](https://www.coca-cola.com/ph/en/about-us/faq/how-much-caffeine-does-coca-cola-contain)
+  give 32 mg per 330 ml for Classic and Zero, versus 42 mg for Light in that market.
+  The approved generic 25 mg/250 ml equals 33 mg/330 ml, not a brand-exact estimate.
+  Regional and diet/light recipes vary. Caffeine-free is known zero and leaves the
+  90% hydration ratio unchanged; no additional caffeine penalty applies.
+- [Sprite and Sprite Zero](https://www.cocacolaep.com/our-brands/our-brands/sprite/)
+  and [Fanta](https://www.cocacolaep.com/our-brands/our-brands/fanta/)
+  provide caffeine-free lemonade/fruit-soda examples, not evidence for a 90% ratio.
+- [Fever-Tree tonic](https://fever-tree.com/en-us/products/premium-tonic-water)
+  provides tonic recipe context. No extra quinine penalty is inferred.
+- [Bundaberg's FAQ](https://www.bundaberg.com/faqs/) supports caffeine-free ginger
+  beer. Brewed soft drinks may retain trace alcohol; this generic non-alcoholic
+  recipe uses `alcohol.kind: none` without claiming every product is chemically
+  alcohol-free. Alcoholic ginger beer and mixed drinks are excluded.
+- [Robinsons Summer Fruits](https://robinsonssquash.co.uk/our-products/family-favourites/summer-fruits-single-concentrate/)
+  illustrates fruit squash without caffeine ingredients and a 1:4 dilution.
+  Manufacturer dilutions vary. The shared 95% estimate applies to the prepared
+  drink and is not a score for concentrate or a dilution-derived calculation.
+
+### Presentation and preserved history
+
+Soft Drinks uses `Color.purple` and existing selection borders/primary name text.
+Frank supplies the custom category symbol; until integrated, the existing generic
+category symbol remains. Drink artwork uses existing fallbacks until supplied.
+No sheet layout, positioning or animation changes under #149 are included.
+
+All 25 prior definitions and persistence fields are unchanged. Existing saved facts
+and unknown values retain their original meaning; new logs capture development-9,
+and repeats use current rules without rewriting originals. HealthKit mapping and
+alcohol policy remain separate. No database deletion or historical recalculation.

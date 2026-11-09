@@ -269,6 +269,7 @@ struct AddDrinkView: View {
         case "coffee": return .brown
         case "tea": return .mint
         case "juices": return .orange
+        case "soft-drinks": return .purple
         default: return .blue
         }
     }
