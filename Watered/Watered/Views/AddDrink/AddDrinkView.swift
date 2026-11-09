@@ -269,6 +269,8 @@ struct AddDrinkView: View {
         switch categoryID {
         case "water": return "drop.fill"
         case "juices": return "takeoutbag.and.cup.and.straw"
+        case "sports-energy": return "waterbottle.fill"
+        case "wellness": return "heart"
         default: return "cup.and.saucer"
         }
     }

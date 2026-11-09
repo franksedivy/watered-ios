@@ -1,0 +1,66 @@
+[
+    {
+        "id": "kombucha",
+        "name": "Kombucha",
+        "categoryID": "wellness",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 4.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "unknown"
+        }
+    },
+    {
+        "id": "vitamin-drink",
+        "name": "Vitamin drink",
+        "categoryID": "wellness",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 500,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "cbd-drink",
+        "name": "CBD drink",
+        "categoryID": "wellness",
+        "sortOrder": 30,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    }
+]

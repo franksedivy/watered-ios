@@ -465,6 +465,47 @@ final class AddDrinkCategoryUITests: XCTestCase {
     }
 
     @MainActor
+    func testWellnessAndSportsDefaultsAndSavedCaffeine() {
+        let app = openAddDrink()
+        let categories = app.scrollViews["addDrinkCategoryScrollView"]
+        for (categoryID, drinks) in [
+            ("wellness", [("kombucha", "250 ml"), ("vitamin-drink", "500 ml"), ("cbd-drink", "250 ml")]),
+            ("sports-energy", [("energy-drink", "250 ml"), ("sports-drink", "500 ml"), ("electrolyte-drink", "500 ml"), ("protein-shake", "300 ml")])
+        ] {
+            let category = categories.buttons["addDrinkCategoryScrollView.\(categoryID)"]
+            for _ in 0..<8 where !category.isHittable { categories.swipeLeft() }
+            XCTAssertTrue(category.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            category.tap()
+            let types = app.scrollViews["addDrinkTypeScrollView"]
+            for (id, volume) in drinks {
+                let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+                for _ in 0..<8 where !drink.isHittable { types.swipeLeft() }
+                XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+                drink.tap()
+                XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+                XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, volume)
+                XCTAssertFalse(app.switches["addDrinkDecafToggle"].exists)
+                XCTAssertFalse(app.switches["addDrinkCaffeineFreeToggle"].exists)
+                XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
+            }
+        }
+        let types = app.scrollViews["addDrinkTypeScrollView"]
+        let energy = types.buttons["addDrinkTypeScrollView.energy-drink"]
+        for _ in 0..<8 where !energy.isHittable { types.swipeRight() }
+        energy.tap()
+        app.buttons["addDrinkSubmitButton"].tap()
+        XCTAssertTrue(app.buttons["addDrinkSubmitButton"].waitForNonExistence(timeout: readinessTimeout))
+        app.tabBars.buttons["Stats"].tap()
+        let row = app.collectionViews["statsDrinkHistoryList"].buttons["statsDrinkEntryLink"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
+        row.tap()
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(detail.staticTexts["statsHydrationContribution"].label.contains("225 ml"))
+        XCTAssertTrue(detail.staticTexts["statsCaffeineAmount"].label.contains("80 mg"))
+    }
+
+    @MainActor
     private func waitForControlValue(_ value: String, in element: XCUIElement) -> Bool {
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "value == %@", value), object: element
