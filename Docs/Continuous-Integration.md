@@ -14,6 +14,17 @@ runs can also be rerun from their Actions page.
 A newer run cancels an older run for the same branch. Jobs have a 45-minute limit,
 the test step has a 40-minute limit, and individual test timeouts are bounded.
 
+## Test scope
+
+As agreed on 9 November 2026, CI executes only `WateredTests` using
+`-only-testing:WateredTests`. All UI tests are temporarily excluded from hosted
+execution during active development. Their source and shared local test plan remain
+intact for contributor-run checks. Reintroduce UI coverage incrementally as the app
+matures, through explicit changes to this selection and its helper checks.
+
+A green CI run proves unit-test coverage only; it does not resolve the outstanding
+UI failures tracked in #155/#138 or replace manual/device review.
+
 ## Environment
 
 - GitHub-hosted `xcode-27` arm64 image, currently a public preview.
