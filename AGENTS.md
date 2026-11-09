@@ -12,7 +12,8 @@ Keep explanations plain and proportional to the task. Small comment or copy edit
 
 - Read the task and relevant docs, then inspect branch, working tree and affected code. Preserve unrelated changes.
 - Define the outcome and observable completion checks. Keep one independently reviewable change per task; a release chat coordinates scope rather than accumulating implementation.
-- Reuse the suitable checkout. Use a focused branch; isolate concurrent writers if parallel work is explicitly requested. Do not create extra chats or delegate unless requested.
+- Use Frank’s usual checkout at `/Users/frank.sedivy/Developer/Repos/BytePie/watered-ios` by default, with a focused branch. Create or use a separate worktree only when Frank explicitly agrees that parallel work requires one; do not create worktrees for routine sequential work.
+- For agreed parallel work, identify which folder and branch each person is using, and release any branch held by an agent worktree before handing it back to Frank’s usual checkout. Do not create extra chats or delegate unless requested.
 - Treat unrelated improvements as follow-ups. Do not broaden a bug fix into general cleanup.
 
 Investigation default: after roughly 15 minutes, report what evidence has been found and the next hypothesis. After two attempts produce no new evidence, change approach or explain the precise blocker. A useful checkpoint is not a claim that the task is finished.
