@@ -271,6 +271,7 @@ struct AddDrinkView: View {
         case "juices": return "takeoutbag.and.cup.and.straw"
         case "sports-energy": return "waterbottle.fill"
         case "wellness": return "heart"
+        case "milk-alternatives": return "mug.fill"
         default: return "cup.and.saucer"
         }
     }
@@ -281,6 +282,7 @@ struct AddDrinkView: View {
         case "tea": return .mint
         case "juices": return .orange
         case "soft-drinks": return .purple
+        case "milk-alternatives": return .pink
         default: return .blue
         }
     }

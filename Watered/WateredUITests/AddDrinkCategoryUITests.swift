@@ -513,6 +513,51 @@ final class AddDrinkCategoryUITests: XCTestCase {
         return XCTWaiter.wait(for: [expectation], timeout: readinessTimeout) == .completed
     }
 
+    @MainActor
+    func testMilkDefaultsNoPreparationAndSavedCocoaEstimates() {
+        let app = openAddDrink()
+        let categories = app.scrollViews["addDrinkCategoryScrollView"]
+        let category = categories.buttons["addDrinkCategoryScrollView.milk-alternatives"]
+        for _ in 0..<10 {
+            if category.isHittable { break }
+            categories.swipeLeft()
+        }
+        XCTAssertTrue(category.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+        category.tap()
+        let types = app.scrollViews["addDrinkTypeScrollView"]
+        for id in ["milk", "oat-milk", "soy-milk", "almond-milk", "coconut-milk", "rice-milk", "kefir", "drinking-yoghurt", "milkshake", "chocolate-milk", "hot-chocolate", "ayran"] {
+            let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+            for _ in 0..<10 {
+                if drink.isHittable { break }
+                types.swipeLeft()
+            }
+            XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
+            drink.tap()
+            XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+            XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, id == "milkshake" ? "300 ml" : "250 ml")
+            XCTAssertFalse(app.switches["addDrinkDecafToggle"].exists)
+            XCTAssertFalse(app.switches["addDrinkCaffeineFreeToggle"].exists)
+            XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
+        }
+        let cocoa = types.buttons["addDrinkTypeScrollView.hot-chocolate"]
+        for _ in 0..<10 {
+            if cocoa.isHittable { break }
+            types.swipeRight()
+        }
+        cocoa.tap()
+        app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "500 ml")
+        app.buttons["addDrinkSubmitButton"].tap()
+        XCTAssertTrue(app.buttons["addDrinkSubmitButton"].waitForNonExistence(timeout: readinessTimeout))
+        app.tabBars.buttons["Stats"].tap()
+        let row = app.collectionViews["statsDrinkHistoryList"].buttons["statsDrinkEntryLink"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: readinessTimeout))
+        row.tap()
+        let detail = app.collectionViews["statsDrinkEntryDetailList"]
+        XCTAssertTrue(detail.waitForExistence(timeout: readinessTimeout))
+        XCTAssertTrue(detail.staticTexts["statsHydrationContribution"].label.contains("425 ml"))
+        XCTAssertTrue(detail.staticTexts["statsCaffeineAmount"].label.contains("10 mg"))
+    }
+
     // Opens the sheet with an empty store and predictable units for category interaction checks.
     @MainActor
     private func openAddDrink() -> XCUIApplication {

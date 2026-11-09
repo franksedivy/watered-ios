@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-10`.
+- `version` identifies the catalogue content release, currently `development-11`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 38 drinks: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness and four Sports & Energy definitions.
+The current seed contains 50 drinks across eight categories, including twelve Milk & Alternatives definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -471,3 +471,86 @@ where no asset is supplied.
 Existing catalogue files, saved snapshots, unknown values and persistence fields
 are unchanged by this batch. Repeats use current rules without rewriting originals.
 #149 layout, HealthKit, sugar research #152 and broader alcohol policy stay separate.
+
+## Milk & Alternatives — approved 9 November 2026 (#99 / #101 / #102)
+
+Content `development-11` adds `milk-alternatives.json` after Sports & Energy,
+bringing the seed to 50 drinks across eight categories. Manifest 1, schema 3 and
+calculation version 2 remain unchanged. All twelve entries have no preparation
+options. Caffeine in the two cocoa drinks scales with prepared volume.
+
+| ID / display name, in order | Hydration | Caffeine / 250 ml | Default |
+| --- | ---: | ---: | ---: |
+| `milk` / Milk | 90% | 0 mg | 250 ml |
+| `oat-milk` / Oat milk | 90% | 0 mg | 250 ml |
+| `soy-milk` / Soy milk | 90% | 0 mg | 250 ml |
+| `almond-milk` / Almond milk | 95% | 0 mg | 250 ml |
+| `coconut-milk` / Coconut milk | 95% | 0 mg | 250 ml |
+| `rice-milk` / Rice milk | 90% | 0 mg | 250 ml |
+| `kefir` / Kefir | 90% | 0 mg | 250 ml |
+| `drinking-yoghurt` / Drinking yoghurt | 85% | 0 mg | 250 ml |
+| `milkshake` / Milkshake | 85% | 0 mg | 300 ml |
+| `chocolate-milk` / Chocolate milk | 85% | 5 mg | 250 ml |
+| `hot-chocolate` / Hot chocolate | 85% | 5 mg | 250 ml |
+| `ayran` / Ayran | 95% | 0 mg | 250 ml |
+
+### Scope, evidence and uncertainty
+
+The fixed percentages are approved generic accounting assumptions, not measured
+physiological hydration fractions. Differences between plant drinks do not establish
+that one hydrates better than another. Recipes vary across brands, fat levels,
+sweeteners and barista formulations. Fortification/fermentation confer no extra
+credit. Record the full consumed volume separately from calculated goal credit.
+
+- **Milk:** plain dairy milk across skimmed, semi-skimmed, whole and lactose-free
+  versions. The 90% audit approximation is consistent with the existing milk input
+  for coffee recipes. A [whole/skimmed milk hydration trial](https://pubmed.ncbi.nlm.nih.gov/26702122/)
+  found greater short-term retention than water, not evidence for a 10% hydration
+  loss. This study does not establish a universal coefficient for all dairy recipes.
+- **Oat / Soy / Almond milk:** plain ready-to-drink sweetened, unsweetened or barista
+  products; exclude chocolate, coffee and other flavoured versions. The 90/90/95%
+  values retain the audit's provisional recipe estimates. Representative ingredients:
+  [Oatly](https://www.oatly.com/en-us/products/oatmilk/oatmilk-32-oz),
+  [Alpro Soya](https://www.alpro.com/en-gb/products/drinks/soya-original),
+  [Alpro Almond](https://www.alpro.com/en-gb/products/drinks/almond-original).
+  Label ingredient percentages are not hydration multipliers.
+- **Coconut milk:** diluted carton milk alternative, including sweetened,
+  unsweetened/barista products, excluding canned cooking milk and cream. Coconut
+  water remains a separate drink. 95% is a newly approved generic assumption;
+  [Alpro Coconut](https://www.alpro.com/en-gb/products/drinks/coconut-original-chilled?pp=0)
+  supplies recipe context, not measured retention data.
+- **Rice milk:** plain ready-to-drink sweetened/unsweetened rice drink, excluding
+  flavoured versions. Provisional 90%; [DREAM Original](https://dreamplantbased.com/products/ricemilk-products/ricemilk-original-classic/)
+  is a representative caffeine-free recipe.
+- **Kefir:** plain drinkable dairy kefir across fat levels, excluding fruit flavours,
+  water kefir and spoonable products. Provisional 90%, without a fermentation penalty;
+  [Lifeway Plain](https://lifewaykefir.com/products/whole-milk-plain-kefir/) provides
+  recipe context. Exact residual alcohol is not inferred from fermentation alone.
+- **Drinking yoghurt:** pourable plain/fruit-flavoured dairy yoghurt drinks, excluding
+  spoonable yoghurt, concentrated probiotic shots and coffee/chocolate recipes.
+  Provisional 85% is the audit's thick-dairy-drink assumption, not a measured result.
+  [Yop](https://www.yop.co.uk/) was the audit's representative product family.
+- **Milkshake:** pourable fruit/vanilla dairy shake, excluding ice-cream-heavy dessert
+  shakes and coffee/chocolate recipes. Provisional 85%; [Müller strawberry recipe](https://www.muller.co.uk/our-brands/mueller-frijj/frijj-favourites-strawberry-cheesecake-flavour)
+  supports caffeine-free recipe context.
+- **Chocolate milk:** cold dairy chocolate milk, ready-made or prepared with powder/
+  syrup, excluding coffee blends. **Hot chocolate** covers ordinary drinkable
+  milk-based chocolate/cocoa without whipped cream or toppings, excluding thick
+  desserts and coffee blends. Both use provisional 85% and generic 5 mg/250 ml.
+  [Chocolate-milk reference figures](https://www.pepsicoproductfacts.com/Home/caffeine)
+  list 2–7 mg/8 fl oz; [Health Canada](https://www.canada.ca/en/health-canada/services/food-nutrition/food-safety/food-additives/caffeine-foods.html)
+  lists 5 mg/237 ml for hot-cocoa mix. These support a rounded default, not an exact
+  result for every milk-based recipe; stronger cocoa can contain more caffeine.
+- **Ayran:** plain ready-to-drink yoghurt/water/salt, excluding flavoured and spoonable
+  products. The audit's provisional 95% remains a generic prepared-drink placeholder;
+  no component calculation is claimed without exact proportions and plain-yoghurt
+  inputs. [Sütaş](https://www.sutas.com/sutas-ayran-250-ml-young-bottle) supplies recipe
+  context. Salt adds no extra consumed water or goal credit.
+
+The category uses iOS pink (`Color.pink`) and `mug.fill`; selected borders and primary
+name text follow existing styling. Artwork loads by stable drink ID, with existing
+fallbacks until supplied. Existing 38 definitions, saved snapshots, unknown values,
+persistence fields and calculation logic are unchanged. No historical recalculation
+or reset; repeats resolve current rules. #149 layout, HealthKit and alcohol policy
+remain separate. No standalone cocoa or goat-milk entry is added to this approved
+12-drink lineup.

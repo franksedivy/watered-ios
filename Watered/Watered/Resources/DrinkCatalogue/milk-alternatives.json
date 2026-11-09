@@ -1,0 +1,238 @@
+[
+    {
+        "id": "milk",
+        "name": "Milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "oat-milk",
+        "name": "Oat milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "soy-milk",
+        "name": "Soy milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 30,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "almond-milk",
+        "name": "Almond milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 40,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "coconut-milk",
+        "name": "Coconut milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 50,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "rice-milk",
+        "name": "Rice milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 60,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "kefir",
+        "name": "Kefir",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 70,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "drinking-yoghurt",
+        "name": "Drinking yoghurt",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 80,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.85
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "milkshake",
+        "name": "Milkshake",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 90,
+        "isRetired": false,
+        "defaultVolume": 300,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.85
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "chocolate-milk",
+        "name": "Chocolate milk",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 100,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.85
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 2.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "hot-chocolate",
+        "name": "Hot chocolate",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 110,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.85
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 2.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "ayran",
+        "name": "Ayran",
+        "categoryID": "milk-alternatives",
+        "sortOrder": 120,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    }
+]
