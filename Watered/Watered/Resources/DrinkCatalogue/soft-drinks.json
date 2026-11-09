@@ -1,0 +1,127 @@
+[
+    {
+        "id": "cola",
+        "name": "Cola",
+        "categoryID": "soft-drinks",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 10
+                    }
+                },
+                {
+                    "variant": "caffeine-free",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "lemonade",
+        "name": "Lemonade",
+        "categoryID": "soft-drinks",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "tonic-water",
+        "name": "Tonic water",
+        "categoryID": "soft-drinks",
+        "sortOrder": 30,
+        "isRetired": false,
+        "defaultVolume": 200,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "fruit-soda",
+        "name": "Fruit soda",
+        "categoryID": "soft-drinks",
+        "sortOrder": 40,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "ginger-beer",
+        "name": "Ginger beer",
+        "categoryID": "soft-drinks",
+        "sortOrder": 50,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "squash",
+        "name": "Squash",
+        "categoryID": "soft-drinks",
+        "sortOrder": 60,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    }
+]
