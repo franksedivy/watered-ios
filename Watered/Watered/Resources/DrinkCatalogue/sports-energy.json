@@ -1,0 +1,84 @@
+[
+    {
+        "id": "energy-drink",
+        "name": "Energy drink",
+        "categoryID": "sports-energy",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "options",
+            "defaultVariant": "regular",
+            "options": [
+                {
+                    "variant": "regular",
+                    "rule": {
+                        "kind": "perVolume",
+                        "concentration": 32.0
+                    }
+                }
+            ]
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "sports-drink",
+        "name": "Sports drink",
+        "categoryID": "sports-energy",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 500,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "electrolyte-drink",
+        "name": "Electrolyte drink",
+        "categoryID": "sports-energy",
+        "sortOrder": 30,
+        "isRetired": false,
+        "defaultVolume": 500,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "protein-shake",
+        "name": "Protein shake",
+        "categoryID": "sports-energy",
+        "sortOrder": 40,
+        "isRetired": false,
+        "defaultVolume": 300,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.9
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    }
+]

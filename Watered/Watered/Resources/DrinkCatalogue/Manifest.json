@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "schemaVersion": 3,
-    "version": "development-9",
+    "version": "development-10",
     "categories": [
         {
             "id": "water",
@@ -32,6 +32,18 @@
             "name": "Soft Drinks",
             "sortOrder": 50,
             "file": "soft-drinks.json"
+        },
+        {
+            "id": "wellness",
+            "name": "Wellness",
+            "sortOrder": 60,
+            "file": "wellness.json"
+        },
+        {
+            "id": "sports-energy",
+            "name": "Sports & Energy",
+            "sortOrder": 70,
+            "file": "sports-energy.json"
         }
     ]
 }

@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-9`.
+- `version` identifies the catalogue content release, currently `development-10`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 31 drinks: four Water, seven Coffee, ten Tea, four Juices and six Soft Drinks definitions.
+The current seed contains 38 drinks: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness and four Sports & Energy definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -401,3 +401,72 @@ All 25 prior definitions and persistence fields are unchanged. Existing saved fa
 and unknown values retain their original meaning; new logs capture development-9,
 and repeats use current rules without rewriting originals. HealthKit mapping and
 alcohol policy remain separate. No database deletion or historical recalculation.
+
+## Wellness and Sports & Energy — approved 9 November 2026 (#99 / #101 / #102)
+
+Content `development-10` adds Wellness and Sports & Energy after Soft Drinks.
+The seed contains 38 drinks. Manifest 1, schema 3 and calculation version 2 stay
+unchanged. Every new drink has no preparation controls; caffeine scales with volume.
+
+| Category | ID / display name | Hydration | Caffeine / 250 ml | Default |
+| --- | --- | ---: | ---: | ---: |
+| Wellness | `kombucha` / Kombucha | 95% | 10 mg | 250 ml |
+| Wellness | `vitamin-drink` / Vitamin drink | 95% | 0 mg | 500 ml |
+| Wellness | `cbd-drink` / CBD drink | 95% | 0 mg | 250 ml |
+| Sports & Energy | `energy-drink` / Energy drink | 90% | 80 mg | 250 ml |
+| Sports & Energy | `sports-drink` / Sports drink | 95% | 0 mg | 500 ml |
+| Sports & Energy | `electrolyte-drink` / Electrolyte drink | 95% | 0 mg | 500 ml |
+| Sports & Energy | `protein-shake` / Protein shake | 90% | 0 mg | 300 ml |
+
+### Recipe boundaries and evidence
+
+All hydration ratios are approved generic accounting assumptions, not measured
+physiological retention fractions. Vitamins, CBD, electrolytes and protein do not
+add special goal credit. No extra caffeine penalty is applied. Brand examples
+support recipe/caffeine context, not universal hydration coefficients.
+
+- **Kombucha:** ready-to-drink tea-based kombucha sold as non-alcoholic, including
+  plain/fruit flavours and trace-alcohol versions. Excludes hard kombucha, homemade
+  brews and added-caffeine/energy blends. [Remedy UK](https://www.remedydrinks.co.uk/blogs/news/how-much-caffeine-is-in-kombucha-3)
+  reports less than 15 mg caffeine per 250 ml; 10 mg is a generic estimate, not a
+  measured brand average. Frank explicitly extended the audit's 0.0%-only 95%
+  proposal to this trace-alcohol scope. Exact ABV remains unknown (`alcohol.kind:
+  unknown`), independently of the approved fixed hydration ratio; do not fabricate
+  zero ABV or apply an additional alcohol rule.
+- **Vitamin drink:** ready-to-drink water-based vitamin drink, regular/sugar-free,
+  excluding caffeinated energy versions and concentrated shots.
+  [Vitamin Well Reload](https://www.vitaminwell.com/product/reload/) is recipe
+  context. The audit's provisional 95% applies without a vitamin bonus.
+- **CBD drink:** ready-to-drink water-based CBD soft drink, regular/sugar-free;
+  excludes oils, concentrated shots, alcohol and caffeinated blends.
+  [Goodrays ingredients](https://www.goodrays.com/products/cbd-passionfruit-pomelo-330ml)
+  support the non-caffeinated example. [TRIP's CBD product record](https://data.food.gov.uk/cbd-products/products-list/cbdid3196)
+  supports the 250 ml serving choice, not a current universal recipe or CBD dose.
+  CBD-dose tracking is a future interest, not implemented in this batch. No CBD
+  safety/effectiveness claim or hydration bonus is inferred.
+- **Energy drink:** ordinary caffeinated ready-to-drink energy drink, regular or
+  sugar-free, excluding concentrated shots. [Red Bull](https://www.redbull.com/gb-en/energydrink/products/red-bull-energy-drink)
+  publishes 80 mg caffeine per 250 ml. Other formulations vary; this is a generic
+  default. 90% retains the audit's soft-drink assumption.
+- **Sports drink:** ready-to-drink isotonic-style regular/sugar-free drink;
+  excludes caffeinated energy products, concentrated shots and tablets/powders.
+  [Gatorade](https://www.gatorade.com/faqs) distinguishes ordinary hydration products
+  from caffeinated energy lines. The provisional 95% is not an absorption claim.
+- **Electrolyte drink:** non-caffeinated electrolyte tablets/powders prepared with
+  water according to the label; log total prepared volume. Excludes concentrated
+  shots and caffeinated versions. [Nuun](https://nuunlife.ca/products/nuun-sport?variant=38833712431255)
+  distinguishes its caffeine variants and specifies dilution. 95% is a shared
+  prepared-drink assumption, not a concentrate score or product-study result.
+- **Protein shake:** standard protein powder serving prepared with water; excludes
+  milk-based shakes, mass gainers and caffeine-containing formulations, including
+  coffee/energy or relevant cocoa recipes. [Optimum Nutrition preparation](https://www.optimumnutrition.com/en-gb/products/gold-standard-100-whey-protein-powder-eu?variant=52105832694027)
+  illustrates water mixing; it does not establish the provisional 90% ratio.
+  Log total prepared drink volume; no scoop-count controls.
+
+Greens drink and apple cider vinegar drink are explicitly deferred. Milk &
+Alternatives review is paused before estimates. Category colours, symbols and new
+drink artwork are not yet agreed/supplied; existing UI fallbacks remain in use.
+
+Existing catalogue files, saved snapshots, unknown values and persistence fields
+are unchanged by this batch. Repeats use current rules without rewriting originals.
+#149 layout, HealthKit, sugar research #152 and broader alcohol policy stay separate.
