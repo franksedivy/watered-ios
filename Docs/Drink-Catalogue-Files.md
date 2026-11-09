@@ -464,8 +464,9 @@ support recipe/caffeine context, not universal hydration coefficients.
   Log total prepared drink volume; no scoop-count controls.
 
 Greens drink and apple cider vinegar drink are explicitly deferred. Milk &
-Alternatives review is paused before estimates. Category colours, symbols and new
-drink artwork are not yet agreed/supplied; existing UI fallbacks remain in use.
+Alternatives review is paused before estimates. Sports & Energy uses `waterbottle.fill`; Wellness uses `heart`. Category colours
+remain to be agreed. Drink artwork loads by catalogue ID, with existing fallbacks
+where no asset is supplied.
 
 Existing catalogue files, saved snapshots, unknown values and persistence fields
 are unchanged by this batch. Repeats use current rules without rewriting originals.
