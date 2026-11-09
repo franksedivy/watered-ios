@@ -233,7 +233,7 @@ struct AddDrinkView: View {
                     Button {
                         selectCategory(category)
                     } label: {
-                        Label(category.name, systemImage: category.id == "water" ? "drop.fill" : "cup.and.saucer")
+                        Label(category.name, systemImage: categorySymbol(category.id))
                             .font(.callout)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
@@ -256,10 +256,19 @@ struct AddDrinkView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
+    private func categorySymbol(_ categoryID: String) -> String {
+        switch categoryID {
+        case "water": return "drop.fill"
+        case "juices": return "takeoutbag.and.cup.and.straw"
+        default: return "cup.and.saucer"
+        }
+    }
+
     private func categoryTint(_ categoryID: String) -> Color {
         switch categoryID {
         case "coffee": return .brown
         case "tea": return .mint
+        case "juices": return .orange
         default: return .blue
         }
     }

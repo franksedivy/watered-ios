@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-7`.
+- `version` identifies the catalogue content release, currently `development-8`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains four Water, seven Coffee and ten Tea definitions.
+The current seed contains 25 drinks: four Water, seven Coffee, ten Tea and four Juices definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, #102)
@@ -193,7 +193,7 @@ policy and HealthKit mapping remain separate.
 ## Remaining teas — approved 8 November 2026 (#99 / #101 / #102)
 
 Content `development-7` appends these six drinks after the four plain teas, in the
-order below. The full seed is now 21 drinks: four Water, seven Coffee and ten Tea.
+order below. That release contained 21 drinks: four Water, seven Coffee and ten Tea.
 Black tea remains the Tea category default. Display names are exactly as listed.
 
 | ID | Display name | Serving default | Hydration credit | Caffeine / 250 ml | Optional preparation |
@@ -275,3 +275,65 @@ This completes the agreed ten-entry Tea membership, not the wider catalogue unde
 fallbacks until supplied. Sheet positioning/animation remains separate in #149;
 alcohol and HealthKit mapping remain outside this batch. No PR is created without
 Frank's explicit request.
+
+## Juices — approved 9 November 2026 (#99 / #101 / #102)
+
+Content `development-8` adds `juices.json` after Tea. The seed now has 25 drinks.
+Manifest 1, schema 3 and calculation version 2 are unchanged. All four drinks have
+250 ml defaults, known zero caffeine (`caffeine.kind: none`), no alcohol
+(`alcohol.kind: none`) and no preparation or flavour controls.
+
+| ID / display name, in order | Hydration contribution | Credit for 250 ml | Scope |
+| --- | ---: | ---: | --- |
+| `fruit-juice` / Fruit juice | 90% | 225 ml | 100% fruit juice; no sweetened/diluted fruit drinks or added caffeine |
+| `vegetable-juice` / Vegetable juice | 95% | 237.5 ml | 100% vegetable juice, including vegetable-only blends; excludes fruit-and-vegetable blends |
+| `smoothie` / Smoothie | 85% | 212.5 ml | Drinkable fruit/vegetable smoothies and blends; excludes milk, yoghurt and protein-based versions or caffeinated additions |
+| `aloe-vera-drink` / Aloe vera drink | 90% | 225 ml | Ready-to-drink diluted aloe beverage, including pulp; representative estimate uses a sweetened bottled drink, excluding concentrates, supplements and caffeinated blends |
+
+These are approved generic Watered accounting assumptions, not measured physiological
+hydration fractions or market averages. They do not imply that the remainder causes
+fluid loss. Fluid intake retains the entire consumed volume; goal credit uses the
+fixed ratio. No extra caffeine penalty or health benefit is inferred.
+
+### Evidence and limitations
+
+- Fruit juice's 90% is a newly approved generic assumption. The
+  [USDA fruit composition tables](https://www.ars.usda.gov/ARSUserFiles/80400535/Data/SR/SR28/reports/sr28fg09.pdf)
+  report raw orange juice at 88.3 g water per 100 g, but composition by mass does not
+  establish a volume-based hydration coefficient across fruit juices. An
+  [orange-juice hydration trial](https://pubmed.ncbi.nlm.nih.gov/26702122/) does not
+  establish a 10% hydration loss relative to water.
+- Vegetable juice retains the audit's provisional 95%. The ingredient list for
+  [V8 Original](https://www.campbells.com/v8/products/v8-vegetable-juice/original-100-vegetable-juice/)
+  supports the vegetable-only, non-caffeinated example; it does not establish 95%
+  physiological credit. Vegetable blends and solids vary.
+- Smoothie retains the audit's provisional 85% for drinkable puree and juice.
+  [Innocent's ingredient information](https://www.innocentdrinks.co.uk/get-in-touch/faqs)
+  provides recipe context, not a measured coefficient. A component-based calculation
+  remains unsupported without representative puree/juice proportions and rules.
+- Aloe vera drink retains the audit's provisional 90%.
+  [ALO Original](https://alodrink.com/alo-original/alo-exposed/) lists water, aloe juice,
+  pulp and sweeteners without caffeine sources;
+  [Aloevine Original](https://aloevine.com/flavors/original/) lists 8% aloe gel.
+  Neither label establishes a hydration fraction; gel percentage is not hydration
+  contribution. Unsweetened aloe water may differ from this representative recipe.
+
+The [manufacturer audit](https://github.com/franksedivy/watered-ios/wiki/Research:-Drink-Manufacturer-Audit)
+retains historical proposals; the approved values above supersede its older
+unreviewed juice scores. Zero caffeine applies to the defined recipes, not tea,
+coffee, guarana or energy blends.
+
+### Presentation and history
+
+Juices uses iOS orange (`Color.orange`) and `takeoutbag.and.cup.and.straw`. Selected
+drink tiles retain the existing category-coloured border and neutral fill; names
+retain the existing primary text style (black in light appearance). Bundled artwork
+can be supplied under the four stable IDs; until then the existing fallback renders.
+
+Existing Water/Coffee/Tea JSON, saved snapshots, unknown estimates and persistence
+fields remain unchanged. Only new logs capture development-8; repeating a supported
+recent drink resolves current rules without changing its original record. Serving
+defaults apply only to untouched volume; chosen and restored amounts remain intact.
+No database reset, HealthKit mapping, alcohol-policy or #149 sheet-layout change is
+included. Tests cover catalogue membership, units, saved-fact round trips, repeats,
+no preparation controls, volume defaults and saved hydration totals.

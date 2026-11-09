@@ -16,10 +16,23 @@ The README establishes focused branches from `main`, one issue or coherent chang
 2. Start a focused branch from the appropriate base. Existing history uses `feature/`, `bugfix/` and `refactor/`; agent-created branches can use `codex/<issue>-<description>`. Existing branches do not need renaming.
 3. Implement a small coherent slice following existing model and persistence boundaries.
 4. Run relevant checks from [Testing](Docs/TESTING.md), inspect `git diff --check` and review the diff, including new files.
-5. Open a PR referencing the issue. Describe the concrete problem, resulting behaviour, verification and limitations. Include visual evidence for UI changes.
+5. Only when Frank explicitly requests it, open a PR referencing the relevant and parent issues. Describe the concrete problem, resulting behaviour, verification and limitations. Include visual evidence for UI changes and complete the metadata checklist below.
 6. Obtain explicit merge agreement. A successful check or approved issue does not authorize a release.
 
 Do not silently skip CI or broaden a change to make unrelated tests pass. If a prototype intentionally has unverified behaviour, document the gap and agree its verification before treating it as release-ready.
+
+## PR metadata checklist
+
+Complete these checks when creating any PR, including drafts, and recheck them when scope changes. Inspect the relevant and parent tickets and existing repository conventions; do not guess assignments or create new labels, milestones or projects merely to fill fields.
+
+- **Assignee:** assign the person responsible for delivery; for Frank's Watered work, use `franksedivy` unless another owner is agreed.
+- **Labels:** apply existing labels that describe the actual change, such as `enhancement`, `bug` or `documentation`. Do not copy unrelated issue labels automatically.
+- **Milestone:** use the agreed release milestone from the owning issue when the PR contributes to that release.
+- **Projects:** add the PR to the relevant existing project and set applicable status/fields when one is in use. Check the owning and parent issues. If no project applies, leave it unset and say so; if access prevents checking or updating it, report the limitation.
+- **Reviewers:** request the agreed eligible reviewer or team. GitHub does not allow the PR author to review their own PR; do not invent a reviewer simply to populate the field. Explain when no eligible reviewer is designated.
+- **Development / issue links:** reference all relevant and parent tickets in the description. Use closing keywords or GitHub's closing links only when the PR fully resolves that issue. For partial category deliveries, use `Refs #…`; an empty Development field is acceptable when automatic closure would be incorrect.
+
+Read back the saved metadata before reporting completion. Briefly identify any intentionally unset fields or permission limitations. Metadata completion does not authorize a merge or release.
 
 ## Repetitive checks and formatting
 

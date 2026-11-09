@@ -109,7 +109,7 @@ struct RemainingTeaEstimateTests {
             #expect(repeated.catalogueSnapshot.caffeineVariant == .caffeineFree)
             #expect(repeated.catalogueSnapshot.caffeineAmount == 0)
             #expect(abs(try #require(repeated.catalogueSnapshot.hydrationContribution) - 313.5) < 0.000001)
-            #expect(repeated.catalogueSnapshot.catalogueVersion == "development-7")
+            #expect(repeated.catalogueSnapshot.catalogueVersion == "development-8")
         }
         #expect(recents.filter { $0.caffeineVariant == .caffeineFree }.count == 2)
         #expect(store.entries.filter { $0.drinkID == "black-tea" }.allSatisfy { $0.catalogueSnapshot.caffeineAmount == nil })
