@@ -49,6 +49,11 @@ final class PersistentDrinkEntry {
     /// The original JSON schema version, or nil for entries that did not capture it.
     var catalogueSchemaVersion: Int? = nil
 
+    /// Optional additions allow existing stores to retain their original snapshots.
+    var isNonAlcoholic: Bool? = nil
+    var alcoholABV: Double? = nil
+    var alcoholABVUpperBound: Double? = nil
+
     /// Copies a logged entry and its captured snapshot into storage fields.
     ///
     /// - Parameter drinkEntry: The entry whose facts and metadata must be preserved.
@@ -65,6 +70,9 @@ final class PersistentDrinkEntry {
         self.catalogueDrinkName = snapshot.drinkName
         self.caffeineVariantID = snapshot.caffeineVariant.rawValue
         self.shotCount = snapshot.shotCount
+        self.isNonAlcoholic = snapshot.isNonAlcoholic
+        self.alcoholABV = snapshot.alcoholABV
+        self.alcoholABVUpperBound = snapshot.alcoholABVUpperBound
         self.hydrationContribution = snapshot.hydrationContribution
         self.caffeineAmount = snapshot.caffeineAmount
         self.catalogueVersion = snapshot.catalogueVersion
@@ -100,6 +108,11 @@ final class PersistentDrinkEntry {
             return nil
         }
 
+        for value in [alcoholABV, alcoholABVUpperBound].compactMap({ $0 }) {
+            guard value.isFinite, (0...1).contains(value) else { return nil }
+        }
+        if isNonAlcoholic == true, alcoholABV != nil { return nil }
+
         let snapshot = DrinkCatalogueSnapshot(
             drinkID: drinkID,
             drinkName: drinkName,
@@ -109,7 +122,10 @@ final class PersistentDrinkEntry {
             caffeineAmount: caffeineAmount,
             catalogueVersion: catalogueVersion,
             calculationVersion: calculationVersion,
-            catalogueSchemaVersion: catalogueSchemaVersion
+            catalogueSchemaVersion: catalogueSchemaVersion,
+            isNonAlcoholic: isNonAlcoholic,
+            alcoholABV: alcoholABV,
+            alcoholABVUpperBound: alcoholABVUpperBound
         )
         return DrinkEntry(
             id: id,

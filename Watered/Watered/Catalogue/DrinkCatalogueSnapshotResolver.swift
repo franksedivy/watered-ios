@@ -13,10 +13,11 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
         case unavailableDrink(String)
         case unavailablePreparation(String)
         case unavailableShotCount(String)
+        case unavailableAlcoholPreparation(String)
     }
     
     /// Identifies the calculation logic used to produce saved estimates.
-    static let calculationVersion = "2"
+    static let calculationVersion = "3"
     
     private let catalogue: DrinkCatalogue
     
@@ -42,7 +43,9 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
         drinkID: String,
         amount: DrinkAmount,
         caffeineVariant: CaffeineVariant? = nil,
-        shotCount: Int? = nil
+        shotCount: Int? = nil,
+        isNonAlcoholic: Bool = false,
+        alcoholABV: Double? = nil
     ) throws -> DrinkCatalogueSnapshot {
         guard let definition = catalogue.drink(withID: drinkID),
               !definition.isRetired else {
@@ -75,9 +78,35 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
             resolvedShotCount = nil
         }
             
+        var hydrationRule = definition.hydrationContributionRule
+        var resolvedABV: Double?
+        var upperBound: Double?
+        var capturedNonAlcoholic: Bool?
+        if let configuration = definition.alcohol.configuration {
+            capturedNonAlcoholic = isNonAlcoholic
+            if isNonAlcoholic {
+                guard let preparation = configuration.nonAlcoholic, alcoholABV == nil else {
+                    throw ResolutionError.unavailableAlcoholPreparation(drinkID)
+                }
+                hydrationRule = .ratio(preparation.hydrationRatio)
+                upperBound = preparation.maximumABV
+            } else {
+                let value = alcoholABV ?? configuration.defaultABV
+                guard configuration.supportedABVs.contains(value) else {
+                    throw ResolutionError.unavailableAlcoholPreparation(drinkID)
+                }
+                resolvedABV = value
+            }
+        } else {
+            guard !isNonAlcoholic, alcoholABV == nil else {
+                throw ResolutionError.unavailableAlcoholPreparation(drinkID)
+            }
+            if case .abv(let value) = definition.alcohol { resolvedABV = value }
+        }
+
         let hydration = try DrinkEstimateCalculator.hydrationContribution(
             for: amount,
-            rule: definition.hydrationContributionRule
+            rule: hydrationRule
         )
         let caffeine = try DrinkEstimateCalculator.caffeineAmount(
             for: amount,
@@ -94,7 +123,10 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
             caffeineAmount: caffeine,
             catalogueVersion: catalogue.version,
             calculationVersion: Self.calculationVersion,
-            catalogueSchemaVersion: catalogue.schemaVersion
+            catalogueSchemaVersion: catalogue.schemaVersion,
+            isNonAlcoholic: capturedNonAlcoholic,
+            alcoholABV: resolvedABV,
+            alcoholABVUpperBound: upperBound
         )
     }
 }

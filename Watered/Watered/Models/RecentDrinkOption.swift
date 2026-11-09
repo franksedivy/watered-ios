@@ -16,6 +16,8 @@ nonisolated struct RecentDrinkOption: Identifiable {
         let unit: LiquidUnit
         let caffeineVariant: CaffeineVariant
         let shotCount: Int?
+        let isNonAlcoholic: Bool
+        let alcoholABV: Double?
     }
 
     let drinkID: String
@@ -23,6 +25,8 @@ nonisolated struct RecentDrinkOption: Identifiable {
     let amount: DrinkAmount
     let caffeineVariant: CaffeineVariant
     let shotCount: Int?
+    let isNonAlcoholic: Bool
+    let alcoholABV: Double?
 
     /// Whether the current definition offers a choice of caffeine preparations.
     private let showsCaffeineVariant: Bool
@@ -33,7 +37,9 @@ nonisolated struct RecentDrinkOption: Identifiable {
             volumeValue: amount.value,
             unit: amount.unit,
             caffeineVariant: caffeineVariant,
-            shotCount: shotCount
+            shotCount: shotCount,
+            isNonAlcoholic: isNonAlcoholic,
+            alcoholABV: alcoholABV
         )
     }
 
@@ -48,13 +54,17 @@ nonisolated struct RecentDrinkOption: Identifiable {
         definition: DrinkDefinition,
         amount: DrinkAmount,
         caffeineVariant: CaffeineVariant,
-        shotCount: Int?
+        shotCount: Int?,
+        isNonAlcoholic: Bool = false,
+        alcoholABV: Double? = nil
     ) {
         self.drinkID = definition.id
         self.drinkName = definition.name
         self.amount = amount
         self.caffeineVariant = caffeineVariant
         self.shotCount = shotCount
+        self.isNonAlcoholic = isNonAlcoholic
+        self.alcoholABV = alcoholABV
         self.showsCaffeineVariant = definition.caffeineOptions.count > 1
     }
 
@@ -70,6 +80,11 @@ nonisolated struct RecentDrinkOption: Identifiable {
         }
         if let shotCount {
             text += shotCount == 1 ? ", 1 shot" : ", \(shotCount) shots"
+        }
+        if isNonAlcoholic {
+            text += " (Non-alcoholic)"
+        } else if let alcoholABV {
+            text += " (\((alcoholABV * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV)"
         }
         return text
     }
@@ -90,7 +105,9 @@ nonisolated struct RecentDrinkOption: Identifiable {
             volumeValue: amount.value,
             unit: amount.unit,
             caffeineVariant: caffeineVariant,
-            shotCount: shotCount
+            shotCount: shotCount,
+            isNonAlcoholic: isNonAlcoholic,
+            alcoholABV: alcoholABV
         )
         return try draft.drinkEntry(using: resolver, date: date)
     }

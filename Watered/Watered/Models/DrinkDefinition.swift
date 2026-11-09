@@ -126,7 +126,7 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     private enum HydrationKeys: String, CodingKey { case kind }
 
     init(from decoder: any Decoder) throws {
-        try self.init(from: decoder, requiresContent: decoder.userInfo[.catalogueSchemaVersion] as? Int == 3)
+        try self.init(from: decoder, requiresContent: (decoder.userInfo[.catalogueSchemaVersion] as? Int ?? 0) >= 3)
     }
 
     /// Schema 3 requires both content objects. Legacy catalogue decoding never touches saved entries.

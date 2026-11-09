@@ -42,7 +42,7 @@ final class WateredStore {
     /// Builds available shortcuts in newest-first order with UUID resolving tied times.
     ///
     /// Missing or retired drinks and unsupported preparations are excluded. Identity,
-    /// amount, unit, caffeine variant and shot count distinguish shortcuts.
+    /// amount, unit, caffeine variant, shot count, alcohol preparation and ABV distinguish shortcuts.
     ///
     /// - Parameter catalogue: The validated catalogue available for new submissions.
     /// - Returns: Distinct shortcuts that can be repeated using current rules.
@@ -78,11 +78,24 @@ final class WateredStore {
                 continue
             }
 
+            if let configuration = definition.alcohol.configuration {
+                if snapshot.isNonAlcoholic == true {
+                    guard configuration.nonAlcoholic != nil else { continue }
+                } else if let abv = snapshot.alcoholABV, !configuration.supportedABVs.contains(abv) {
+                    continue
+                }
+            } else if snapshot.isNonAlcoholic == true {
+                continue
+            }
+
+            let repeatABV = definition.alcohol.configuration.map { snapshot.alcoholABV ?? $0.defaultABV }
             let option = RecentDrinkOption(
                 definition: definition,
                 amount: entry.amount,
                 caffeineVariant: snapshot.caffeineVariant,
-                shotCount: snapshot.shotCount
+                shotCount: snapshot.shotCount,
+                isNonAlcoholic: snapshot.isNonAlcoholic ?? false,
+                alcoholABV: snapshot.isNonAlcoholic == true ? nil : repeatABV
             )
             if includedIDs.insert(option.id).inserted {
                 options.append(option)

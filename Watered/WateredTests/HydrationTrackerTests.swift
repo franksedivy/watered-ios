@@ -382,6 +382,7 @@ struct HydrationTrackerTests {
             drinkID: "test-beer",
             drinkName: "Beer",
             hydrationRule: .alcohol(defaultABV: 0.05),
+            capturedHydrationContribution: 165,
             amount: DrinkAmount(value: 330, unit: .milliliters),
             date: Date()
         )
@@ -389,6 +390,7 @@ struct HydrationTrackerTests {
             drinkID: "test-wine",
             drinkName: "Wine",
             hydrationRule: .alcohol(defaultABV: 0.13),
+            capturedHydrationContribution: -45,
             amount: DrinkAmount(value: 150, unit: .milliliters),
             date: Date()
         )
@@ -414,6 +416,7 @@ struct HydrationTrackerTests {
             drinkID: "test-spirits",
             drinkName: "Spirits",
             hydrationRule: .alcohol(defaultABV: 0.40),
+            capturedHydrationContribution: -75,
             amount: DrinkAmount(value: 25, unit: .milliliters),
             date: Date()
         )

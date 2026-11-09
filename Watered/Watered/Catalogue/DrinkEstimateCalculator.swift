@@ -19,8 +19,8 @@ nonisolated enum DrinkEstimateCalculator {
     
     /// Calculates hydration contribution using the supplied rule
     ///
-    /// uses millilitres regardless of the drink's original or displayed unit. The alcohol calculation preserves Watered's
-    /// existing heuristic.
+    /// Uses millilitres regardless of the drink's original or displayed unit. New alcohol
+    /// calculations give no goal credit; saved snapshots are never recalculated.
     ///
     /// - Parameters:
     ///   - amount: The consumed liquid amount, which must be positive and finite.
@@ -49,8 +49,7 @@ nonisolated enum DrinkEstimateCalculator {
             guard defaultABV.isFinite && (0...1).contains(defaultABV) else {
                 throw CalculationError.invalidHydrationRule
             }
-            let alcohoVolume = volume * defaultABV
-            contribution = volume - (alcohoVolume * 10)
+            contribution = 0
             
         case .unknown:
             return nil

@@ -45,7 +45,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var definitions = try container.nestedUnkeyedContainer(forKey: .drinks)
         var decoded: [DrinkDefinition] = []
         while !definitions.isAtEnd {
-            decoded.append(try DrinkDefinition(from: definitions.superDecoder(), requiresContent: schemaVersion == 3))
+            decoded.append(try DrinkDefinition(from: definitions.superDecoder(), requiresContent: schemaVersion >= 3))
         }
         drinks = decoded
     }
@@ -58,6 +58,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case duplicateCategoryID(String)
         case duplicateDrinkID(String)
         case unknownCategoryID(drinkID: String, categoryID: String)
+        case invalidAlcoholConfiguration(drinkID: String)
         case invalidDefaultVolume(drinkID: String)
         case invalidHydrationRatio(drinkID: String)
         case invalidDefaultABV(drinkID: String)
@@ -86,7 +87,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
-        guard (1...3).contains(schemaVersion) else {
+        guard (1...4).contains(schemaVersion) else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
@@ -167,6 +168,25 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
             if case .alcohol(let value) = drink.hydrationContributionRule {
                 guard drink.alcohol == .abv(value) else {
                     throw ValidationError.inconsistentAlcoholContent(drinkID: drink.id)
+                }
+            }
+
+            if let configuration = drink.alcohol.configuration {
+                let steps = configuration.supportedABVs
+                guard schemaVersion >= 4,
+                      steps.count >= 2,
+                      steps.allSatisfy({ $0.isFinite && $0 > 0 && $0 <= 1 }),
+                      steps == steps.sorted(), Set(steps).count == steps.count,
+                      steps.contains(configuration.defaultABV),
+                      drink.hydrationContributionRule == .ratio(0) else {
+                    throw ValidationError.invalidAlcoholConfiguration(drinkID: drink.id)
+                }
+                if let preparation = configuration.nonAlcoholic {
+                    guard preparation.hydrationRatio.isFinite, (0...1).contains(preparation.hydrationRatio),
+                          preparation.maximumABV.isFinite, (0...1).contains(preparation.maximumABV),
+                          preparation.maximumABV < steps[0] else {
+                        throw ValidationError.invalidAlcoholConfiguration(drinkID: drink.id)
+                    }
                 }
             }
 

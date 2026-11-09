@@ -111,6 +111,22 @@ struct StatsDrinkEntryDetailView: View {
                 }
             }
             
+            if entry.catalogueSnapshot.isNonAlcoholic != nil || entry.catalogueSnapshot.alcoholABV != nil {
+                Section("Alcohol") {
+                    if let nonAlcoholic = entry.catalogueSnapshot.isNonAlcoholic {
+                        LabeledContent("Preparation", value: nonAlcoholic ? "Non-alcoholic" : "Alcoholic")
+                            .accessibilityIdentifier("statsAlcoholPreparation")
+                    }
+                    LabeledContent("ABV", value: entry.catalogueSnapshot.alcoholABV.map {
+                        ($0 * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
+                    } ?? "Unknown")
+                    .accessibilityIdentifier("statsAlcoholABV")
+                    if let upperBound = entry.catalogueSnapshot.alcoholABVUpperBound {
+                        LabeledContent("Recipe limit", value: "Up to \((upperBound * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV")
+                    }
+                }
+            }
+
             Section("Identity") {
                 LabeledContent("ID", value: entry.id.uuidString)
             }

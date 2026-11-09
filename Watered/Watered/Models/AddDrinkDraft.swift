@@ -19,6 +19,9 @@ nonisolated struct AddDrinkDraft {
     /// Nil selects the configured default, or no shots when they do not apply.
     var shotCount: Int? = nil
 
+    var isNonAlcoholic: Bool = false
+    var alcoholABV: Double? = nil
+
     /// Resolves current catalogue rules and creates a new entry with captured facts.
     ///
     /// - Parameters:
@@ -35,7 +38,9 @@ nonisolated struct AddDrinkDraft {
             drinkID: drinkID,
             amount: amount,
             caffeineVariant: caffeineVariant,
-            shotCount: shotCount
+            shotCount: shotCount,
+            isNonAlcoholic: isNonAlcoholic,
+            alcoholABV: alcoholABV
         )
 
         return DrinkEntry(amount: amount, date: date, catalogueSnapshot: snapshot)
