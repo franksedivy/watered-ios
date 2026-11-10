@@ -137,7 +137,7 @@ struct DrinkContentStructureTests {
         #expect(record.drinkEntry()?.catalogueSnapshot == old)
         #expect(repeated.id != restored.id)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 0)
-        #expect(repeated.catalogueSnapshot.catalogueSchemaVersion == 3)
+        #expect(repeated.catalogueSnapshot.catalogueSchemaVersion == current.schemaVersion)
         #expect(repeated.catalogueSnapshot.hydrationContribution == 250)
     }
 
