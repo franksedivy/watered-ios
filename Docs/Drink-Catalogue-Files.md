@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `4`.
-- `version` identifies the catalogue content release, currently `development-12`.
+- `version` identifies the catalogue content release, currently `development-13`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -677,3 +677,25 @@ steps, invalid configuration/selection, saved unknowns/negative history, persist
 round trips and current-rule repeats. UI tests remain excluded from hosted CI;
 building them is not an interaction/device pass. Verification results belong with
 the implementation report; this section does not claim a test-suite pass.
+
+
+## Coffee serving defaults — approved 10 November 2026 (#99, #101, #102)
+
+Espresso starts at **30 ml**. Latte, Cappuccino, Iced coffee, White coffee,
+Cold brew and Americano each start at **250 ml**. These are suggested serving
+amounts, independent of the caffeine reference volumes: Cold brew still uses
+200 mg per 400 ml (125 mg in its new 250 ml default serving). Shot count remains
+independent of volume and retains the existing per-drink defaults.
+
+Content `development-13` adds only `defaultVolume` to the seven coffee definitions;
+schema 4, manifest 1 and calculation version 3 are unchanged. Hydration percentages,
+caffeine rules, identities and the other 51 definitions are unchanged. This is an
+agreed product default, not a claim about universal coffee cup sizes.
+
+Existing selection handling applies a default only while volume is untouched.
+Switching between untouched coffee selections uses 30/250 ml, including the exact
+converted value in ounce pickers. Explicit manual amounts and restored drafts keep
+their original physical volume. A converted default already selected by the wheel
+does not count as a manual edit. Saved entries are never resized or recalculated;
+Recents repeat their captured amount under current estimate rules, without applying
+the serving suggestion. No persistence/model migration or database reset is needed.

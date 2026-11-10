@@ -23,7 +23,7 @@ struct DrinkCatalogueLoaderTests {
         )
 
         #expect(catalogue.schemaVersion == 4)
-        #expect(catalogue.version == "development-12")
+        #expect(catalogue.version == "development-13")
         #expect(catalogue.drinks.count == 58)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),

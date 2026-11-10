@@ -4,6 +4,52 @@ import Testing
 
 @MainActor
 struct ReviewedCoffeeEstimateTests {
+    @Test(arguments: LiquidUnit.allCases)
+    func coffeeServingDefaultsRespectManualAndRestoredAmounts(unit: LiquidUnit) throws {
+        let coffee = try DrinkCatalogueLoader().load().activeDrinks(inCategoryID: "coffee")
+        #expect(coffee.count == 7)
+        var fresh = AddDrinkVolumeSelection(value: AddDrinkVolumeSelection.defaultValue(for: unit), unit: unit)
+        var manual = fresh
+        manual.select(unit == .milliliters ? 500 : 16, displayedAs: unit)
+        let originalManual = manual
+        var restored = AddDrinkVolumeSelection(value: 12, unit: unit, canApplyServingDefault: false)
+        let originalRestored = restored
+        for drink in coffee {
+            let serving = drink.id == "espresso" ? 30.0 : 250.0
+            #expect(drink.defaultVolume == serving)
+            fresh.applyServingDefault(drink.defaultVolume)
+            #expect(abs(fresh.amount.volume.converted(to: .milliliters).value - serving) < 0.000001)
+            #expect(fresh.options(in: unit).contains(fresh.displayValue(in: unit)))
+            // The converted default is already selected; a display update is not a manual change.
+            fresh.select(fresh.displayValue(in: unit), displayedAs: unit)
+            #expect(fresh.canApplyServingDefault)
+            manual.applyServingDefault(drink.defaultVolume)
+            restored.applyServingDefault(drink.defaultVolume)
+            #expect(manual == originalManual)
+            #expect(restored == originalRestored)
+        }
+    }
+
+    @Test func coffeeServingDefaultsDoNotResizeSavedOrRepeatedDrinks() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+        let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
+        for drink in catalogue.activeDrinks(inCategoryID: "coffee") {
+            let entry = try AddDrinkDraft(drinkID: drink.id, volumeValue: 375, unit: .milliliters)
+                .drinkEntry(using: resolver)
+            let record = PersistentDrinkEntry(drinkEntry: entry)
+            let restored = try #require(record.drinkEntry())
+            #expect(restored.amount.value == 375)
+            #expect(restored.catalogueSnapshot == entry.catalogueSnapshot)
+            let recent = try #require(WateredStore(entries: [restored]).recentDrinkOptions(in: catalogue).first)
+            let repeated = try recent.drinkEntry(using: resolver)
+            #expect(repeated.id != restored.id)
+            #expect(repeated.amount.value == 375)
+            #expect(repeated.catalogueSnapshot.hydrationContribution == entry.catalogueSnapshot.hydrationContribution)
+            #expect(repeated.catalogueSnapshot.caffeineAmount == entry.catalogueSnapshot.caffeineAmount)
+            #expect(record.drinkEntry()?.catalogueSnapshot == entry.catalogueSnapshot)
+        }
+    }
+
     @Test func defaultsResolvePerDrink() throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
         for (id, shots) in [("espresso", 1), ("cappuccino", 1), ("latte", 2), ("americano", 2), ("iced-coffee", 2)] {
@@ -50,7 +96,7 @@ struct ReviewedCoffeeEstimateTests {
         let repeated = try recent.drinkEntry(using: DrinkCatalogueSnapshotResolver(catalogue: catalogue))
         #expect(repeated.id != restored.id)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 15)
-        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-12")
+        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-13")
         #expect(repeated.catalogueSnapshot.hydrationContribution == 226.5)
         #expect(record.drinkEntry()?.catalogueSnapshot == snapshot)
         #expect(store.entries.first?.catalogueSnapshot == snapshot)

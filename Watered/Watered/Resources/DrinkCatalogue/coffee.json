@@ -5,6 +5,7 @@
         "categoryID": "coffee",
         "sortOrder": 10,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.906
@@ -49,6 +50,7 @@
         "categoryID": "coffee",
         "sortOrder": 20,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.91
@@ -93,6 +95,7 @@
         "categoryID": "coffee",
         "sortOrder": 30,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -137,6 +140,7 @@
         "categoryID": "coffee",
         "sortOrder": 40,
         "isRetired": false,
+        "defaultVolume": 30,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.95
@@ -181,6 +185,7 @@
         "categoryID": "coffee",
         "sortOrder": 50,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.981
@@ -215,6 +220,7 @@
         "categoryID": "coffee",
         "sortOrder": 60,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -249,6 +255,7 @@
         "categoryID": "coffee",
         "sortOrder": 70,
         "isRetired": false,
+        "defaultVolume": 250,
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.994
