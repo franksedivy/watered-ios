@@ -757,3 +757,62 @@ broader catalogue tickets. Deferred entries and membership reconciliation remain
 under #101; integration/release evidence remains under #105. #149 sheet layout,
 HealthKit mapping and sugar research #152 stay separate. No PR is created as part
 of this implementation request.
+
+## Final reviewed membership — 10 November 2026 (#99, #101, #102)
+
+Frank approved the current **60 drinks across ten categories** as the lineup for
+this catalogue pass. Missing provisional entries are acceptable and may be added
+later; they are not outstanding population work. The original 64 entries were a
+proposal, not a required count. The following reconciles that proposal with the
+reviewed manifest and category files:
+
+| Category | Proposed | Reviewed | Membership/naming reconciliation |
+| --- | ---: | ---: | --- |
+| Water | 4 | 4 | Flavoured water is represented by Infused water; existing reviewed recipes retained. |
+| Coffee | 10 | 7 | Add Iced coffee; Greek frappe, Mocha, Flat white and Filter/drip coffee are not included in this pass. White coffee is the reviewed Coffee with milk recipe. |
+| Tea | 10 | 10 | Same membership; bottled/canned iced tea is named Iced tea. |
+| Juices | 4 | 4 | Same membership. |
+| Soft Drinks | 8 | 6 | Regular/diet cola share Cola; Soda drink is represented by Fruit soda. Standalone Fruit drink is not included in this pass. |
+| Wellness | 5 | 3 | Greens drink and Apple cider vinegar drink are deferred. |
+| Sports & Energy | 3 | 4 | Add Electrolyte drink. |
+| Milk & Alternatives | 10 | 12 | Add Coconut milk and Ayran; Cow's milk is named Milk. |
+| Alcohol | 8 | 8 | Mocktail and Non-alcoholic beer are preparations of Cocktail and Beer; add Fortified wine and Liqueur. Other supported non-alcoholic choices also use toggles. |
+| Other | 2 | 2 | Broth and Miso soup. |
+| Total | 64 | 60 | Approved scope, without requiring replacements for omitted entries. |
+
+Water intentionally keeps the existing fresh-form/unit fallback rather than an
+authored `defaultVolume`; all other drinks have reviewed serving suggestions.
+Absence of an optional default is supported and does not mean an unknown estimate.
+The manifest/category files own exact IDs, order and recipe values. There is no new
+requirement for temperature, flavour, sugar, nutrition or custom recipe controls.
+
+### Quantity handoff to #95 / #108
+
+These are **captured app facts**, not approved HealthKit sample quantities or an
+eligibility matrix. Export policy remains owned by #95; implementation by #108.
+Use the saved amount/preparation/estimates, never a rounded display string or a
+newer recipe. Caffeine and water eligibility must be decided independently.
+
+| Recorded example | Fluid intake | Hydration goal credit | Captured caffeine | Alcohol context |
+| --- | ---: | ---: | ---: | --- |
+| Still water, 330 ml | 330 ml | 330 ml | 0 mg | No alcohol in the recipe |
+| Latte, 250 ml, two regular shots | 250 ml | 226.5 ml | 120 mg | No alcohol in the recipe |
+| Latte, 250 ml, two decaf shots | 250 ml | 226.5 ml | 10 mg | No alcohol in the recipe |
+| Cold brew, 250 ml, regular | 250 ml | 247.5 ml | 125 mg | No alcohol in the recipe |
+| Beer, 330 ml, 5% ABV | 330 ml | 0 ml | 0 mg | Exact selected ABV 5% |
+| Beer, 330 ml, non-alcoholic | 330 ml | 313.5 ml | 0 mg | Exact ABV unknown; upper bound 0.5% |
+| Cocktail, 200 ml, 10% ABV | 200 ml | 0 ml | Unknown | Exact selected ABV 10% |
+| Miso soup, 250 ml | 250 ml | 237.5 ml | 0 mg | Non-alcoholic recipe assumption |
+| Historical 300 ml entry with unknown saved estimates | 300 ml | Unknown | Unknown | Preserve captured context; do not invent a recipe |
+
+All three supported display units resolve through `Measurement<UnitVolume>` to
+millilitres at calculation precision. An unchanged 250 ml entry shown in US or
+imperial fluid ounces remains that same amount; selecting a new ounce amount
+records that physical amount. No display rounding is fed back into persistence or
+an export calculation. Unknown caffeine does not become a zero sample, and an old
+negative hydration estimate must not become negative exported water. These examples
+do not decide whether any entry produces neither, one or both HealthKit sample types.
+
+The final Other PR and its hosted unit result still need acceptance before ticket
+closure. Full catalogue integration, UI/device evidence and release readiness stay
+with #105/#113; this membership decision does not establish those outcomes.
