@@ -96,10 +96,42 @@
         }
     },
     {
+        "id": "cocktail",
+        "name": "Cocktail",
+        "categoryID": "alcohol",
+        "sortOrder": 40,
+        "isRetired": false,
+        "defaultVolume": 200,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "unknown"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.1,
+                "supportedABVs": [
+                    0.05,
+                    0.1,
+                    0.15,
+                    0.2,
+                    0.25
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
         "id": "sparkling-wine",
         "name": "Sparkling wine",
         "categoryID": "alcohol",
-        "sortOrder": 40,
+        "sortOrder": 50,
         "isRetired": false,
         "defaultVolume": 125,
         "hydrationContributionRule": {
@@ -131,7 +163,7 @@
         "id": "fortified-wine",
         "name": "Fortified wine",
         "categoryID": "alcohol",
-        "sortOrder": 50,
+        "sortOrder": 60,
         "isRetired": false,
         "defaultVolume": 50,
         "hydrationContributionRule": {
@@ -159,7 +191,7 @@
         "id": "spirits",
         "name": "Spirits",
         "categoryID": "alcohol",
-        "sortOrder": 60,
+        "sortOrder": 70,
         "isRetired": false,
         "defaultVolume": 25,
         "hydrationContributionRule": {
@@ -186,7 +218,7 @@
         "id": "liqueur",
         "name": "Liqueur",
         "categoryID": "alcohol",
-        "sortOrder": 70,
+        "sortOrder": 80,
         "isRetired": false,
         "defaultVolume": 25,
         "hydrationContributionRule": {
@@ -208,38 +240,6 @@
                     0.35,
                     0.4
                 ]
-            }
-        }
-    },
-    {
-        "id": "cocktail",
-        "name": "Cocktail",
-        "categoryID": "alcohol",
-        "sortOrder": 80,
-        "isRetired": false,
-        "defaultVolume": 200,
-        "hydrationContributionRule": {
-            "kind": "ratio",
-            "ratio": 0
-        },
-        "caffeine": {
-            "kind": "unknown"
-        },
-        "alcohol": {
-            "kind": "options",
-            "configuration": {
-                "defaultABV": 0.1,
-                "supportedABVs": [
-                    0.05,
-                    0.1,
-                    0.15,
-                    0.2,
-                    0.25
-                ],
-                "nonAlcoholic": {
-                    "hydrationRatio": 0.95,
-                    "maximumABV": 0.005
-                }
             }
         }
     }
