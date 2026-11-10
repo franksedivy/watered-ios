@@ -569,11 +569,11 @@ causes net dehydration. It neither subtracts goal progress nor increases the tar
 | Beer | 330 ml | 5% | 4, 4.5, 5, 5.5, 6% | Yes | 0 mg |
 | Cider | 330 ml | 4.5% | 4, 4.5, 5, 5.5, 6% | Yes | 0 mg |
 | Wine | 175 ml | 13% | 11, 12, 13, 14, 15% | Yes | 0 mg |
+| Cocktail | 200 ml | 10% | 5, 10, 15, 20, 25% | Yes | Unknown |
 | Sparkling wine | 125 ml | 12% | 10, 11, 12, 13, 14% | Yes | 0 mg |
 | Fortified wine | 50 ml | 18% | 14, 16, 18, 20, 22% | No | 0 mg |
 | Spirits | 25 ml | 40% | 30, 40, 50, 60% | No | 0 mg |
 | Liqueur | 25 ml | 20% | 15, 20, 25, 30, 35, 40% | No | Unknown |
-| Cocktail | 200 ml | 10% | 5, 10, 15, 20, 25% | Yes | Unknown |
 
 Non-alcoholic toggles default off. When enabled, the ABV slider is hidden and
 hydration credit is **95%**. The scope is drinks up to **0.5% ABV**; exact ABV is
@@ -670,8 +670,7 @@ historical rewrite is performed. Recents distinguish ABV/preparation, preserve
 supported selections and resolve current rules into a fresh entry; unsupported
 preparations are excluded. Drafts retain choices through dismissal and failed saves.
 
-All 50 earlier definitions remain unchanged. Artwork uses the existing fallback
-until supplied. #149 sheet positioning/animation, sugar research #152 and HealthKit
+All 50 earlier definitions remain unchanged. All eight artwork sets are bundled by catalogue ID. #149 sheet positioning/animation, sugar research #152 and HealthKit
 mapping remain separate. Automated coverage includes estimates across all units and
 steps, invalid configuration/selection, saved unknowns/negative history, persistence
 round trips and current-rule repeats. UI tests remain excluded from hosted CI;

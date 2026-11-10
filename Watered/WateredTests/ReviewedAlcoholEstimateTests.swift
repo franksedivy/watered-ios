@@ -9,11 +9,11 @@ struct ReviewedAlcoholEstimateTests {
         ("beer", 330, 0.05, [0.04, 0.045, 0.05, 0.055, 0.06], true),
         ("cider", 330, 0.045, [0.04, 0.045, 0.05, 0.055, 0.06], true),
         ("wine", 175, 0.13, [0.11, 0.12, 0.13, 0.14, 0.15], true),
+        ("cocktail", 200, 0.10, [0.05, 0.10, 0.15, 0.20, 0.25], true),
         ("sparkling-wine", 125, 0.12, [0.10, 0.11, 0.12, 0.13, 0.14], true),
         ("fortified-wine", 50, 0.18, [0.14, 0.16, 0.18, 0.20, 0.22], false),
         ("spirits", 25, 0.40, [0.30, 0.40, 0.50, 0.60], false),
-        ("liqueur", 25, 0.20, [0.15, 0.20, 0.25, 0.30, 0.35, 0.40], false),
-        ("cocktail", 200, 0.10, [0.05, 0.10, 0.15, 0.20, 0.25], true)
+        ("liqueur", 25, 0.20, [0.15, 0.20, 0.25, 0.30, 0.35, 0.40], false)
     ]
 
     @Test func membershipDefaultsAndContentRoundTrip() throws {

@@ -18,9 +18,10 @@ final class AddDrinkAlcoholUITests: XCTestCase {
         alcohol.tap()
         let types = app.scrollViews["addDrinkTypeScrollView"]
         let presets = [("beer", "330 ml", true), ("cider", "330 ml", true),
-            ("wine", "175 ml", true), ("sparkling-wine", "125 ml", true),
+            ("wine", "175 ml", true), ("cocktail", "200 ml", true),
+            ("sparkling-wine", "125 ml", true),
             ("fortified-wine", "50 ml", false), ("spirits", "25 ml", false),
-            ("liqueur", "25 ml", false), ("cocktail", "200 ml", true)]
+            ("liqueur", "25 ml", false)]
         for (id, volume, supportsNonAlcoholic) in presets {
             let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
             for _ in 0..<12 {
@@ -42,6 +43,13 @@ final class AddDrinkAlcoholUITests: XCTestCase {
                 XCTAssertTrue(app.sliders["addDrinkABVSlider"].waitForExistence(timeout: 5))
             }
         }
+        let cocktail = types.buttons["addDrinkTypeScrollView.cocktail"]
+        for _ in 0..<12 {
+            if cocktail.isHittable { break }
+            types.swipeRight()
+        }
+        XCTAssertTrue(cocktail.wait(for: \.isHittable, toEqual: true, timeout: 10))
+        cocktail.tap()
         app.sliders["addDrinkABVSlider"].adjust(toNormalizedSliderPosition: 1)
         XCTAssertEqual(app.sliders["addDrinkABVSlider"].value as? String, "25%")
         app.switches["addDrinkNonAlcoholicToggle"].tap()
