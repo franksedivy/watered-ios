@@ -57,9 +57,9 @@ struct DrinkEstimateCalculatorTests {
     }
 
     // GIVEN a 200 ml drink with 13% ABV,
-    // WHEN the existing alcohol contribution rule is applied,
-    // THEN its estimated contribution is -60 ml.
-    @Test func alcoholRulePreservesNegativeContribution() throws {
+    // WHEN the current alcohol contribution policy is applied,
+    // THEN its contribution is zero; older saved results are unaffected.
+    @Test func alcoholRuleGivesZeroContribution() throws {
         let amount = DrinkAmount(
             value: 200,
             unit: .milliliters
@@ -72,7 +72,7 @@ struct DrinkEstimateCalculatorTests {
 
         let result = try #require(contribution)
 
-        #expect(abs(result - (-60)) < 0.000001)
+        #expect(result == 0)
     }
     
     // GIVEN one US fluid ounce with a full contribution ratio,

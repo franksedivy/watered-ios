@@ -7,8 +7,8 @@ as a folder resource. Files are not discovered by scanning the directory.
 ## Versions
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
-- `schemaVersion` identifies the assembled catalogue data contract, currently `3`.
-- `version` identifies the catalogue content release, currently `development-11`.
+- `schemaVersion` identifies the assembled catalogue data contract, currently `4`.
+- `version` identifies the catalogue content release, currently `development-13`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,10 +32,10 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 50 drinks across eight categories, including twelve Milk & Alternatives definitions.
+The current seed contains 58 drinks across nine categories, including eight Alcohol definitions.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
-## Caffeine and alcohol structure (schema 3, #102)
+## Caffeine and alcohol structure (schema 3, extended by schema 4 below, #102)
 
 Every definition explicitly declares `caffeine` and `alcohol`. Neither missing fields
 nor `null` mean zero. Water uses:
@@ -69,9 +69,9 @@ Alcohol uses `{"kind":"abv","value":0.05}` for a known 5% ABV, or
 `{"kind":"unknown"}` when unsupported. ABV must be a finite fraction from 0 to 1.
 Alcohol content does not automatically select a hydration policy. A separately
 selected `hydrationContributionRule: {"kind":"alcohol"}` requires known ABV and
-uses that single value with the existing calculation. Do not also supply
-`defaultABV` in the hydration object. This is schema support, not approval of an
-alcohol coefficient, an alcoholic seed drink, custom ABV UI or HealthKit mapping.
+uses the current zero-credit policy for new logs (calculation version 3). Do not
+also supply `defaultABV` in the hydration object. Schema 4 adds reviewed Alcohol
+choices below; HealthKit mapping remains separate.
 
 Schema 3 rejects old top-level caffeine fields, parent booleans, extra fields in
 content objects, contradictory numeric rule fields and missing required values.
@@ -554,3 +554,147 @@ persistence fields and calculation logic are unchanged. No historical recalculat
 or reset; repeats resolve current rules. #149 layout, HealthKit and alcohol policy
 remain separate. No standalone cocoa or goat-milk entry is added to this approved
 12-drink lineup.
+
+
+## Alcohol — approved 10 November 2026 (#99, #101, #102)
+
+Eight entries follow Milk & Alternatives, in the order below, using iOS indigo
+(`Color.indigo`) and `wineglass.fill`. All alcoholic preparations give **0% goal
+credit**, while their full consumed liquid volume remains fluid intake. This is a
+conservative product accounting policy, not a claim that every alcoholic drink
+causes net dehydration. It neither subtracts goal progress nor increases the target.
+
+| Drink | Default volume | Default ABV | ABV slider choices | Non-alcoholic option | Caffeine |
+| --- | ---: | ---: | --- | --- | --- |
+| Beer | 330 ml | 5% | 4, 4.5, 5, 5.5, 6% | Yes | 0 mg |
+| Cider | 330 ml | 4.5% | 4, 4.5, 5, 5.5, 6% | Yes | 0 mg |
+| Wine | 175 ml | 13% | 11, 12, 13, 14, 15% | Yes | 0 mg |
+| Cocktail | 200 ml | 10% | 5, 10, 15, 20, 25% | Yes | Unknown |
+| Sparkling wine | 125 ml | 12% | 10, 11, 12, 13, 14% | Yes | 0 mg |
+| Fortified wine | 50 ml | 18% | 14, 16, 18, 20, 22% | No | 0 mg |
+| Spirits | 25 ml | 40% | 30, 40, 50, 60% | No | 0 mg |
+| Liqueur | 25 ml | 20% | 15, 20, 25, 30, 35, 40% | No | Unknown |
+
+Non-alcoholic toggles default off. When enabled, the ABV slider is hidden and
+hydration credit is **95%**. The scope is drinks up to **0.5% ABV**; exact ABV is
+**unknown**, never silently 0% or 0.5%. The upper bound is captured separately from
+exact ABV. Caffeine remains 0 mg for non-alcoholic Beer/Cider/Wine/Sparkling wine,
+and unknown for non-alcoholic Cocktail. Caffeine is independent of the alcohol
+preparation: a mocktail can contain coffee, tea, cola or an energy mixer.
+
+### Recipe scope and uncertainty
+
+- Beer covers ordinary lager, ale and stout, without a style selector; excludes
+  coffee/cocoa/added-caffeine specialties from its known-zero caffeine assumption.
+- Cider covers ordinary apple/pear cider, without a flavour selector.
+- Wine covers still red, white and rosé; sparkling and fortified wines are separate.
+- Sparkling wine covers Champagne, Prosecco and Cava, without style/sweetness options.
+- Fortified wine covers port, sherry and vermouth consumed without mixers.
+- Spirits covers ordinary unflavoured vodka, gin, rum, whisky and tequila consumed
+  without mixers; liqueurs and mixed drinks have their own entries.
+- Liqueur covers fruit, herbal, cream, coffee and chocolate varieties. No flavour
+  selector; unknown caffeine avoids inventing a generic estimate for coffee/cocoa.
+- Cocktail covers ordinary mixed drinks and mocktails, without a recipe selector.
+  Volume means consumed liquid, excluding unconsumed ice.
+
+ABV defaults and slider presets are approved generic estimates, not measured market
+averages or a substitute for a product label. The 95% non-alcoholic ratio is also
+an agreed accounting assumption, not a measured retained-water fraction. Existing
+trace-alcohol Kombucha retains its separately approved 95% recipe and unknown ABV.
+
+### Evidence and policy rationale
+
+The previous heuristic was `volume − 10 × ethanol volume`: 5% beer credited 50%,
+13% wine −30%, and 40% spirits −300%. Reviewed evidence does not establish that
+coefficient or a universal crossover at 10% ABV. Alcohol can increase diuresis, but
+its effect depends on dose, hydration state and observation period. Therefore the
+new zero-credit policy should not be described as evidence that every alcoholic
+serving removes more water than it supplies.
+
+- [Hobson & Maughan (2010)](https://pubmed.ncbi.nlm.nih.gov/20497950/): a small
+  controlled study comparing 4% beer with non-alcoholic beer in hydrated/dehydrated
+  men; responses depended on starting hydration state.
+- [Polhuis et al. (2017)](https://pubmed.ncbi.nlm.nih.gov/28657601/): equal ethanol
+  doses across beer, wine and spirits produced differing short-term responses,
+  without a sustained 24-hour diuretic difference. A Dutch Beer Institute employment
+  conflict was disclosed; this is not an independent universal coefficient.
+- [Maughan et al. (2016)](https://pubmed.ncbi.nlm.nih.gov/26702122/): lager did not
+  produce significantly different four-hour urine output from water under the
+  study conditions; no universal dehydration claim follows.
+- [Heineken](https://www.heineken.com/global/en/faq/) and
+  [Magners](https://candcgroupplc.com/products/magners/) provide examples around
+  the approved beer/cider defaults, rather than population averages.
+- [FRE process](https://www.frewines.com/about/how-its-made/) and
+  [FRE Sparkling Brut](https://www.frewines.com/wines/alcohol-removed-sparkling-brut/)
+  illustrate alcohol-removed products below 0.5%; no exact ABV is inferred.
+- [Tio Pepe](https://www.tiopepe.com/es-es/productos/tio-pepe) is 15% and
+  [Taylor’s Fine Ruby](https://mentzendorff.co.uk/wp-content/uploads/2022/06/taylors-port-fine-ruby.pdf)
+  is 20%, illustrating the fortified-wine range.
+- [Absolut](https://www.absolut.com/en/products/absolut-vodka/) illustrates 40%
+  spirits; [Jägermeister](https://de.jagermeister.com/hilfe-kontakt/wie-viel-prozent-alkoholgehalt-hat-jaegermeister)
+  is 35% and [Cointreau](https://www.cointreau.com/us/en/products/cointreau) 40%,
+  illustrating the broad liqueur range.
+- [MOTH product information](https://us.mothdrinks.com/pages/product-information-page)
+  lists 10% Mojito and 14.9% cocktails including an Espresso Martini with cold brew
+  and coffee liqueur, supporting recipe variability and unknown generic caffeine.
+
+### Schema, captured history and verification boundaries
+
+Content `development-12` contains 58 drinks in nine categories. Manifest version 1
+is unchanged; schema **4** introduces `alcohol.kind: options` with one configuration:
+
+```json
+"alcohol": {
+  "kind": "options",
+  "configuration": {
+    "defaultABV": 0.05,
+    "supportedABVs": [0.04, 0.045, 0.05, 0.055, 0.06],
+    "nonAlcoholic": { "hydrationRatio": 0.95, "maximumABV": 0.005 }
+  }
+}
+```
+
+ABVs are fractions. Omit `nonAlcoholic` where unavailable; none/unknown drinks do
+not acquire unused options. Caffeine keeps its existing none/unknown/options
+structure. Regular Alcohol definitions explicitly use hydration ratio 0; the
+non-alcoholic recipe supplies its approved override. Validation rejects invalid,
+unsorted, duplicate or missing-default ABV steps and contradictory configuration.
+Schemas 1–3 remain readable; schema 3+ continues requiring explicit content objects.
+
+Calculation version **3** applies zero credit to new alcohol calculations, including
+legacy alcohol rules resolved for a new log. Old snapshots are not recalculated:
+negative, zero and unknown saved estimates retain their original meaning and versions.
+Optional SwiftData fields capture non-alcoholic selection, exact ABV and its upper
+bound. Older rows retain nil for uncaptured fields. No store reset, data deletion or
+historical rewrite is performed. Recents distinguish ABV/preparation, preserve
+supported selections and resolve current rules into a fresh entry; unsupported
+preparations are excluded. Drafts retain choices through dismissal and failed saves.
+
+All 50 earlier definitions remain unchanged. All eight artwork sets are bundled by catalogue ID. #149 sheet positioning/animation, sugar research #152 and HealthKit
+mapping remain separate. Automated coverage includes estimates across all units and
+steps, invalid configuration/selection, saved unknowns/negative history, persistence
+round trips and current-rule repeats. UI tests remain excluded from hosted CI;
+building them is not an interaction/device pass. Verification results belong with
+the implementation report; this section does not claim a test-suite pass.
+
+
+## Coffee serving defaults — approved 10 November 2026 (#99, #101, #102)
+
+Espresso starts at **30 ml**. Latte, Cappuccino, Iced coffee, White coffee,
+Cold brew and Americano each start at **250 ml**. These are suggested serving
+amounts, independent of the caffeine reference volumes: Cold brew still uses
+200 mg per 400 ml (125 mg in its new 250 ml default serving). Shot count remains
+independent of volume and retains the existing per-drink defaults.
+
+Content `development-13` adds only `defaultVolume` to the seven coffee definitions;
+schema 4, manifest 1 and calculation version 3 are unchanged. Hydration percentages,
+caffeine rules, identities and the other 51 definitions are unchanged. This is an
+agreed product default, not a claim about universal coffee cup sizes.
+
+Existing selection handling applies a default only while volume is untouched.
+Switching between untouched coffee selections uses 30/250 ml, including the exact
+converted value in ounce pickers. Explicit manual amounts and restored drafts keep
+their original physical volume. A converted default already selected by the wheel
+does not count as a manual edit. Saved entries are never resized or recalculated;
+Recents repeat their captured amount under current estimate rules, without applying
+the serving suggestion. No persistence/model migration or database reset is needed.

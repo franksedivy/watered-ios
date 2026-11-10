@@ -29,7 +29,7 @@ struct DrinkContentStructureTests {
         let ratioSnapshot = try DrinkCatalogueSnapshotResolver(catalogue: ratioCatalogue).resolve(drinkID: "test", amount: amount)
         let alcoholSnapshot = try DrinkCatalogueSnapshotResolver(catalogue: alcoholCatalogue).resolve(drinkID: "test", amount: amount)
         #expect(ratioSnapshot.hydrationContribution == 250)
-        #expect(alcoholSnapshot.hydrationContribution == 125)
+        #expect(alcoholSnapshot.hydrationContribution == 0)
         let data = try JSONEncoder().encode(alcoholCatalogue)
         #expect(try JSONDecoder().decode(DrinkCatalogue.self, from: data) == alcoholCatalogue)
         #expect(!String(decoding: data, as: UTF8.self).contains("defaultABV"))
@@ -137,7 +137,7 @@ struct DrinkContentStructureTests {
         #expect(record.drinkEntry()?.catalogueSnapshot == old)
         #expect(repeated.id != restored.id)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 0)
-        #expect(repeated.catalogueSnapshot.catalogueSchemaVersion == 3)
+        #expect(repeated.catalogueSnapshot.catalogueSchemaVersion == current.schemaVersion)
         #expect(repeated.catalogueSnapshot.hydrationContribution == 250)
     }
 

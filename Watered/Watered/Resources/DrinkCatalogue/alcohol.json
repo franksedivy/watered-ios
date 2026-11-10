@@ -1,0 +1,246 @@
+[
+    {
+        "id": "beer",
+        "name": "Beer",
+        "categoryID": "alcohol",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.05,
+                "supportedABVs": [
+                    0.04,
+                    0.045,
+                    0.05,
+                    0.055,
+                    0.06
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
+        "id": "cider",
+        "name": "Cider",
+        "categoryID": "alcohol",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 330,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.045,
+                "supportedABVs": [
+                    0.04,
+                    0.045,
+                    0.05,
+                    0.055,
+                    0.06
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
+        "id": "wine",
+        "name": "Wine",
+        "categoryID": "alcohol",
+        "sortOrder": 30,
+        "isRetired": false,
+        "defaultVolume": 175,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.13,
+                "supportedABVs": [
+                    0.11,
+                    0.12,
+                    0.13,
+                    0.14,
+                    0.15
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
+        "id": "cocktail",
+        "name": "Cocktail",
+        "categoryID": "alcohol",
+        "sortOrder": 40,
+        "isRetired": false,
+        "defaultVolume": 200,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "unknown"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.1,
+                "supportedABVs": [
+                    0.05,
+                    0.1,
+                    0.15,
+                    0.2,
+                    0.25
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
+        "id": "sparkling-wine",
+        "name": "Sparkling wine",
+        "categoryID": "alcohol",
+        "sortOrder": 50,
+        "isRetired": false,
+        "defaultVolume": 125,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.12,
+                "supportedABVs": [
+                    0.1,
+                    0.11,
+                    0.12,
+                    0.13,
+                    0.14
+                ],
+                "nonAlcoholic": {
+                    "hydrationRatio": 0.95,
+                    "maximumABV": 0.005
+                }
+            }
+        }
+    },
+    {
+        "id": "fortified-wine",
+        "name": "Fortified wine",
+        "categoryID": "alcohol",
+        "sortOrder": 60,
+        "isRetired": false,
+        "defaultVolume": 50,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.18,
+                "supportedABVs": [
+                    0.14,
+                    0.16,
+                    0.18,
+                    0.2,
+                    0.22
+                ]
+            }
+        }
+    },
+    {
+        "id": "spirits",
+        "name": "Spirits",
+        "categoryID": "alcohol",
+        "sortOrder": 70,
+        "isRetired": false,
+        "defaultVolume": 25,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.4,
+                "supportedABVs": [
+                    0.3,
+                    0.4,
+                    0.5,
+                    0.6
+                ]
+            }
+        }
+    },
+    {
+        "id": "liqueur",
+        "name": "Liqueur",
+        "categoryID": "alcohol",
+        "sortOrder": 80,
+        "isRetired": false,
+        "defaultVolume": 25,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0
+        },
+        "caffeine": {
+            "kind": "unknown"
+        },
+        "alcohol": {
+            "kind": "options",
+            "configuration": {
+                "defaultABV": 0.2,
+                "supportedABVs": [
+                    0.15,
+                    0.2,
+                    0.25,
+                    0.3,
+                    0.35,
+                    0.4
+                ]
+            }
+        }
+    }
+]

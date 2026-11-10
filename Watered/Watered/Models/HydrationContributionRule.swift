@@ -16,7 +16,7 @@ nonisolated enum HydrationContributionRule: Equatable, Codable {
     /// A value of 1 represents the full volume.
     case ratio(Double)
     
-    /// Uses the alcohol contribution calculation with a defualt ABV.
+    /// Gives zero hydration credit under the current alcohol policy.
     ///
     /// ABV is expressed as a fraction: 0.05 represents 5%
     case alcohol(defaultABV: Double)

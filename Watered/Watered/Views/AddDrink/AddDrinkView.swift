@@ -15,6 +15,8 @@ struct AddDrinkSheetDraft: Equatable {
     var shotCount: Int
     var volumeValue: Double
     var unit: LiquidUnit
+    var isNonAlcoholic: Bool = false
+    var alcoholABV: Double? = nil
 }
 
 /// Presents category, drink type, preparation and volume before submitting a new entry.
@@ -30,6 +32,8 @@ struct AddDrinkView: View {
     @State private var selectedCategoryID: String?
     @State private var selectedDrinkID: String?
     @State private var selectedCaffeineVariant: CaffeineVariant
+    @State private var selectedNonAlcoholic: Bool
+    @State private var selectedAlcoholABV: Double?
     @State private var selectedShotCount: Int
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
@@ -63,6 +67,8 @@ struct AddDrinkView: View {
         _selectedCategoryID = State(initialValue: saved?.categoryID)
         _selectedDrinkID = State(initialValue: saved?.drinkID)
         _selectedCaffeineVariant = State(initialValue: saved?.caffeineVariant ?? .regular)
+        _selectedNonAlcoholic = State(initialValue: saved?.isNonAlcoholic ?? false)
+        _selectedAlcoholABV = State(initialValue: saved?.alcoholABV)
         _selectedShotCount = State(initialValue: saved?.shotCount ?? 1)
         _volumeSelection = State(initialValue: AddDrinkVolumeSelection(
             value: saved?.volumeValue ?? AddDrinkVolumeSelection.defaultValue(for: defaultUnit),
@@ -70,7 +76,7 @@ struct AddDrinkView: View {
             canApplyServingDefault: saved == nil
         ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
-        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil } ?? false
+        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil || $0.alcohol.configuration != nil } ?? false
         _selectedDetent = State(initialValue: saved?.categoryID == nil
             ? .height(440) : .height(hasPreparation ? 720 : 600))
     }
@@ -79,7 +85,8 @@ struct AddDrinkView: View {
         AddDrinkSheetDraft(
             categoryID: selectedCategoryID, drinkID: selectedDrinkID,
             caffeineVariant: selectedCaffeineVariant, shotCount: selectedShotCount,
-            volumeValue: volumeSelection.value, unit: volumeSelection.unit
+            volumeValue: volumeSelection.value, unit: volumeSelection.unit,
+            isNonAlcoholic: selectedNonAlcoholic, alcoholABV: selectedAlcoholABV
         )
     }
 
@@ -91,7 +98,7 @@ struct AddDrinkView: View {
 
     private var hasPreparationOptions: Bool {
         guard let definition = selectedDefinition else { return false }
-        return definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil
+        return definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil || definition.alcohol.configuration != nil
     }
 
     private var selectionAnimation: Animation? {
@@ -136,6 +143,8 @@ struct AddDrinkView: View {
                 volumeSelection.applyServingDefault(defaultDrink.defaultVolume)
                 selectedCaffeineVariant = defaultDrink.defaultCaffeineVariant
                 selectedShotCount = defaultDrink.shotConfiguration?.defaultCount ?? 1
+                selectedNonAlcoholic = false
+                selectedAlcoholABV = defaultDrink.alcohol.configuration?.defaultABV
             }
             // Do not shrink a sheet the user has already expanded manually.
             if selectedDetent != .large {
@@ -156,6 +165,8 @@ struct AddDrinkView: View {
             volumeSelection.applyServingDefault(definition.defaultVolume)
             selectedCaffeineVariant = definition.defaultCaffeineVariant
             selectedShotCount = definition.shotConfiguration?.defaultCount ?? 1
+            selectedNonAlcoholic = false
+            selectedAlcoholABV = definition.alcohol.configuration?.defaultABV
             if selectedDetent != .large {
                 selectedDetent = expandedDetent
             }
@@ -175,7 +186,9 @@ struct AddDrinkView: View {
             unit: volumeSelection.unit,
             caffeineVariant:
                 selectedCaffeineVariant,
-            shotCount: definition.shotConfiguration == nil ? nil : selectedShotCount
+            shotCount: definition.shotConfiguration == nil ? nil : selectedShotCount,
+            isNonAlcoholic: selectedNonAlcoholic,
+            alcoholABV: selectedNonAlcoholic ? nil : selectedAlcoholABV
         )
         do {
             let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
@@ -267,6 +280,7 @@ struct AddDrinkView: View {
 
     private func categorySymbol(_ categoryID: String) -> String {
         switch categoryID {
+        case "alcohol": return "wineglass.fill"
         case "water": return "drop.fill"
         case "juices": return "takeoutbag.and.cup.and.straw"
         case "sports-energy": return "waterbottle.fill"
@@ -278,6 +292,7 @@ struct AddDrinkView: View {
 
     private func categoryTint(_ categoryID: String) -> Color {
         switch categoryID {
+        case "alcohol": return .indigo
         case "coffee": return .brown
         case "tea": return .mint
         case "juices": return .orange
@@ -296,7 +311,10 @@ struct AddDrinkView: View {
                     } label: {
                         VStack(spacing: 8) {
                             AddDrinkThumbnail(drinkID: definition.id, categoryID: definition.categoryID)
-                                .frame(width: 66, height: 66)
+                                .frame(
+                                    width: definition.id == "espresso" ? 54 : 74,
+                                    height: definition.id == "espresso" ? 54 : 74
+                                )
                                 .frame(width: 88, height: 88)
                                 .background(
                                     Color.primary.opacity(0.06),
@@ -335,6 +353,9 @@ struct AddDrinkView: View {
     private var preparationSection: some View {
         if let definition = selectedDefinition, hasPreparationOptions {
             VStack(spacing: 12) {
+                if let configuration = definition.alcohol.configuration {
+                    alcoholPreparation(configuration)
+                }
                 if definition.caffeineOptions.contains(where: { $0.variant == .regular }),
                    let alternative = definition.caffeineOptions.first(where: {
                        $0.variant == .decaf || $0.variant == .caffeineFree
@@ -386,6 +407,46 @@ struct AddDrinkView: View {
             .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
             .tint(categoryTint(definition.categoryID))
             .padding(.horizontal, 20)
+        }
+    }
+
+    /// Index-based stepping supports the distinct ABV presets without inventing intermediate strengths.
+    @ViewBuilder
+    private func alcoholPreparation(_ configuration: AlcoholConfiguration) -> some View {
+        if let preparation = configuration.nonAlcoholic {
+            Toggle("Non-alcoholic", isOn: $selectedNonAlcoholic)
+                .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
+            if selectedNonAlcoholic {
+                Text("Up to \((preparation.maximumABV * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV · exact amount unknown")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        if !selectedNonAlcoholic {
+            if configuration.nonAlcoholic != nil {
+                Divider()
+            }
+            let steps = configuration.supportedABVs
+            let value = selectedAlcoholABV ?? configuration.defaultABV
+            let label = (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Alcohol: \(label) ABV")
+                Slider(value: Binding(
+                    get: { Double(steps.firstIndex(of: value) ?? 0) },
+                    set: { selectedAlcoholABV = steps[Int($0.rounded())] }
+                ), in: 0...Double(steps.count - 1), step: 1)
+                .accessibilityLabel("Alcohol strength")
+                .accessibilityValue(label)
+                .accessibilityIdentifier("addDrinkABVSlider")
+                HStack {
+                    ForEach(steps, id: \.self) { step in
+                        Text((step * 100).formatted(.number.precision(.fractionLength(0...1))) + "%")
+                            .font(.caption2)
+                        if step != steps.last { Spacer(minLength: 0) }
+                    }
+                }
+                .accessibilityHidden(true)
+            }
         }
     }
 

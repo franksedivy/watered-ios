@@ -6,22 +6,26 @@ nonisolated enum DrinkEntryFixture {
     /// Creates a snapshot-backed entry using an explicit test rule.
     ///
     /// Rules supplied by tests describe their fixtures, not approved product estimates.
+    /// An explicit captured value models historical facts independently of current calculations.
     /// Invalid fixture input deliberately fails setup rather than supplying guessed values.
     static func make(
         id: UUID = UUID(),
         drinkID: String,
         drinkName: String,
         hydrationRule: HydrationContributionRule,
+        capturedHydrationContribution: Double? = nil,
         amount: DrinkAmount,
         date: Date,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         source: DrinkEntrySource = .manual
     ) -> DrinkEntry {
-        let contribution = try! DrinkEstimateCalculator.hydrationContribution(
-            for: amount,
-            rule: hydrationRule
-        )
+        let contribution: Double?
+        if let capturedHydrationContribution {
+            contribution = capturedHydrationContribution
+        } else {
+            contribution = try! DrinkEstimateCalculator.hydrationContribution(for: amount, rule: hydrationRule)
+        }
         let snapshot = DrinkCatalogueSnapshot(
             drinkID: drinkID,
             drinkName: drinkName,

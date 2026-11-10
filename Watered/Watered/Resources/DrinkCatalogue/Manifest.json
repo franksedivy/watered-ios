@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
-    "schemaVersion": 3,
-    "version": "development-11",
+    "schemaVersion": 4,
+    "version": "development-13",
     "categories": [
         {
             "id": "water",
@@ -50,6 +50,12 @@
             "name": "Milk & Alternatives",
             "sortOrder": 80,
             "file": "milk-alternatives.json"
+        },
+        {
+            "id": "alcohol",
+            "name": "Alcohol",
+            "sortOrder": 90,
+            "file": "alcohol.json"
         }
     ]
 }

@@ -44,4 +44,13 @@ nonisolated struct DrinkCatalogueSnapshot: Equatable {
 
     /// The JSON schema version used when logging, or nil if it was not recorded.
     let catalogueSchemaVersion: Int?
+
+    /// Nil means this preparation was not captured by older versions.
+    var isNonAlcoholic: Bool? = nil
+
+    /// Exact selected ABV as a fraction; nil remains unknown, never assumed zero.
+    var alcoholABV: Double? = nil
+
+    /// The captured upper bound for a non-alcoholic recipe, not an exact ABV.
+    var alcoholABVUpperBound: Double? = nil
 }
