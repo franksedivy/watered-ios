@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `4`.
-- `version` identifies the catalogue content release, currently `development-13`.
+- `version` identifies the catalogue content release, currently `development-14`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 58 drinks across nine categories, including eight Alcohol definitions.
+The current seed contains 60 drinks across ten categories, including Broth and Miso soup under Other.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, extended by schema 4 below, #102)
@@ -698,3 +698,121 @@ their original physical volume. A converted default already selected by the whee
 does not count as a manual edit. Saved entries are never resized or recalculated;
 Recents repeat their captured amount under current estimate rules, without applying
 the serving suggestion. No persistence/model migration or database reset is needed.
+
+
+## Other — approved 10 November 2026 (#99, #101, #102)
+
+Other follows Alcohol, using iOS gray (`Color.gray`) and `sparkle`. Display order:
+
+| Stable ID | Name | Hydration contribution | Caffeine | Default volume |
+| --- | --- | ---: | ---: | ---: |
+| broth | Broth | 95% | 0 mg | 250 ml |
+| miso | Miso soup | 95% | 0 mg | 250 ml |
+
+Neither drink has preparation, flavour, strength, caffeine or alcohol controls.
+The IDs match Frank's supplied `broth` and `miso` artwork sets; each has 1×/2×/3×
+PNG references and is loaded through the existing catalogue-ID image lookup.
+At the suggested 250 ml serving, either drink contributes 237.5 ml towards the
+hydration goal while recording the full 250 ml as fluid intake.
+
+### Recipe scope, evidence and limitations
+
+- **Broth:** ordinary thin, clear vegetable, chicken or beef broth, prepared ready
+  to drink. Excludes undiluted stock/concentrate, thick/creamy soups and meals.
+- **Miso soup:** ordinary thin miso soup prepared with water or dashi. Record the
+  consumed liquid broth volume, excluding solid toppings such as tofu or seaweed;
+  thick soups and noodle meals are outside this generic entry.
+- Both assume non-caffeinated, non-alcoholic recipes. The 0 mg caffeine estimate
+  is a recipe assumption, not a measurement of every possible product.
+- The 95% values are agreed generic accounting estimates, not measured retained-water
+  fractions. Sodium content does not create extra goal credit or a hydration penalty.
+  These defaults do not prescribe treatment for dehydration or sodium intake.
+
+[Ray et al. (1998)](https://pubmed.ncbi.nlm.nih.gov/9760324/) compared rehydration
+with water, chicken broth, a carbohydrate-electrolyte drink and chicken noodle soup
+following exercise-related dehydration. Sodium-containing preparations improved
+fluid retention under those conditions. This supports broth contributing fluid,
+but does not establish a universal 95% factor across vegetable, chicken and beef
+broths or directly measure miso soup.
+
+[Marukome's classic recipe](https://www.marukomeusa.com/pages/classic) and
+[instant miso ingredient list](https://www.marukomeusa.com/products/instant-miso-soup-3-pack-tofu-view-only)
+illustrate miso in dashi with ordinary non-caffeinated ingredients.
+[Hikari's preparation instructions](https://hikarimiso.com/products/kantan-miso-soup-original/)
+illustrate ready-to-drink soup made by adding water. These examples support recipe
+scope and the known-zero caffeine assumption, not a measured hydration coefficient.
+
+### History and scope boundary
+
+Content `development-14` contains 60 drinks across ten categories. Manifest 1,
+schema 4 and calculation version 3 remain unchanged. All 58 previous definitions
+are unchanged. Serving defaults apply only while volume is untouched; manual
+selections and restored drafts retain their exact physical amount. Existing
+snapshots retain captured names, volumes, negative/zero/unknown estimates and
+versions. Repeats create a fresh entry at the captured amount using current rules.
+No persistence changes, store reset or historical recalculation are required.
+
+This implements the agreed Other batch, not final acceptance or closure of the
+broader catalogue tickets. Deferred entries and membership reconciliation remain
+under #101; integration/release evidence remains under #105. #149 sheet layout,
+HealthKit mapping and sugar research #152 stay separate. No PR is created as part
+of this implementation request.
+
+## Final reviewed membership — 10 November 2026 (#99, #101, #102)
+
+Frank approved the current **60 drinks across ten categories** as the lineup for
+this catalogue pass. Missing provisional entries are acceptable and may be added
+later; they are not outstanding population work. The original 64 entries were a
+proposal, not a required count. The following reconciles that proposal with the
+reviewed manifest and category files:
+
+| Category | Proposed | Reviewed | Membership/naming reconciliation |
+| --- | ---: | ---: | --- |
+| Water | 4 | 4 | Flavoured water is represented by Infused water; existing reviewed recipes retained. |
+| Coffee | 10 | 7 | Add Iced coffee; Greek frappe, Mocha, Flat white and Filter/drip coffee are not included in this pass. White coffee is the reviewed Coffee with milk recipe. |
+| Tea | 10 | 10 | Same membership; bottled/canned iced tea is named Iced tea. |
+| Juices | 4 | 4 | Same membership. |
+| Soft Drinks | 8 | 6 | Regular/diet cola share Cola; Soda drink is represented by Fruit soda. Standalone Fruit drink is not included in this pass. |
+| Wellness | 5 | 3 | Greens drink and Apple cider vinegar drink are deferred. |
+| Sports & Energy | 3 | 4 | Add Electrolyte drink. |
+| Milk & Alternatives | 10 | 12 | Add Coconut milk and Ayran; Cow's milk is named Milk. |
+| Alcohol | 8 | 8 | Mocktail and Non-alcoholic beer are preparations of Cocktail and Beer; add Fortified wine and Liqueur. Other supported non-alcoholic choices also use toggles. |
+| Other | 2 | 2 | Broth and Miso soup. |
+| Total | 64 | 60 | Approved scope, without requiring replacements for omitted entries. |
+
+Water intentionally keeps the existing fresh-form/unit fallback rather than an
+authored `defaultVolume`; all other drinks have reviewed serving suggestions.
+Absence of an optional default is supported and does not mean an unknown estimate.
+The manifest/category files own exact IDs, order and recipe values. There is no new
+requirement for temperature, flavour, sugar, nutrition or custom recipe controls.
+
+### Quantity handoff to #95 / #108
+
+These are **captured app facts**, not approved HealthKit sample quantities or an
+eligibility matrix. Export policy remains owned by #95; implementation by #108.
+Use the saved amount/preparation/estimates, never a rounded display string or a
+newer recipe. Caffeine and water eligibility must be decided independently.
+
+| Recorded example | Fluid intake | Hydration goal credit | Captured caffeine | Alcohol context |
+| --- | ---: | ---: | ---: | --- |
+| Still water, 330 ml | 330 ml | 330 ml | 0 mg | No alcohol in the recipe |
+| Latte, 250 ml, two regular shots | 250 ml | 226.5 ml | 120 mg | No alcohol in the recipe |
+| Latte, 250 ml, two decaf shots | 250 ml | 226.5 ml | 10 mg | No alcohol in the recipe |
+| Cold brew, 250 ml, regular | 250 ml | 247.5 ml | 125 mg | No alcohol in the recipe |
+| Beer, 330 ml, 5% ABV | 330 ml | 0 ml | 0 mg | Exact selected ABV 5% |
+| Beer, 330 ml, non-alcoholic | 330 ml | 313.5 ml | 0 mg | Exact ABV unknown; upper bound 0.5% |
+| Cocktail, 200 ml, 10% ABV | 200 ml | 0 ml | Unknown | Exact selected ABV 10% |
+| Miso soup, 250 ml | 250 ml | 237.5 ml | 0 mg | Non-alcoholic recipe assumption |
+| Historical 300 ml entry with unknown saved estimates | 300 ml | Unknown | Unknown | Preserve captured context; do not invent a recipe |
+
+All three supported display units resolve through `Measurement<UnitVolume>` to
+millilitres at calculation precision. An unchanged 250 ml entry shown in US or
+imperial fluid ounces remains that same amount; selecting a new ounce amount
+records that physical amount. No display rounding is fed back into persistence or
+an export calculation. Unknown caffeine does not become a zero sample, and an old
+negative hydration estimate must not become negative exported water. These examples
+do not decide whether any entry produces neither, one or both HealthKit sample types.
+
+The final Other PR and its hosted unit result still need acceptance before ticket
+closure. Full catalogue integration, UI/device evidence and release readiness stay
+with #105/#113; this membership decision does not establish those outcomes.

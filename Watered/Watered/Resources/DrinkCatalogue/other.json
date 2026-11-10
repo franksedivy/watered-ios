@@ -1,0 +1,38 @@
+[
+    {
+        "id": "broth",
+        "name": "Broth",
+        "categoryID": "other",
+        "sortOrder": 10,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    },
+    {
+        "id": "miso",
+        "name": "Miso soup",
+        "categoryID": "other",
+        "sortOrder": 20,
+        "isRetired": false,
+        "defaultVolume": 250,
+        "hydrationContributionRule": {
+            "kind": "ratio",
+            "ratio": 0.95
+        },
+        "caffeine": {
+            "kind": "none"
+        },
+        "alcohol": {
+            "kind": "none"
+        }
+    }
+]

@@ -280,6 +280,7 @@ struct AddDrinkView: View {
 
     private func categorySymbol(_ categoryID: String) -> String {
         switch categoryID {
+        case "other": return "sparkle"
         case "alcohol": return "wineglass.fill"
         case "water": return "drop.fill"
         case "juices": return "takeoutbag.and.cup.and.straw"
@@ -292,6 +293,7 @@ struct AddDrinkView: View {
 
     private func categoryTint(_ categoryID: String) -> Color {
         switch categoryID {
+        case "other": return .gray
         case "alcohol": return .indigo
         case "coffee": return .brown
         case "tea": return .mint
