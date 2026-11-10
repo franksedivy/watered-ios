@@ -7,8 +7,8 @@ as a folder resource. Files are not discovered by scanning the directory.
 ## Versions
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
-- `schemaVersion` identifies the assembled catalogue data contract, currently `5`.
-- `version` identifies the catalogue content release, currently `development-15`.
+- `schemaVersion` identifies the assembled catalogue data contract, currently `6`.
+- `version` identifies the catalogue content release, currently `development-25`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -847,3 +847,350 @@ HealthKit water should represent estimated water content, replacing the earlier
 narrow-water-only proposal. This slice implements capture only: no HealthKit sample
 mapping, permissions or writes. Alcohol export requires a separately reviewed
 standard-drink conversion. See the [mapping decision record](decisions/001-healthkit-export-mapping.md).
+
+
+## Water content — Water category approved 10 November 2026 (#95, #106)
+
+Content `development-16` populates only four `waterContent` fractions. Schema 5,
+manifest 1 and calculation 4 stay unchanged; all other 56 entries remain unknown.
+
+| ID | Fraction | Estimated water in 330 ml | Recipe scope |
+| --- | ---: | ---: | --- |
+| still-water | 1.0 | 330 ml | Plain drinking/mineral water. |
+| sparkling-water | 1.0 | 330 ml | Plain carbonated water without juice or sugar. |
+| infused-water | 1.0 | 330 ml | Light fruit/herb infusion, consumed liquid only; no added juice, syrup or sugar. |
+| coconut-water | 0.95 | 313.5 ml | Plain unsweetened coconut water without pulp. |
+
+These are reviewed rounded product estimates, not chemical purity or physiological
+retention fractions. The 100% assumptions ignore small dissolved constituents.
+[Perrier composition](https://www.perrier.com/fr/produits/detail/perrier) illustrates
+plain mineral water with added carbon dioxide.
+[USU infusion guidance](https://extension.usu.edu/createbetterhealth/files/Create-Better-Health-Lesson-4-Packet.pdf)
+notes fruit-derived sugars vary, supporting a restricted light-infusion recipe,
+not proving an exact universal 100% water fraction.
+
+[USDA SR28, coconut water NDB 12119](https://www.ars.usda.gov/ARSUserFiles/80400535/Data/SR/SR28/reports/sr28fg12.pdf)
+reports 94.99 g water per 100 g. Frank explicitly accepted 0.95 as a volume-based
+approximation assuming approximately equal drink/water density; this is not a
+measured 95% volume fraction. It is independently chosen despite matching the
+existing 95% hydration-goal coefficient. Other estimates and serving defaults are
+unchanged. New logs/repeats capture water amounts; existing saved unknowns remain
+unknown. No HealthKit writes, historical recalculation or backfill.
+
+
+## Water content — Coffee approved 10 November 2026 (#95, #106)
+
+Content `development-17` adds seven fixed water-content estimates. Schema 5,
+manifest 1 and calculation 4 are unchanged. The four Water values remain unchanged;
+the remaining 49 definitions retain unknown water content.
+
+| ID / name | Water fraction | Water at default serving |
+| --- | ---: | ---: |
+| latte / Latte | 0.90 | 225 ml / 250 ml |
+| cappuccino / Cappuccino | 0.90 | 225 ml / 250 ml |
+| iced-coffee / Iced coffee | 0.98 | 245 ml / 250 ml |
+| espresso / Espresso | 0.92 | 27.6 ml / 30 ml |
+| coffee-with-milk / White coffee | 0.98 | 245 ml / 250 ml |
+| cold-brew / Cold brew | 0.98 | 245 ml / 250 ml |
+| americano / Americano | 0.98 | 245 ml / 250 ml |
+
+Frank explicitly approved fixed water fractions across regular and decaf and all
+supported shot counts, including zero. Shots affect caffeine only. These are generic
+recipe estimates, not ingredient-level reconstruction: even zero-shot Espresso
+retains 92% by this product convention. No new preparation-dependent formula or
+reinterpretation of old logs is introduced. Caffeine and goal credit are unchanged.
+
+Scope: liquid consumed, excluding ice left behind and foam headspace; Iced coffee
+is black espresso diluted with water, Cold brew is ready-to-drink rather than
+concentrate, and White coffee retains the 225 ml brewed coffee + 25 ml milk reference.
+Milk drinks use a generic dairy recipe without milk customisation or added syrup.
+
+[SCA's espresso experiments](https://sca.coffee/sca-news/25/issue-21/its-electric-understanding-and-reducingstatic-electricity-during-grinding-nf9hj)
+report examples at 8.2–8.7% dissolved solids, supporting the ballpark for the 92%
+water assumption, not a universal espresso composition. [USDA whole-milk composition](https://www.ars.usda.gov/ARSUserFiles/80400525/Data/SR/SR28/reports/sr28fg01.pdf)
+reports 88.13 g water/100 g; the milk component's approximate 90% by volume and the
+mixed-drink values are product approximations, not directly measured fractions.
+A [cold-brew study](https://pmc.ncbi.nlm.nih.gov/articles/PMC9407127/)
+standardised served samples to 2% dissolved solids, informing the 98% assumption
+without establishing a market average. Mass-based solids/composition are not exact
+volume fractions; density, recipe and strength variation remain limitations.
+
+New logs and repeats capture these water amounts; old captured unknowns/values are
+preserved. No historical recalculation, HealthKit writes or hydration-policy change.
+
+
+## Water content — Tea approved 10 November 2026 (#95, #106)
+
+Content `development-18` populates the ten Tea water fractions below. Frank approved
+fixed estimates across temperature and all supported regular/decaf/caffeine-free
+variants. Temperature is not an input or new control. Schema 5, manifest 1 and
+calculation 4 stay unchanged. Four Water and seven Coffee values remain unchanged;
+the remaining 39 definitions retain unknown water content.
+
+| ID | Fraction | Estimated water in 250 ml |
+| --- | ---: | ---: |
+| black-tea | 1.0 | 250 ml |
+| green-tea | 1.0 | 250 ml |
+| white-tea | 1.0 | 250 ml |
+| herbal-tea | 1.0 | 250 ml |
+| matcha | 0.99 | 247.5 ml |
+| matcha-latte | 0.92 | 230 ml |
+| bubble-milk-tea | 0.93 | 232.5 ml |
+| bubble-fruit-tea | 0.95 | 237.5 ml |
+| yerba-mate | 0.99 | 247.5 ml |
+| iced-tea | 0.95 | 237.5 ml |
+
+Iced tea's 330 ml serving therefore captures 313.5 ml water. Plain brewed teas
+exclude milk/sugar. The rounded 100% uses brewed black/herbal composition near
+99.7% water by mass as context; Green/White share the approximation, not separate
+measurements. [New Zealand composition tables](https://foodcomposition.co.nz/downloads/concise-13-edition.pdf).
+
+Matcha retains the dilute 2 g powder/250 ml recipe; Matcha latte retains the 50 ml
+water + 200 ml milk reference with approximate powder allowance. Bubble milk/fruit
+tea and Iced tea use weaker, recipe-specific lightly sweetened estimates; pearls,
+jelly and ice left behind are excluded. Generic percentages are not market averages.
+[USDA's Arizona lemon-tea reference](https://www.ars.usda.gov/ARSUserFiles/80400535/Data/SR/SR28/reports/sr28fg14.pdf)
+is around 90% water by mass, illustrating why heavily sweetened products differ
+rather than validating our lightly sweetened 95% estimate. Yerba mate's 99% is an
+explicit generic plain-brew assumption without a verified universal fraction.
+Mass-based composition is not an exact volume fraction; these are approved rounded
+product approximations. Matching a goal-credit coefficient does not equate the two
+quantities. No caffeine, hydration, alcohol or serving defaults change.
+
+New logs/repeats capture the reviewed estimates; historical snapshots remain intact.
+No HealthKit writes, backfill, database reset or new preparation controls.
+
+
+## Water content — Juices approved 10 November 2026 (#95, #106)
+
+Content `development-19` adds the four approved Juice fractions. Schema 5, manifest
+1 and calculation 4 stay unchanged. The 21 earlier reviewed values are unchanged;
+35 definitions remain unknown.
+
+| ID | Water fraction | Water in 250 ml | Recipe scope |
+| --- | ---: | ---: | --- |
+| fruit-juice | 0.90 | 225 ml | 100% fruit juice, excluding diluted/sweetened fruit drinks. |
+| vegetable-juice | 0.95 | 237.5 ml | Vegetable-only juices/blends, excluding fruit blends. |
+| smoothie | 0.85 | 212.5 ml | Drinkable fruit/vegetable blends without dairy/protein/caffeine additions. |
+| aloe-vera-drink | 0.95 | 237.5 ml | Diluted ready-to-drink aloe beverage, including pulp; not concentrate/supplement. |
+
+Frank accepted these as rounded generic volume estimates, not measured universal
+fractions. [USDA apple juice](https://www.ars.usda.gov/ARSUserFiles/80400535/Data/SR/SR28/reports/sr28fg09.pdf)
+is 88.24 g water/100 g; [vegetable juice](https://www.ars.usda.gov/ARSUserFiles/80400535/Data/SR/SR28/reports/sr28fg11.pdf)
+is around 94% by mass. Those support the general composition range, not an exact
+mass-to-volume conversion or a market average across recipes.
+
+Smoothie's 85% is a weaker generic assumption because puree/juice proportions vary;
+no representative composition measurement establishes this exact value.
+[ALO Exposed](https://alodrink.com/alo-original/alo-exposed/) provides an example of
+water, aloe juice/pulp and sweeteners, with 33 g carbohydrate per 500 ml. Its label
+does not directly establish water content; the 95% is an explicitly approved
+approximation. Density and recipe variation remain limitations for all four.
+
+Aloe water content is 95% while its unchanged hydration-goal coefficient is 90%.
+All caffeine, alcohol, goal-credit and serving defaults remain unchanged. New logs
+and repeats capture water amounts; historical snapshots remain unchanged. No
+HealthKit writes, historical recalculation, backfill or database reset.
+
+
+## Water content — Soft Drinks approved 10 November 2026 (#95, #106)
+
+Content `development-20` adds six approved fixed water fractions. Schema 5,
+manifest 1 and calculation 4 are unchanged; 31 definitions are reviewed and 29
+remain unknown.
+
+| ID | Water fraction | Water in 250 ml |
+| --- | ---: | ---: |
+| cola | 0.93 | 232.5 ml |
+| lemonade | 0.96 | 240 ml |
+| tonic-water | 0.95 | 237.5 ml |
+| fruit-soda | 0.95 | 237.5 ml |
+| ginger-beer | 0.93 | 232.5 ml |
+| squash | 0.98 | 245 ml |
+
+Frank approved one generic estimate per drink across regular and sugar-free
+recipes, with no sugar selector. Cola also keeps the same water fraction across
+regular/caffeine-free variants. Squash means the prepared drink at manufacturer
+recommended dilution; ginger beer remains the non-alcoholic soft drink.
+
+These exact fractions are approved product assumptions, not measured composition
+or market averages. Recipe context comes from [Coca-Cola](https://www.coca-cola.com/gb/en/brands/coca-cola-original-taste),
+[Sprite](https://www.coca-cola.com/gb/en/brands/sprite),
+[Fanta](https://www.coca-cola.com/gb/en/brands/fanta),
+[Fever-Tree](https://fever-tree.com/en-us/products/premium-tonic-water),
+[Bundaberg](https://www.bundaberg.com/brew/ginger-beer/) and
+[Robinsons](https://robinsonssquash.co.uk/our-products/family-favourites/summer-fruits-single-concentrate/).
+Nutrition labels do not measure water volume; subtracting grams of sugar from
+millilitres would be invalid. Brand, density and dilution vary, and these fixed
+values generally underestimate water in sugar-free versions.
+
+Caffeine, alcohol, hydration-goal credit and serving defaults are unchanged.
+New logs/repeats capture these water estimates; historical snapshots stay intact.
+No HealthKit writes or historical backfill are introduced.
+
+
+## Water content — Wellness approved 10 November 2026 (#95, #106)
+
+Content `development-21` adds three approved fixed water fractions. Schema 5,
+manifest 1 and calculation 4 remain unchanged; 34 definitions are reviewed and
+26 remain unknown.
+
+| ID | Water fraction | Water in default serving |
+| --- | ---: | ---: |
+| kombucha | 0.98 | 245 ml / 250 ml |
+| vitamin-drink | 0.97 | 485 ml / 500 ml |
+| cbd-drink | 0.98 | 245 ml / 250 ml |
+
+These are approved rounded generic volume assumptions, not measured composition
+or market averages. Fixed values cover regular/sugar-free recipes within the
+existing category scope: ready-to-drink tea-based non-alcoholic kombucha (including
+trace alcohol), water-based vitamin drinks and water-based CBD soft drinks.
+Concentrates, oils, hard kombucha and caffeinated energy blends remain excluded.
+
+[Remedy](https://www.remedydrinks.com/pages/remedy-kombucha) provides sugar-free
+kombucha context; [Vitamin Well Reload](https://www.vitaminwell.com/product/reload/)
+lists 4.2 g sugar/100 ml; [Goodrays](https://www.goodrays.com/products/cbd-passionfruit-pomelo-330ml)
+lists 2.5 g sugar/100 ml. These examples inform recipe assumptions but do not
+establish water fractions; sugar mass cannot be subtracted directly from volume.
+Brand, density and fermentation differences remain limitations.
+
+Kombucha alcohol remains unknown independently of its water estimate. Caffeine,
+alcohol, hydration-goal credit and serving defaults are unchanged. New logs and
+repeats capture the estimates; historical snapshots remain intact. No HealthKit
+writes, CBD-dose tracking or backfill are introduced.
+
+
+## Water content — Sports & Energy approved 10 November 2026 (#95, #106)
+
+Content `development-22` adds four approved fixed water fractions. Schema 5,
+manifest 1 and calculation 4 stay unchanged; 38 definitions are reviewed and
+22 remain unknown.
+
+| ID | Water fraction | Water in default serving |
+| --- | ---: | ---: |
+| energy-drink | 0.93 | 232.5 ml / 250 ml |
+| sports-drink | 0.96 | 480 ml / 500 ml |
+| electrolyte-drink | 0.99 | 495 ml / 500 ml |
+| protein-shake | 0.90 | 270 ml / 300 ml |
+
+Frank approved fixed generic volume estimates, including regular/sugar-free
+versions within existing scope. Energy excludes concentrated shots; Sports is
+ready-to-drink isotonic-style; Electrolyte means non-caffeinated tablets/powders
+prepared to label directions. Protein shake means standard powder mixed with
+water, excluding milk-based shakes, mass gainers and caffeinated formulations.
+Log total prepared volume; no scoop/dilution controls are introduced.
+
+These are rounded product assumptions, not measured water fractions or market
+averages. [Red Bull](https://www.redbull.com/gb-en/energydrink/products/red-bull-energy-drink)
+lists 27 g sugar/250 ml; [Lucozade](https://lucozade.com/support) describes
+carbohydrate/electrolyte sports recipes; [Nuun](https://nuunlife.ca/products/nuun-sport?variant=38833712431255)
+provides prepared-electrolyte context. [Optimum Nutrition](https://www.optimumnutrition.com/en-gb/products/gold-standard-100-whey-protein-powder-eu?variant=52105832694027)
+illustrates roughly 30 g powder mixed with 180–240 ml water. These examples do not
+establish the exact fractions; grams of solids cannot be subtracted directly
+from millilitres. Protein preparation has the greatest uncertainty, and regular
+versus sugar-free recipes also vary.
+
+Caffeine, alcohol, hydration-goal credit and serving defaults stay unchanged.
+New logs/repeats capture water estimates; historical snapshots remain intact.
+No HealthKit writes or historical backfill are introduced.
+
+
+## Water content — Milk & Alternatives approved 10 November 2026 (#95, #106)
+
+Content `development-23` adds twelve approved fixed water fractions. Schema 5,
+manifest 1 and calculation 4 stay unchanged; 50 definitions are reviewed and
+10 remain unknown.
+
+| ID | Water fraction | Water in 250 ml |
+| --- | ---: | ---: |
+| milk | 0.90 | 225 ml |
+| oat-milk | 0.92 | 230 ml |
+| soy-milk | 0.94 | 235 ml |
+| almond-milk | 0.97 | 242.5 ml |
+| coconut-milk | 0.97 | 242.5 ml |
+| rice-milk | 0.90 | 225 ml |
+| kefir | 0.90 | 225 ml |
+| drinking-yoghurt | 0.85 | 212.5 ml |
+| milkshake | 0.85 | 212.5 ml |
+| chocolate-milk | 0.87 | 217.5 ml |
+| hot-chocolate | 0.85 | 212.5 ml |
+| ayran | 0.95 | 237.5 ml |
+
+Frank approved one fixed generic volume estimate across supported fat levels,
+sweetened/unsweetened and barista variants. Existing recipe scope is retained:
+coconut milk is a diluted carton drink, not canned cooking milk; kefir is plain
+dairy; drinking yoghurt is pourable plain/fruit; milkshake is an ordinary
+fruit/vanilla shake, excluding ice-cream-heavy desserts; hot chocolate is milk-based
+without toppings; ayran is yoghurt, water and salt. Milkshake's default 300 ml
+captures 255 ml water. Preparation and brand variation remain limitations.
+
+These fractions are rounded product assumptions, not measured universal volume
+fractions or market averages. [USDA dairy composition](https://www.ars.usda.gov/ARSUserFiles/80400525/Data/SR/SR28/reports/sr28fg01.pdf)
+lists whole milk at 88.13 g water/100 g; mass percentage is not volume percentage.
+[Oatly](https://www.oatly.com/en-us/products/oatmilk/oatmilk-32-oz),
+[Alpro](https://www.alpro.com/en-gb/products/drinks/soya-original),
+[DREAM](https://dreamplantbased.com/products/ricemilk-products/ricemilk-original-classic/),
+[Lifeway](https://lifewaykefir.com/products/whole-milk-plain-kefir/) and
+[Sütaş](https://www.sutas.com/sutas-ayran-275-ml-edt) provide recipe context,
+not measurements establishing these exact fractions. Hot chocolate and sweetened
+mixed dairy recipes have particularly variable composition.
+
+Caffeine, alcohol, hydration-goal credit and serving defaults stay unchanged.
+New logs/repeats capture these estimates; historical snapshots remain intact.
+No HealthKit writes or historical backfill are introduced.
+
+
+## Water content — Alcohol approved 10 November 2026 (#95, #106)
+
+Content `development-24`, schema 6, calculation 5 adds `waterContent.kind:
+alcoholOptions` with `options: [{abv, fraction}]` and optional `nonAlcoholic`
+water fraction. Each table must match the drink's supported ABVs exactly and
+provide a non-alcoholic value if and only if that preparation exists. Invalid,
+duplicate, missing or out-of-range values are rejected. Schemas 1–5 remain
+readable; alcohol water tables require schema 6. There are 58 reviewed entries;
+Broth and Miso soup remain unknown pending review.
+
+| Drink | ABV % → water % | Non-alcoholic water % |
+| --- | --- | ---: |
+| Beer | 4→94; 4.5→93.5; 5→93; 5.5→92.5; 6→92 | 97 |
+| Cider | 4→92; 4.5→91.5; 5→91; 5.5→90.5; 6→90 | 95 |
+| Wine | 11→89; 12→88; 13→87; 14→86; 15→85 | 97 |
+| Cocktail | 5→90; 10→85; 15→80; 20→75; 25→70 | 95 |
+| Sparkling wine | 10→90; 11→89; 12→88; 13→87; 14→86 | 97 |
+| Fortified wine | 14→82; 16→80; 18→78; 20→76; 22→74 | — |
+| Spirits | 30→72; 40→63; 50→54; 60→44 | — |
+| Liqueur | 15→70; 20→65; 25→60; 30→55; 35→50; 40→45 | — |
+
+Frank approved these rounded generic recipe assumptions, including the weaker
+Cocktail/Liqueur estimates. They are not measured category averages or a runtime
+density formula. [OIML](https://www.oiml.org/en/publications/recommendations/22/)
+provides ethanol/water composition context; [Guinness](https://www.guinness.com/en-us/frequently-asked-questions),
+[Heineken](https://www.heineken.com/my/en/our-products/heineken-0-0/) and
+[Freixenet](https://freixenet.com/fr/produit/cordon-sans-alcohol/) illustrate dissolved
+carbohydrates and non-alcoholic recipe variation, not these exact water fractions.
+Default beer captures 306.9 ml water per 330 ml; non-alcoholic beer captures
+320.1 ml. The non-alcoholic option retains an unknown exact ABV with a 0.5% upper
+bound; its water value must not turn alcohol into known zero.
+
+The resolver uses the selected/default ABV or the separate non-alcoholic lookup.
+New logs/repeats save that water amount; old saved estimates remain unchanged.
+Caffeine, alcohol choices, goal-credit rules and serving defaults are unchanged.
+No HealthKit writes, alcohol-dose conversion or backfill are introduced.
+
+
+## Water content — Other approved 10 November 2026 (#95, #106)
+
+Content `development-25` completes all 60 definitions: 52 fixed fractions and
+8 Alcohol strength tables. Schema 6 and calculation 5 remain unchanged.
+Broth uses 0.99 (247.5 ml water/250 ml); Miso soup uses 0.97 (242.5 ml/250 ml).
+These are rounded generic assumptions, not measured universal fractions.
+Broth means ordinary thin clear vegetable/chicken/beef broth prepared for drinking;
+miso means ordinary diluted broth, logging liquid only without solid toppings.
+Concentrates, thick soups and unusually rich recipes are excluded.
+[Swanson](https://www.campbells.com/swanson/products/broth/chicken-broth/) and
+[Hikari](https://hikarimiso.com/products/kantan-miso-soup-original/) provide recipe
+context, not measurements establishing these exact fractions.
+
+Goal credit remains 95% for both; caffeine and alcohol remain known zero. New
+logs/repeats capture water separately; existing saved facts remain unchanged.
+Unknown remains supported by the schema for future unreviewed recipes and old logs.

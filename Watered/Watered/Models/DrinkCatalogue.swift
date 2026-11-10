@@ -88,7 +88,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
-        guard (1...5).contains(schemaVersion) else {
+        guard (1...6).contains(schemaVersion) else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
@@ -143,6 +143,16 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
             if case .fraction(let value) = drink.waterContent,
                !value.isFinite || !(0...1).contains(value) {
                 throw ValidationError.invalidWaterContent(drinkID: drink.id)
+            }
+
+            if case .alcoholOptions(let options, let nonAlcoholic) = drink.waterContent {
+                guard schemaVersion >= 6, let configuration = drink.alcohol.configuration,
+                      options.map(\.abv) == configuration.supportedABVs,
+                      options.allSatisfy({ $0.fraction.isFinite && (0...1).contains($0.fraction) }),
+                      (nonAlcoholic != nil) == (configuration.nonAlcoholic != nil),
+                      nonAlcoholic.map({ $0.isFinite && (0...1).contains($0) }) ?? true else {
+                    throw ValidationError.invalidWaterContent(drinkID: drink.id)
+                }
             }
 
             switch drink.hydrationContributionRule {

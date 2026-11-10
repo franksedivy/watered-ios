@@ -7,7 +7,30 @@
         "isRetired": false,
         "defaultVolume": 330,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.04,
+                    "fraction": 0.94
+                },
+                {
+                    "abv": 0.045,
+                    "fraction": 0.935
+                },
+                {
+                    "abv": 0.05,
+                    "fraction": 0.93
+                },
+                {
+                    "abv": 0.055,
+                    "fraction": 0.925
+                },
+                {
+                    "abv": 0.06,
+                    "fraction": 0.92
+                }
+            ],
+            "nonAlcoholic": 0.97
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -42,7 +65,30 @@
         "isRetired": false,
         "defaultVolume": 330,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.04,
+                    "fraction": 0.92
+                },
+                {
+                    "abv": 0.045,
+                    "fraction": 0.915
+                },
+                {
+                    "abv": 0.05,
+                    "fraction": 0.91
+                },
+                {
+                    "abv": 0.055,
+                    "fraction": 0.905
+                },
+                {
+                    "abv": 0.06,
+                    "fraction": 0.9
+                }
+            ],
+            "nonAlcoholic": 0.95
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -77,7 +123,30 @@
         "isRetired": false,
         "defaultVolume": 175,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.11,
+                    "fraction": 0.89
+                },
+                {
+                    "abv": 0.12,
+                    "fraction": 0.88
+                },
+                {
+                    "abv": 0.13,
+                    "fraction": 0.87
+                },
+                {
+                    "abv": 0.14,
+                    "fraction": 0.86
+                },
+                {
+                    "abv": 0.15,
+                    "fraction": 0.85
+                }
+            ],
+            "nonAlcoholic": 0.97
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -112,7 +181,30 @@
         "isRetired": false,
         "defaultVolume": 200,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.05,
+                    "fraction": 0.9
+                },
+                {
+                    "abv": 0.1,
+                    "fraction": 0.85
+                },
+                {
+                    "abv": 0.15,
+                    "fraction": 0.8
+                },
+                {
+                    "abv": 0.2,
+                    "fraction": 0.75
+                },
+                {
+                    "abv": 0.25,
+                    "fraction": 0.7
+                }
+            ],
+            "nonAlcoholic": 0.95
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -147,7 +239,30 @@
         "isRetired": false,
         "defaultVolume": 125,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.1,
+                    "fraction": 0.9
+                },
+                {
+                    "abv": 0.11,
+                    "fraction": 0.89
+                },
+                {
+                    "abv": 0.12,
+                    "fraction": 0.88
+                },
+                {
+                    "abv": 0.13,
+                    "fraction": 0.87
+                },
+                {
+                    "abv": 0.14,
+                    "fraction": 0.86
+                }
+            ],
+            "nonAlcoholic": 0.97
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -182,7 +297,29 @@
         "isRetired": false,
         "defaultVolume": 50,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.14,
+                    "fraction": 0.82
+                },
+                {
+                    "abv": 0.16,
+                    "fraction": 0.8
+                },
+                {
+                    "abv": 0.18,
+                    "fraction": 0.78
+                },
+                {
+                    "abv": 0.2,
+                    "fraction": 0.76
+                },
+                {
+                    "abv": 0.22,
+                    "fraction": 0.74
+                }
+            ]
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -213,7 +350,25 @@
         "isRetired": false,
         "defaultVolume": 25,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.3,
+                    "fraction": 0.72
+                },
+                {
+                    "abv": 0.4,
+                    "fraction": 0.63
+                },
+                {
+                    "abv": 0.5,
+                    "fraction": 0.54
+                },
+                {
+                    "abv": 0.6,
+                    "fraction": 0.44
+                }
+            ]
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -243,7 +398,33 @@
         "isRetired": false,
         "defaultVolume": 25,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "alcoholOptions",
+            "options": [
+                {
+                    "abv": 0.15,
+                    "fraction": 0.7
+                },
+                {
+                    "abv": 0.2,
+                    "fraction": 0.65
+                },
+                {
+                    "abv": 0.25,
+                    "fraction": 0.6
+                },
+                {
+                    "abv": 0.3,
+                    "fraction": 0.55
+                },
+                {
+                    "abv": 0.35,
+                    "fraction": 0.5
+                },
+                {
+                    "abv": 0.4,
+                    "fraction": 0.45
+                }
+            ]
         },
         "hydrationContributionRule": {
             "kind": "ratio",

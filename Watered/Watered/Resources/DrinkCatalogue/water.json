@@ -6,7 +6,8 @@
         "sortOrder": 10,
         "isRetired": false,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -26,7 +27,8 @@
         "sortOrder": 20,
         "isRetired": false,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -46,7 +48,8 @@
         "sortOrder": 30,
         "isRetired": false,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -66,7 +69,8 @@
         "sortOrder": 40,
         "isRetired": false,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.95
         },
         "hydrationContributionRule": {
             "kind": "ratio",

@@ -32,7 +32,7 @@ struct CatalogueDiskIntegrationTests {
                 #expect(repeated.amount.value == original.amount.value)
                 #expect(repeated.amount.unit == unit)
                 #expect(repeated.catalogueSnapshot == original.catalogueSnapshot)
-                #expect(repeated.catalogueSnapshot.calculationVersion == "4")
+                #expect(repeated.catalogueSnapshot.calculationVersion == "5")
             }
             try save(repeats, at: url)
             assertSameEntries(try read(at: url), entries + repeats)

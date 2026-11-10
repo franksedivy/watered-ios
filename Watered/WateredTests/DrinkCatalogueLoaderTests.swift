@@ -22,8 +22,8 @@ struct DrinkCatalogueLoaderTests {
             catalogue.drink(withID: "still-water")
         )
 
-        #expect(catalogue.schemaVersion == 5)
-        #expect(catalogue.version == "development-15")
+        #expect(catalogue.schemaVersion == 6)
+        #expect(catalogue.version == "development-25")
         #expect(catalogue.drinks.count == 60)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),
@@ -67,14 +67,14 @@ struct DrinkCatalogueLoaderTests {
         let json = """
         {
             "manifestVersion": 1,
-            "schemaVersion": 6,
+            "schemaVersion": 7,
             "version": "test-1",
             "categories": []
         }
         """
         let loader = DrinkCatalogueLoader()
         let expectedError =
-            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(6)
+            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(7)
 
         #expect(throws: expectedError) {
             _ = try loader.load(

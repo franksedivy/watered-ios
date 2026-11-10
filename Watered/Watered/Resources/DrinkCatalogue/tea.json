@@ -7,7 +7,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -45,7 +46,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -83,7 +85,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -121,7 +124,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 1.0
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -142,7 +146,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.99
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -173,7 +178,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.92
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -204,7 +210,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.93
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -235,7 +242,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.95
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -273,7 +281,8 @@
         "isRetired": false,
         "defaultVolume": 250,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.99
         },
         "hydrationContributionRule": {
             "kind": "ratio",
@@ -304,7 +313,8 @@
         "isRetired": false,
         "defaultVolume": 330,
         "waterContent": {
-            "kind": "unknown"
+            "kind": "fraction",
+            "value": 0.95
         },
         "hydrationContributionRule": {
             "kind": "ratio",

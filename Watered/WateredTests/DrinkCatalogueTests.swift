@@ -73,14 +73,14 @@ struct DrinkCatalogueTests {
     // THEN validation reports the exact version it cannot support.
     @Test func catalogueRejectsUnsupportedSchemaVersion() {
         let catalogue = DrinkCatalogue(
-            schemaVersion: 6,
+            schemaVersion: 7,
             version: "test-2",
             categories: [],
             drinks: []
         )
 
         let expectedError =
-            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(6)
+            DrinkCatalogue.ValidationError.unsupportedSchemaVersion(7)
 
         #expect(throws: expectedError) {
             try catalogue.validate()

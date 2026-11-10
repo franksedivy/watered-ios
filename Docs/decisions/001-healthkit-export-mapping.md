@@ -1,6 +1,6 @@
 # 001 — Capture water content independently of hydration credit
 
-- Status: Structure and quantity direction accepted by Frank on 10 November 2026. Per-drink water values and final export mapping remain under review.
+- Status: Structure and quantity direction accepted by Frank on 10 November 2026. All catalogue water estimates are approved; final export mapping remains under review.
 - Owner/reviewer: Frank Sedivy.
 - Related: [#95](https://github.com/franksedivy/watered-ios/issues/95), parent [#106](https://github.com/franksedivy/watered-ios/issues/106), mapping [#108](https://github.com/franksedivy/watered-ios/issues/108).
 - Supersedes: the narrow Still/Sparkling/Infused-only water policy approved earlier in this chat. The subsequent full-beverage-volume suggestion was also rejected.
@@ -16,20 +16,18 @@ Frank chose to represent the water contained in a drink in HealthKit, keeping
 hydration scoring inside Watered. The illustrative 330 ml beer × 90% = 297 ml water
 is not a reviewed recipe estimate. Do not infer water fraction as 1 − ABV.
 
-Implement explicit `waterContent` metadata as `unknown` or a finite `fraction`
-from 0 through 1. All 60 current entries start unknown, including plain water,
-until reviewed. Capture a separate optional `waterAmount` in millilitres in each
-new saved snapshot. Unknown and zero remain distinct. Existing records remain
-unknown; no historical recalculation, backfill or database reset.
+All 60 definitions now have approved generic water estimates. Fifty-two use a
+fixed fraction across their supported preparations; eight Alcohol definitions
+use reviewed ABV lookup tables with separate non-alcoholic estimates where offered.
+The exact fractions and recipe limitations are recorded in the catalogue contract.
+These are estimates, not measured universal composition or market averages.
 
-The fraction describes the definition's recipe. It must apply across its supported
-preparations before a shared numeric value is populated. If regular/decaf, shots,
-ABV or non-alcoholic preparation require different water estimates, keep unknown
-until a focused preparation-specific extension is reviewed. This first structure
-does not assume those preparations have identical water content.
+Capture a separate optional `waterAmount` in millilitres in each new snapshot.
+Unknown remains supported and distinct from zero. Existing saved facts stay
+unchanged; older records without water remain unknown. No backfill or reset.
 
 See [catalogue contract](../Drink-Catalogue-Files.md#water-content-structure--10-november-2026-95-106):
-content development-15, schema 5, calculation 4; legacy schemas 1–4 remain readable.
+content development-25, schema 6, calculation 5; legacy schemas 1–5 remain readable.
 
 ## Platform facts and remaining mapping decisions
 
@@ -67,18 +65,22 @@ stores/restores that value without a catalogue lookup. Repeating a recent drink
 creates a new event using current rules; it never changes its source entry.
 
 [Regression coverage](../../Watered/WateredTests/WaterContentTests.swift) covers
-all-unknown catalogue membership, strict schema decoding, older schema fallback,
+reviewed catalogue membership and preparation-specific water, strict schema decoding, older schema fallback,
 invalid values, all three units, zero versus unknown, disk save/dispose/reopen,
 current-rule repeats and retained historical snapshots. Hosted CI execution is
 reported in #95; this document does not claim a pass before one exists.
 
 ## Outstanding handoffs
 
-- #95: review all 60 water-content estimates, including preparation exceptions and evidence; replace the earlier narrow-water matrix and examples. Keep unknown where evidence is insufficient. Structure delivery alone does not close #95.
+- #95: all 60 water estimates are reviewed. Finalize the export mapping and examples; catalogue delivery alone does not close #95.
 - #108: map supported captured water/caffeine quantities independently after policy review. Preserve quantities through catalogue retirement, display-unit changes and retries. Add explicit immutable export-policy context in coordination with #96; catalogue/calculation versions are not export-policy versions.
 - #96: retain ownership of opt-in/backfill, durable per-type states, retries, deduplication, partial success and deletion. Any reconciliation of Watered-owned samples needs narrow justification. This change makes none of those choices.
 - #107/#111: reviewed write types, independent permissions and honest estimate wording. No HealthKit client or permission changes in this slice.
 - #112: mapping, persistence and controlled-device verification. Test neither/one/both outcomes once recipe water values are reviewed, without personal Health data in routine automation.
 
 No HealthKit writes, historical re-export, PR, merge or release is authorized by
-this record. A separate water estimate review follows this structural work.
+this record. All catalogue water estimates have been reviewed.
+
+Alcohol water uses schema 6 reviewed tables for every supported ABV and a separate
+non-alcoholic fraction where offered. Calculation version 5 resolves the selected
+preparation before saving water; no historical amounts are recalculated.

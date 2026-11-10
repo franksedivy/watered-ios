@@ -32,7 +32,7 @@ struct ReviewedTeaEstimateTests {
                     #expect(abs(try #require(snapshot.hydrationContribution) - volume * 0.99) < 0.000001)
                     #expect(abs(try #require(snapshot.caffeineAmount) - volume / 250 * (variant == .decaf ? 5 : regular)) < 0.000001)
                     #expect(snapshot.shotCount == nil)
-                    #expect(snapshot.catalogueVersion == "development-15")
+                    #expect(snapshot.catalogueVersion == "development-25")
                 }
             }
         }
@@ -74,7 +74,7 @@ struct ReviewedTeaEstimateTests {
         #expect(repeated.catalogueSnapshot.caffeineVariant == .decaf)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 5)
         #expect(repeated.catalogueSnapshot.hydrationContribution == 247.5)
-        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-15")
+        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-25")
         #expect(store.entries.first?.catalogueSnapshot == old)
         #expect(record.drinkEntry()?.catalogueSnapshot == old)
     }

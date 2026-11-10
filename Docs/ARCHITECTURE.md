@@ -48,7 +48,7 @@ unit used by fresh/restored Add Drink forms and the recent menu. Settings `updat
 
 ## Catalogue and current UI boundary
 
-The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The catalogue contains 60 definitions: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness, four Sports & Energy, twelve Milk & Alternatives, eight Alcohol and two Other, under content development-15 / schema 5. Alcohol uses discrete ABV choices and optional non-alcoholic preparations; calculation version 3 gives alcoholic preparations zero goal credit. Optional saved preparation/ABV fields preserve older rows without recalculating history. All definitions now explicitly carry unknown water content pending review. Calculation version 4 captures a separate optional water amount in snapshots and persistence; existing rows remain unknown. HealthKit mapping remains separate.
+The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The catalogue contains 60 definitions: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness, four Sports & Energy, twelve Milk & Alternatives, eight Alcohol and two Other, under content development-25 / schema 6. Alcohol uses discrete ABV choices and optional non-alcoholic preparations; calculation version 3 gives alcoholic preparations zero goal credit. Optional saved preparation/ABV fields preserve older rows without recalculating history. The four Water, seven Coffee, ten Tea, four Juice, six Soft Drink, three Wellness, four Sports & Energy and twelve Milk & Alternatives definitions have reviewed water-content fractions; the eight Alcohol definitions use reviewed strength tables and both Other definitions have reviewed fixed fractions. Coffee water fractions remain fixed across regular/decaf and shot counts. Calculation version 5 captures a separate optional water amount in snapshots and persistence; existing rows remain unknown. HealthKit mapping remains separate.
 
 The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
 
@@ -57,3 +57,7 @@ HealthKit export, widgets, a Watch app, iCloud sync and production analytics are
 ## Maintaining this map
 
 Update this document when responsibilities or data contracts change. Record significant rationale separately using a [decision record](decisions/TEMPLATE.md), linking any relevant historical entry in the wiki Decision Log. Do not turn this file into a release backlog.
+
+Alcohol water uses schema 6 reviewed tables for every supported ABV and a separate
+non-alcoholic fraction where offered. Calculation version 5 resolves the selected
+preparation before saving water; no historical amounts are recalculated.
