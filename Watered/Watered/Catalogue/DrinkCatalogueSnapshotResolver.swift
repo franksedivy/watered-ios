@@ -17,7 +17,7 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
     }
     
     /// Identifies the calculation logic used to produce saved estimates.
-    static let calculationVersion = "3"
+    static let calculationVersion = "4"
     
     private let catalogue: DrinkCatalogue
     
@@ -124,6 +124,7 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
             catalogueVersion: catalogue.version,
             calculationVersion: Self.calculationVersion,
             catalogueSchemaVersion: catalogue.schemaVersion,
+            waterAmount: try DrinkEstimateCalculator.waterAmount(for: amount, content: definition.waterContent),
             isNonAlcoholic: capturedNonAlcoholic,
             alcoholABV: resolvedABV,
             alcoholABVUpperBound: upperBound

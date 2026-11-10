@@ -6,6 +6,9 @@
         "sortOrder": 10,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -41,6 +44,9 @@
         "sortOrder": 20,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -76,6 +82,9 @@
         "sortOrder": 30,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -111,6 +120,9 @@
         "sortOrder": 40,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -129,6 +141,9 @@
         "sortOrder": 50,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -157,6 +172,9 @@
         "sortOrder": 60,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.92
@@ -185,6 +203,9 @@
         "sortOrder": 70,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.93
@@ -213,6 +234,9 @@
         "sortOrder": 80,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.95
@@ -248,6 +272,9 @@
         "sortOrder": 90,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -276,6 +303,9 @@
         "sortOrder": 100,
         "isRetired": false,
         "defaultVolume": 330,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.95

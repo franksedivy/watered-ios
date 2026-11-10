@@ -7,8 +7,8 @@ as a folder resource. Files are not discovered by scanning the directory.
 ## Versions
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
-- `schemaVersion` identifies the assembled catalogue data contract, currently `4`.
-- `version` identifies the catalogue content release, currently `development-14`.
+- `schemaVersion` identifies the assembled catalogue data contract, currently `5`.
+- `version` identifies the catalogue content release, currently `development-15`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -816,3 +816,34 @@ do not decide whether any entry produces neither, one or both HealthKit sample t
 The final Other PR and its hosted unit result still need acceptance before ticket
 closure. Full catalogue integration, UI/device evidence and release readiness stay
 with #105/#113; this membership decision does not establish those outcomes.
+
+
+## Water-content structure — 10 November 2026 (#95, #106)
+
+Content `development-15`, schema **5**, adds a required `waterContent` object to
+all 60 definitions. Every value is initially `{"kind":"unknown"}` pending review,
+including plain water. No hydration or caffeine default changes in this slice.
+A reviewed value can use `{"kind":"fraction","value":0.90}`: a finite fraction
+of consumed liquid volume, from 0 through 1. The 90% example is synthetic, not
+an approved beer estimate. Unknown must omit `value`; missing/null content and
+extra fields are invalid in schema 5. Schemas 1–4 remain readable; absent water
+content in older catalogues resolves to unknown, never hydration credit or 1 − ABV.
+
+Calculation version **4** resolves `waterAmount` in millilitres at logging using
+unrounded physical volume × fraction. Snapshot and optional SwiftData fields
+preserve that quantity independently of hydration-goal contribution and caffeine.
+Nil means unknown/not previously captured; zero remains known zero. Existing rows
+remain nil; no historical recalculation, backfill, deletion or database reset.
+Repeated drinks are new events and resolve the current reviewed content.
+
+The simple field applies to the definition's recipe. Before assigning a fraction,
+review whether it genuinely applies across that drink's supported preparations
+(including regular/decaf, shot count and alcoholic/non-alcoholic choices). If it
+does not, keep unknown until preparation-specific content is agreed; do not invent
+an override or derive water content from ABV. This structure does not yet encode
+preparation-specific water fractions.
+
+HealthKit water should represent estimated water content, replacing the earlier
+narrow-water-only proposal. This slice implements capture only: no HealthKit sample
+mapping, permissions or writes. Alcohol export requires a separately reviewed
+standard-drink conversion. See the [mapping decision record](decisions/001-healthkit-export-mapping.md).

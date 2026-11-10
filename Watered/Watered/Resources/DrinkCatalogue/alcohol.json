@@ -6,6 +6,9 @@
         "sortOrder": 10,
         "isRetired": false,
         "defaultVolume": 330,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -38,6 +41,9 @@
         "sortOrder": 20,
         "isRetired": false,
         "defaultVolume": 330,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -70,6 +76,9 @@
         "sortOrder": 30,
         "isRetired": false,
         "defaultVolume": 175,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -102,6 +111,9 @@
         "sortOrder": 40,
         "isRetired": false,
         "defaultVolume": 200,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -134,6 +146,9 @@
         "sortOrder": 50,
         "isRetired": false,
         "defaultVolume": 125,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -166,6 +181,9 @@
         "sortOrder": 60,
         "isRetired": false,
         "defaultVolume": 50,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -194,6 +212,9 @@
         "sortOrder": 70,
         "isRetired": false,
         "defaultVolume": 25,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0
@@ -221,6 +242,9 @@
         "sortOrder": 80,
         "isRetired": false,
         "defaultVolume": 25,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0

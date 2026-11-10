@@ -10,6 +10,7 @@ import Foundation
 /// Resolves catalogue rules into estimates when a drink is logged.
 nonisolated enum DrinkEstimateCalculator {
     enum CalculationError: Error {
+        case invalidWaterContent
         case invalidAmount
         case invalidHydrationRule
         case nonFiniteResult
@@ -17,6 +18,23 @@ nonisolated enum DrinkEstimateCalculator {
         case invalidShotCount
     }
     
+    /// Resolves water content from physical volume, never hydration credit or ABV.
+    static func waterAmount(for amount: DrinkAmount, content: WaterContent) throws -> Double? {
+        let volume = VolumeCalculation.baseValue(from: amount.volume)
+        guard volume.isFinite, volume > 0 else { throw CalculationError.invalidAmount }
+        switch content {
+        case .unknown:
+            return nil
+        case .fraction(let value):
+            guard value.isFinite, (0...1).contains(value) else {
+                throw CalculationError.invalidWaterContent
+            }
+            let water = volume * value
+            guard water.isFinite else { throw CalculationError.nonFiniteResult }
+            return water
+        }
+    }
+
     /// Calculates hydration contribution using the supplied rule
     ///
     /// Uses millilitres regardless of the drink's original or displayed unit. New alcohol

@@ -6,6 +6,9 @@
         "sortOrder": 10,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.906
@@ -51,6 +54,9 @@
         "sortOrder": 20,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.91
@@ -96,6 +102,9 @@
         "sortOrder": 30,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -141,6 +150,9 @@
         "sortOrder": 40,
         "isRetired": false,
         "defaultVolume": 30,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.95
@@ -186,6 +198,9 @@
         "sortOrder": 50,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.981
@@ -221,6 +236,9 @@
         "sortOrder": 60,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.99
@@ -256,6 +274,9 @@
         "sortOrder": 70,
         "isRetired": false,
         "defaultVolume": 250,
+        "waterContent": {
+            "kind": "unknown"
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.994

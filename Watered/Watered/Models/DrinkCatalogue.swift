@@ -45,7 +45,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var definitions = try container.nestedUnkeyedContainer(forKey: .drinks)
         var decoded: [DrinkDefinition] = []
         while !definitions.isAtEnd {
-            decoded.append(try DrinkDefinition(from: definitions.superDecoder(), requiresContent: schemaVersion >= 3))
+            decoded.append(try DrinkDefinition(from: definitions.superDecoder(), requiresContent: schemaVersion >= 3, requiresWaterContent: schemaVersion >= 5))
         }
         drinks = decoded
     }
@@ -61,6 +61,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         case invalidAlcoholConfiguration(drinkID: String)
         case invalidDefaultVolume(drinkID: String)
         case invalidHydrationRatio(drinkID: String)
+        case invalidWaterContent(drinkID: String)
         case invalidDefaultABV(drinkID: String)
         case inconsistentAlcoholContent(drinkID: String)
         case duplicateCaffeineVariant(drinkID: String, variant: CaffeineVariant)
@@ -87,7 +88,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
     ///
     func validate() throws {
-        guard (1...4).contains(schemaVersion) else {
+        guard (1...5).contains(schemaVersion) else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
@@ -139,6 +140,11 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
                 }
             }
             
+            if case .fraction(let value) = drink.waterContent,
+               !value.isFinite || !(0...1).contains(value) {
+                throw ValidationError.invalidWaterContent(drinkID: drink.id)
+            }
+
             switch drink.hydrationContributionRule {
             case .ratio(let ratio):
                 guard ratio.isFinite && ratio >= 0 else {

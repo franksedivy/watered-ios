@@ -45,6 +45,9 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     /// Explicit caffeine content; only configurable drinks carry options.
     let caffeine: CaffeineContent
 
+    /// Estimated water fraction, independent of hydration goal credit.
+    let waterContent: WaterContent
+
     /// Alcohol content, independent of the chosen hydration policy.
     let alcohol: AlcoholContent
 
@@ -82,7 +85,8 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
             CaffeineOption(variant: .regular, rule: .unknown)
         ],
         defaultCaffeineVariant: CaffeineVariant = .regular,
-        shotConfiguration: ShotConfiguration? = nil
+        shotConfiguration: ShotConfiguration? = nil,
+        waterContent: WaterContent = .unknown
     ) {
         self.id = id
         self.name = name
@@ -98,6 +102,7 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
             self.alcohol = .unknown
         }
         self.shotConfiguration = shotConfiguration
+        self.waterContent = waterContent
     }
 
     /// Creates a definition using explicit content, with no duplicate caffeine configuration.
@@ -105,7 +110,8 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         id: String, name: String, categoryID: String, sortOrder: Int, isRetired: Bool,
         defaultVolume: Double? = nil, hydrationContributionRule: HydrationContributionRule = .unknown,
         caffeine: CaffeineContent, alcohol: AlcoholContent,
-        shotConfiguration: ShotConfiguration? = nil
+        shotConfiguration: ShotConfiguration? = nil,
+        waterContent: WaterContent = .unknown
     ) {
         self.id = id
         self.name = name
@@ -117,21 +123,28 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         self.caffeine = caffeine
         self.alcohol = alcohol
         self.shotConfiguration = shotConfiguration
+        self.waterContent = waterContent
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, categoryID, sortOrder, isRetired, defaultVolume, hydrationContributionRule
-        case caffeine, alcohol, shotConfiguration, caffeineOptions, defaultCaffeineVariant
+        case caffeine, alcohol, waterContent, shotConfiguration, caffeineOptions, defaultCaffeineVariant
     }
     private enum HydrationKeys: String, CodingKey { case kind }
 
     init(from decoder: any Decoder) throws {
-        try self.init(from: decoder, requiresContent: (decoder.userInfo[.catalogueSchemaVersion] as? Int ?? 0) >= 3)
+        try self.init(from: decoder, requiresContent: (decoder.userInfo[.catalogueSchemaVersion] as? Int ?? 0) >= 3,
+                      requiresWaterContent: (decoder.userInfo[.catalogueSchemaVersion] as? Int ?? 0) >= 5)
     }
 
     /// Schema 3 requires both content objects. Legacy catalogue decoding never touches saved entries.
-    init(from decoder: any Decoder, requiresContent: Bool) throws {
+    init(from decoder: any Decoder, requiresContent: Bool, requiresWaterContent: Bool = false) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        if requiresWaterContent || container.contains(.waterContent) {
+            waterContent = try container.decode(WaterContent.self, forKey: .waterContent)
+        } else {
+            waterContent = .unknown
+        }
         let modern = requiresContent || container.contains(.caffeine) || container.contains(.alcohol)
         id = try container.decode(String.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
@@ -144,7 +157,7 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         if modern {
             try CatalogueObjectKeys.require(decoder, allowed: [
                 "id", "name", "categoryID", "sortOrder", "isRetired", "defaultVolume",
-                "hydrationContributionRule", "caffeine", "alcohol", "shotConfiguration"
+                "hydrationContributionRule", "caffeine", "alcohol", "waterContent", "shotConfiguration"
             ])
             caffeine = try container.decode(CaffeineContent.self, forKey: .caffeine)
             alcohol = try container.decode(AlcoholContent.self, forKey: .alcohol)
@@ -188,6 +201,7 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
         try container.encodeIfPresent(defaultVolume, forKey: .defaultVolume)
         try container.encode(caffeine, forKey: .caffeine)
         try container.encode(alcohol, forKey: .alcohol)
+        try container.encode(waterContent, forKey: .waterContent)
         try container.encodeIfPresent(shotConfiguration, forKey: .shotConfiguration)
         if case .alcohol = hydrationContributionRule {
             var hydration = container.nestedContainer(keyedBy: HydrationKeys.self, forKey: .hydrationContributionRule)
