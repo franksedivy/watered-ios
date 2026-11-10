@@ -8,7 +8,7 @@ as a folder resource. Files are not discovered by scanning the directory.
 
 - `manifestVersion` identifies the manifest's file-layout format, currently `1`.
 - `schemaVersion` identifies the assembled catalogue data contract, currently `4`.
-- `version` identifies the catalogue content release, currently `development-13`.
+- `version` identifies the catalogue content release, currently `development-14`.
 
 Content version `development-3` removes Mineral water, Frappe, Mocha, Decaf coffee and
 Turkish coffee from new selection, leaving 11 definitions. The manifest layout remains version 1. Schema 2 permits zero-shot preparations;
@@ -32,7 +32,7 @@ The loader assembles files in manifest order and validates the complete result,
 including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
-The current seed contains 58 drinks across nine categories, including eight Alcohol definitions.
+The current seed contains 60 drinks across ten categories, including Broth and Miso soup under Other.
 The remaining catalogue population, estimates and metadata review stay in #101.
 
 ## Caffeine and alcohol structure (schema 3, extended by schema 4 below, #102)
@@ -698,3 +698,62 @@ their original physical volume. A converted default already selected by the whee
 does not count as a manual edit. Saved entries are never resized or recalculated;
 Recents repeat their captured amount under current estimate rules, without applying
 the serving suggestion. No persistence/model migration or database reset is needed.
+
+
+## Other — approved 10 November 2026 (#99, #101, #102)
+
+Other follows Alcohol, using iOS gray (`Color.gray`) and `sparkle`. Display order:
+
+| Stable ID | Name | Hydration contribution | Caffeine | Default volume |
+| --- | --- | ---: | ---: | ---: |
+| broth | Broth | 95% | 0 mg | 250 ml |
+| miso | Miso soup | 95% | 0 mg | 250 ml |
+
+Neither drink has preparation, flavour, strength, caffeine or alcohol controls.
+The IDs match Frank's supplied `broth` and `miso` artwork sets; each has 1×/2×/3×
+PNG references and is loaded through the existing catalogue-ID image lookup.
+At the suggested 250 ml serving, either drink contributes 237.5 ml towards the
+hydration goal while recording the full 250 ml as fluid intake.
+
+### Recipe scope, evidence and limitations
+
+- **Broth:** ordinary thin, clear vegetable, chicken or beef broth, prepared ready
+  to drink. Excludes undiluted stock/concentrate, thick/creamy soups and meals.
+- **Miso soup:** ordinary thin miso soup prepared with water or dashi. Record the
+  consumed liquid broth volume, excluding solid toppings such as tofu or seaweed;
+  thick soups and noodle meals are outside this generic entry.
+- Both assume non-caffeinated, non-alcoholic recipes. The 0 mg caffeine estimate
+  is a recipe assumption, not a measurement of every possible product.
+- The 95% values are agreed generic accounting estimates, not measured retained-water
+  fractions. Sodium content does not create extra goal credit or a hydration penalty.
+  These defaults do not prescribe treatment for dehydration or sodium intake.
+
+[Ray et al. (1998)](https://pubmed.ncbi.nlm.nih.gov/9760324/) compared rehydration
+with water, chicken broth, a carbohydrate-electrolyte drink and chicken noodle soup
+following exercise-related dehydration. Sodium-containing preparations improved
+fluid retention under those conditions. This supports broth contributing fluid,
+but does not establish a universal 95% factor across vegetable, chicken and beef
+broths or directly measure miso soup.
+
+[Marukome's classic recipe](https://www.marukomeusa.com/pages/classic) and
+[instant miso ingredient list](https://www.marukomeusa.com/products/instant-miso-soup-3-pack-tofu-view-only)
+illustrate miso in dashi with ordinary non-caffeinated ingredients.
+[Hikari's preparation instructions](https://hikarimiso.com/products/kantan-miso-soup-original/)
+illustrate ready-to-drink soup made by adding water. These examples support recipe
+scope and the known-zero caffeine assumption, not a measured hydration coefficient.
+
+### History and scope boundary
+
+Content `development-14` contains 60 drinks across ten categories. Manifest 1,
+schema 4 and calculation version 3 remain unchanged. All 58 previous definitions
+are unchanged. Serving defaults apply only while volume is untouched; manual
+selections and restored drafts retain their exact physical amount. Existing
+snapshots retain captured names, volumes, negative/zero/unknown estimates and
+versions. Repeats create a fresh entry at the captured amount using current rules.
+No persistence changes, store reset or historical recalculation are required.
+
+This implements the agreed Other batch, not final acceptance or closure of the
+broader catalogue tickets. Deferred entries and membership reconciliation remain
+under #101; integration/release evidence remains under #105. #149 sheet layout,
+HealthKit mapping and sugar research #152 stay separate. No PR is created as part
+of this implementation request.

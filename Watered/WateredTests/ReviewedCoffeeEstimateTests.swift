@@ -96,7 +96,7 @@ struct ReviewedCoffeeEstimateTests {
         let repeated = try recent.drinkEntry(using: DrinkCatalogueSnapshotResolver(catalogue: catalogue))
         #expect(repeated.id != restored.id)
         #expect(repeated.catalogueSnapshot.caffeineAmount == 15)
-        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-13")
+        #expect(repeated.catalogueSnapshot.catalogueVersion == "development-14")
         #expect(repeated.catalogueSnapshot.hydrationContribution == 226.5)
         #expect(record.drinkEntry()?.catalogueSnapshot == snapshot)
         #expect(store.entries.first?.catalogueSnapshot == snapshot)

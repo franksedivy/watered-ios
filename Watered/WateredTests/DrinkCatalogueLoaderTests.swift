@@ -23,8 +23,8 @@ struct DrinkCatalogueLoaderTests {
         )
 
         #expect(catalogue.schemaVersion == 4)
-        #expect(catalogue.version == "development-13")
-        #expect(catalogue.drinks.count == 58)
+        #expect(catalogue.version == "development-14")
+        #expect(catalogue.drinks.count == 60)
         #expect(catalogue.categories == [
             DrinkCategory(id: "water", name: "Water", sortOrder: 10),
             DrinkCategory(id: "coffee", name: "Coffee", sortOrder: 20),
@@ -34,7 +34,8 @@ struct DrinkCatalogueLoaderTests {
             DrinkCategory(id: "wellness", name: "Wellness", sortOrder: 60),
             DrinkCategory(id: "sports-energy", name: "Sports & Energy", sortOrder: 70),
             DrinkCategory(id: "milk-alternatives", name: "Milk & Alternatives", sortOrder: 80),
-            DrinkCategory(id: "alcohol", name: "Alcohol", sortOrder: 90)
+            DrinkCategory(id: "alcohol", name: "Alcohol", sortOrder: 90),
+            DrinkCategory(id: "other", name: "Other", sortOrder: 100)
         ])
         #expect(catalogue.drink(withID: "mineral-water") == nil)
         #expect(water.categoryID == "water")
