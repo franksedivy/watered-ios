@@ -311,7 +311,10 @@ struct AddDrinkView: View {
                     } label: {
                         VStack(spacing: 8) {
                             AddDrinkThumbnail(drinkID: definition.id, categoryID: definition.categoryID)
-                                .frame(width: 66, height: 66)
+                                .frame(
+                                    width: definition.id == "espresso" ? 54 : 74,
+                                    height: definition.id == "espresso" ? 54 : 74
+                                )
                                 .frame(width: 88, height: 88)
                                 .background(
                                     Color.primary.opacity(0.06),
@@ -420,6 +423,9 @@ struct AddDrinkView: View {
             }
         }
         if !selectedNonAlcoholic {
+            if configuration.nonAlcoholic != nil {
+                Divider()
+            }
             let steps = configuration.supportedABVs
             let value = selectedAlcoholABV ?? configuration.defaultABV
             let label = (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
