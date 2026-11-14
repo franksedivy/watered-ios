@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
-    "schemaVersion": 4,
-    "version": "development-14",
+    "schemaVersion": 6,
+    "version": "development-25",
     "categories": [
         {
             "id": "water",

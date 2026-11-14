@@ -45,6 +45,10 @@ nonisolated struct DrinkCatalogueSnapshot: Equatable {
     /// The JSON schema version used when logging, or nil if it was not recorded.
     let catalogueSchemaVersion: Int?
 
+    /// Estimated water content in millilitres, captured independently of goal credit.
+    /// Nil means unknown or not captured by an older app; zero is a known amount.
+    var waterAmount: Double? = nil
+
     /// Nil means this preparation was not captured by older versions.
     var isNonAlcoholic: Bool? = nil
 

@@ -40,6 +40,9 @@ final class PersistentDrinkEntry {
     /// The captured caffeine estimate in milligrams; nil means unknown, zero means known zero.
     var caffeineAmount: Double? = nil
 
+    /// Captured water content in millilitres; older rows remain unknown.
+    var waterAmount: Double? = nil
+
     /// The catalogue content version used when logging.
     var catalogueVersion: String? = nil
 
@@ -75,6 +78,7 @@ final class PersistentDrinkEntry {
         self.alcoholABVUpperBound = snapshot.alcoholABVUpperBound
         self.hydrationContribution = snapshot.hydrationContribution
         self.caffeineAmount = snapshot.caffeineAmount
+        self.waterAmount = snapshot.waterAmount
         self.catalogueVersion = snapshot.catalogueVersion
         self.calculationVersion = snapshot.calculationVersion
         self.catalogueSchemaVersion = snapshot.catalogueSchemaVersion
@@ -104,6 +108,10 @@ final class PersistentDrinkEntry {
         if let caffeineAmount, !caffeineAmount.isFinite || caffeineAmount < 0 {
             return nil
         }
+        if let waterAmount {
+            let volume = VolumeCalculation.baseValue(from: DrinkAmount(value: volumeValue, unit: unit).volume)
+            guard waterAmount.isFinite, waterAmount >= 0, volume.isFinite, waterAmount <= volume else { return nil }
+        }
         if let shotCount, shotCount < 0 {
             return nil
         }
@@ -123,6 +131,7 @@ final class PersistentDrinkEntry {
             catalogueVersion: catalogueVersion,
             calculationVersion: calculationVersion,
             catalogueSchemaVersion: catalogueSchemaVersion,
+            waterAmount: waterAmount,
             isNonAlcoholic: isNonAlcoholic,
             alcoholABV: alcoholABV,
             alcoholABVUpperBound: alcoholABVUpperBound

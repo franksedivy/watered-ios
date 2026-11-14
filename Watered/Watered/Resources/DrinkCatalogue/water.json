@@ -5,6 +5,10 @@
         "categoryID": "water",
         "sortOrder": 10,
         "isRetired": false,
+        "waterContent": {
+            "kind": "fraction",
+            "value": 1.0
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 1
@@ -22,6 +26,10 @@
         "categoryID": "water",
         "sortOrder": 20,
         "isRetired": false,
+        "waterContent": {
+            "kind": "fraction",
+            "value": 1.0
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 1
@@ -39,6 +47,10 @@
         "categoryID": "water",
         "sortOrder": 30,
         "isRetired": false,
+        "waterContent": {
+            "kind": "fraction",
+            "value": 1.0
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 1
@@ -56,6 +68,10 @@
         "categoryID": "water",
         "sortOrder": 40,
         "isRetired": false,
+        "waterContent": {
+            "kind": "fraction",
+            "value": 0.95
+        },
         "hydrationContributionRule": {
             "kind": "ratio",
             "ratio": 0.95
