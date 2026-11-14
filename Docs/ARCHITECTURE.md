@@ -61,3 +61,10 @@ Update this document when responsibilities or data contracts change. Record sign
 Alcohol water uses schema 6 reviewed tables for every supported ABV and a separate
 non-alcoholic fraction where offered. Calculation version 5 resolves the selected
 preparation before saving water; no historical amounts are recalculated.
+
+
+`HealthExport/AlcoholExportQuantity.swift` is the pure saved-volume/ABV conversion
+for the approved 14 g standard-drink convention (`alcohol-14g-v1`). It returns
+positive, known-zero, unknown or invalid results without catalogue lookup, HealthKit
+calls or changes to saved entries. Sample dates, permissions and durable export
+policy/version context remain integration responsibilities. See the mapping decision.

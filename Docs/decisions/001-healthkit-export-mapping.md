@@ -1,6 +1,6 @@
 # 001 — Capture water content independently of hydration credit
 
-- Status: Structure and quantity direction accepted by Frank on 10 November 2026. All catalogue water estimates are approved; final export mapping remains under review.
+- Status: Structure and quantity direction accepted by Frank on 10 November 2026. All catalogue water estimates are approved; alcohol conversion approved on 14 November; durable export lifecycle remains pending.
 - Owner/reviewer: Frank Sedivy.
 - Related: [#95](https://github.com/franksedivy/watered-ios/issues/95), parent [#106](https://github.com/franksedivy/watered-ios/issues/106), mapping [#108](https://github.com/franksedivy/watered-ios/issues/108).
 - Supersedes: the narrow Still/Sparkling/Infused-only water policy approved earlier in this chat. The subsequent full-beverage-volume suggestion was also rejected.
@@ -43,11 +43,46 @@ The agreed date direction remains start = end = saved `loggedAt`, rejecting inva
 dates rather than substituting creation/export time. [HKSample](https://developer.apple.com/documentation/healthkit/hksample)
 supports point-in-time samples with equal start/end dates.
 
-Alcohol export is now a requested direction for review. Apple's
+### Alcohol conversion approved 14 November 2026
+
+Frank approved alcohol-count export alongside water and caffeine. Use Apple's
 [numberOfAlcoholicBeverages](https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/numberofalcoholicbeverages)
-uses standard-drink counts, not ethanol millilitres/grams. Its conversion and
-permission scope require an explicit decision before implementation. No such
-conversion or authorization change is included here.
+with `HKUnit.count()` and fractional quantities. Apple documents standard drinks
+but does not specify a grams-per-drink conversion in that API documentation.
+Watered explicitly adopts the [NIAAA 14 g convention](https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink),
+with approximate ethanol density 0.789 g/ml. This is a Watered policy choice,
+not a verified Apple-mandated or locale-specific definition.
+
+`standardDrinks = savedVolumeMl × savedABVFraction × 0.789 / 14`
+
+| Saved drink | Alcohol mass (g) | Standard-drink count (display approximation) |
+| --- | ---: | ---: |
+| Beer, 330 ml at 5% | 13.0185 | 0.929893 |
+| Wine, 175 ml at 13% | 17.94975 | 1.282125 |
+| Spirits, 25 ml at 40% | 7.89 | 0.563571 |
+| Cocktail, 200 ml at 10% | 15.78 | 1.127143 |
+
+Export the full calculated precision, not the rounded table values or one count
+per container. Convert US/Imperial fluid ounces to ml before calculation. Use
+only captured volume and exact ABV; no current catalogue or category lookup.
+Known zero emits no sample. Missing exact ABV and upper-bound-only preparations
+emit no alcohol sample and remain unknown, including Kombucha and the current
+non-alcoholic options up to 0.5%. Never substitute that maximum or zero. Non-finite,
+nonpositive volume, out-of-range ABV, or contradictory exact/bounded facts are
+invalid and produce no quantity. Invalid input is distinct from unknown.
+
+Water and caffeine eligibility remain independent of alcohol. Use saved `loggedAt`
+for both sample dates; reject invalid dates rather than substituting export time.
+Keep manual provenance. Write authorization scope now includes alcohol count;
+no read/import access is approved. Permission UI and actual writes remain #107.
+
+[AlcoholExportQuantity](../../Watered/Watered/HealthExport/AlcoholExportQuantity.swift)
+implements only this pure quantity conversion with policy `alcohol-14g-v1` and
+explicit positive/known-zero/unknown/invalid results. It does not construct samples
+or validate sample dates. The future mapper must validate dates independently.
+#96/#108 must persist the chosen policy with pending export work so upgrades and
+retries cannot silently reinterpret quantities; this constant alone does not
+implement durable retry/version context. No historical re-export is implied.
 
 [Authorization request completion](https://developer.apple.com/documentation/healthkit/hkhealthstore/requestauthorization(toshare:read:completion:))
 is not proof of permission. Request only reviewed write types, no general read/import
