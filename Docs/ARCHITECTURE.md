@@ -52,7 +52,7 @@ The manifest names category JSON resources explicitly; the loader validates the 
 
 The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
 
-HealthKit export, widgets, a Watch app, iCloud sync and production analytics are outside the implemented baseline described here. Keep proposed systems separate from this implementation map until code exists.
+Widgets, a Watch app, iCloud sync and production analytics are outside the implemented baseline described here. HealthKit has the staged implementation described below. Keep proposed systems separate from this implementation map until code exists.
 
 ## Maintaining this map
 
@@ -75,7 +75,7 @@ policy/version context remain integration responsibilities. See the mapping deci
 `AppleHealthKitClient` owns a long-lived system store, checks availability before access,
 and requests only water, caffeine and alcohol write permissions with an empty read set.
 The controller refreshes per-type status on foreground entry without prompting; future
-operations must use `currentAuthorization(for:)` rather than cached presentation state.
+operations read the client’s current authorization rather than cached presentation state.
 Only `requestAuthorizationFromUserAction()` may request permission. Profile’s Apple Health
 permissions screen invokes it in Debug and Release and displays per-type states/errors.
 #111 still owns sync opt-in and export status. The screen-opened and review-tapped
@@ -85,8 +85,8 @@ Denied/revoked and not-determined states are per type; restricted/unavailable re
 errors are separate from grants because the platform does not expose a distinct
 per-type restricted authorization status. Errors retain no raw Health data or descriptions.
 
-This boundary does not enable sync or persist opt-in. #109 owns that separate setting
-and eligibility transaction. No writes, queue, retries or deletion are implemented here.
+The permission screen does not enable sync. The separate #109 setting, eligibility
+transaction and upload executor are described below; cleanup remains #110.
 Local saving remains independent. Isolated tests and app previews use
 `FakeHealthKitClient`; standalone view previews do not construct a Health store.
 
@@ -102,7 +102,7 @@ leave other types available. Hydration credit and the current catalogue are unus
 `HealthSampleSpecification` freezes quantities, units, loggedAt, manual provenance,
 catalogue/calculation context, export policy `health-export-v1`, alcohol policy where
 applicable, and a namespaced entry-UUID/type identity with sync version 1. Its Codable
-representation supports #109's pending-work storage; this change does not persist it.
+representation is persisted by #109's pending-work storage.
 Retries must reuse that payload instead of mapping again. Policy versions are separate
 from HealthKit sync version, which must not increase on retry.
 
@@ -112,3 +112,46 @@ metadata and sync identity/version. It rejects unsupported policies rather than
 reinterpreting them. It does not open a Health store or perform writes. #109 owns
 atomic eligibility capture, persistence, execution and retries; actual same-version
 write behavior still needs controlled-device verification under #112.
+
+## Durable Health export (#109)
+
+`PersistentHealthSyncPreference` is device-local and defaults to disabled. Its
+`enabledAt` records the latest enablement; it is not a history/backfill query.
+`HealthExportPersistence.capture` reads the committed preference and current
+per-type grants synchronously in the new drink transaction. Both form and Recents
+use that boundary. Existing entries, disabled gaps and newly granted types are
+never scanned into the queue. Unknown/zero quantities omit work; invalid quantities
+persist independent invalid records. Backdated new entries keep `loggedAt`.
+
+`PersistentHealthExport` stores a frozen Codable specification, stable per-type
+identity, policy/sync versions, desired operation, status, attempt count, retry date,
+sanitized failure and possible-write flag. The app adds these entities and optional
+`PersistentDrinkEntry.deletedAt` without resetting storage. No CloudKit is enabled;
+these leases, acknowledgements and preferences must not become cross-device state.
+
+One app-lifetime `HealthExportCoordinator` serializes writes on MainActor, persists
+in-flight intent before I/O and acknowledges each type afterward. Each attempt and
+acknowledgement reads a fresh context to observe preference/deletion commits without
+saving or rolling back unrelated UI edits. Uncertain in-flight work retries its
+original payload, identity and sync version 1. Acknowledged work is never resent or
+queried for existence, including after manual deletion in Health.
+
+Temporary failures retry with equal jitter: 15–30 seconds initially, doubling to
+an upper limit of six hours. Due work runs while foreground execution is available,
+on reopening/foregrounding, after a committed submission or enablement, and through
+`retryNow()`. Permission-blocked work waits for a later trigger and restored grants;
+invalid work stops. No retry requests permissions. Disabling prevents new upload
+starts while allowing an in-flight result to persist. Local save/state/analytics
+success does not await Health. Raw Health errors and payloads are not logged.
+
+The deletion boundary cancels never-started work, hides possibly-written drinks,
+and retains delete intent/details. Late upload results preserve that intent. **#110
+still owns cleanup I/O, recovery/purge and complete Debug reset behavior/copy**;
+this safety boundary must not be described as completed Health deletion. **#111
+owns the user-facing sync switch, status and Retry now controls**. The current
+permission-only screen does not enable export. New stores remain disabled.
+
+Same-version HealthKit deduplication requires #112's controlled-device evidence;
+fake/simulator tests establish the local protocol only. The accepted limitation
+remains: if a successful write is unacknowledged and the user removes it in Health,
+recovery may recreate it. No exactly-once or background-completion guarantee.

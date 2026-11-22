@@ -164,7 +164,7 @@ struct StatsDrinkEntryDetailView: View {
                             try onDeleteDrink(entry.id)
                             dismiss()
                         } catch {
-                            wateredLog("Drink deletion failed for \(entry.id): \(error.localizedDescription)")
+                            wateredLog("Drink deletion failed.")
                             isShowingDeletionError = true
                         }
                     }

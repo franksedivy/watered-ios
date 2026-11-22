@@ -9,8 +9,9 @@ protocol HealthAuthorizationStore: AnyObject {
 }
 
 @MainActor
-private final class AppleHealthAuthorizationStore: HealthAuthorizationStore {
+private final class AppleHealthAuthorizationStore: HealthAuthorizationStore, HealthSampleStore {
     private let store = HKHealthStore()
+    func save(_ sample: HKQuantitySample) async throws { try await store.save(sample) }
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
     func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus {
@@ -22,9 +23,14 @@ private final class AppleHealthAuthorizationStore: HealthAuthorizationStore {
     }
 }
 
-/// Owns one system store for the app lifetime. Does not save samples or change sync opt-in.
 @MainActor
-final class AppleHealthKitClient: HealthKitClient {
+protocol HealthSampleStore: AnyObject {
+    func save(_ sample: HKQuantitySample) async throws
+}
+
+/// Owns one system store for the app lifetime. App opt-in remains a persistence concern.
+@MainActor
+final class AppleHealthKitClient: HealthExportClient {
     private let store: any HealthAuthorizationStore
     private var isRequesting = false
 
@@ -63,6 +69,31 @@ final class AppleHealthKitClient: HealthKitClient {
                 }
             }
             throw HealthAuthorizationError.requestFailed
+        }
+    }
+
+    func save(_ specification: HealthSampleSpecification) async throws {
+        guard authorization(for: specification.type) == .authorized else { throw HealthExportFailure.authorization }
+        let sample: HKQuantitySample
+        do { sample = try HealthSampleFactory.makeSample(from: specification) }
+        catch { throw HealthExportFailure.invalidPayload }
+        guard let writer = store as? any HealthSampleStore else { throw HealthExportFailure.temporary }
+        do { try await writer.save(sample) }
+        catch {
+            let failure = error as NSError
+            if failure.domain == HKErrorDomain {
+                switch failure.code {
+                case HKError.Code.errorAuthorizationDenied.rawValue,
+                     HKError.Code.errorAuthorizationNotDetermined.rawValue,
+                     HKError.Code.errorHealthDataRestricted.rawValue,
+                     HKError.Code.errorHealthDataUnavailable.rawValue:
+                    throw HealthExportFailure.authorization
+                case HKError.Code.errorInvalidArgument.rawValue:
+                    throw HealthExportFailure.invalidPayload
+                default: break
+                }
+            }
+            throw HealthExportFailure.temporary
         }
     }
 
