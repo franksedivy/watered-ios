@@ -62,7 +62,11 @@ private struct HealthPermissionsSection: View {
         } header: {
             Text("Write permissions")
         } footer: {
-            Text("Write permissions only. To change an existing choice, open Watered’s permissions in the Health app. Allowing access does not enable syncing. Watered does not yet send drinks to Apple Health.")
+            #if DEBUG
+            Text("Write permissions only. Allowing access does not enable syncing. Debug export is controlled separately in Profile → Verify HealthKit export. Change existing permissions in the Health app.")
+            #else
+            Text("Write permissions only. To change an existing choice, open Watered’s permissions in the Health app. Allowing access does not enable syncing.")
+            #endif
         }
         .alert("Apple Health permissions", isPresented: $isShowingHealthGuidance) {
             Button("OK", role: .cancel) {}

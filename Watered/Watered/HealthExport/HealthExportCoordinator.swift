@@ -6,6 +6,10 @@ import SwiftData
 /// a separate context keeps asynchronous acknowledgements away from unrelated UI edits.
 @MainActor @Observable
 final class HealthExportCoordinator {
+    #if DEBUG
+    let debugHarness = DebugHealthExportHarness()
+    #endif
+
     let client: any HealthExportClient
     private(set) var persistenceFailed = false
     private(set) var isProcessing = false
@@ -134,7 +138,13 @@ final class HealthExportCoordinator {
 
         let failure: HealthExportFailure?
         do {
+            #if DEBUG
+            try debugHarness.beforeWrite()
+            #endif
             try await client.save(specification)
+            #if DEBUG
+            await debugHarness.afterSuccessfulWrite(type: specification.type)
+            #endif
             failure = nil
         } catch { failure = error as? HealthExportFailure ?? .temporary }
 

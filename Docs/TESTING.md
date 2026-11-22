@@ -192,3 +192,54 @@ use disposable data on a controlled physical device and record revision/device/i
    local logging/dismissal and once-per-submission analytics must remain independent.
 5. Complete #110/#111/#112 cleanup, status/copy, UI and device scenarios before
    treating optional export as release-ready. Retained delete intent is not cleanup.
+
+### Debug-only device harness (#109, #112)
+
+Profile → **Verify HealthKit export** exposes the existing persisted switch and
+Retry now, plus a local record inspector. New stores remain disabled; opening the
+screen does not enable export, request permissions, or write samples. The switch
+uses the normal creation-time policy and persists across launches/builds sharing
+that store. Turn it off after verification. Disabling retains existing Health data.
+The harness does not reset storage, delete Health data, backfill, or requeue sent work.
+Its screen, intervention state and worker hooks are compiled only with `DEBUG`.
+Release retains its existing executor and persisted preference behavior, without
+these controls or failure/pause injection. The permission copy therefore makes no
+blanket promise that an already-enabled shared store cannot export.
+
+Two one-shot interventions support controlled testing:
+
+- **Fail next upload before writing** throws a sanitized temporary failure before
+  HealthKit I/O. Local logging/dismissal must succeed; pending work and backoff should
+  appear in the inspector. Retry now must reuse the original payload and identity.
+- **Pause next successful write before acknowledgement** suspends after the client
+  reports success, with durable `inFlight`/possible-write state and the worker lock
+  held. Failed attempts leave the pause armed. Resume records the ordinary outcome,
+  including disable/deletion precedence. Stop with Xcode while paused, then relaunch
+  to exercise recovery with the same identity/version. The in-memory intervention
+  resets on relaunch; no test flag or altered payload is persisted.
+
+Guide device checks one at a time. First record branch/revision, device and iOS,
+install without deleting existing data, and confirm the screen is present with
+exports disabled. Then use explicitly chosen disposable drinks and inspect Health:
+
+1. Grant the chosen write types through the existing permissions screen; enable
+   test exports. Log a new drink and compare Health with the frozen inspector values.
+2. Arm simulated failure, log a drink, check normal dismissal/local persistence,
+   then retry and inspect independent results. This is injected-failure evidence,
+   not proof of every real platform failure.
+3. Arm the acknowledgement pause and log one water-only test drink. Confirm Health
+   has the sample while local state is `inFlight`. Stop using Xcode, relaunch and
+   check exactly one sample remains, status is `succeeded`, attempts increased and
+   sync version remains 1. Do not change the frozen record to force a retry.
+4. Delete that acknowledged test sample directly in Health. Retry/relaunch must not
+   recreate it. In a separate paused/unacknowledged test, deleting the test sample
+   in Health before stopping/relaunching may recreate it: the accepted limitation.
+5. Check partial grants/revocation and disable/re-enable with newly logged drinks;
+   disabled gaps and newly granted types must not backfill. Disabling while paused
+   must still allow the completed write's acknowledgement when resumed.
+
+Record each observed result, not just a general pass. Keep #109 open until its
+remaining device acceptance has evidence. #110 cleanup/purge/reset and #111 final
+controls are separate; the harness is not their completion. Backdated-entry mapping
+has synthetic coverage; the current Add Drink form has no date control, so this
+harness does not claim a new device route for that #112 scenario.

@@ -367,6 +367,118 @@ struct HealthExportTests {
         #expect(store.requests == 0)
     }
 
+    #if DEBUG
+    @Test func debugFailureIsOneShotAndLeavesLocalSubmissionSuccessful() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        try enable(container)
+        let store = WateredStore()
+        let analytics = ExportAnalyticsRecorder()
+        let entry = entry(caffeine: 0, abv: nil)
+        try DrinkSubmissionHandler(store: store, analytics: analytics).submit(entry, method: .form) {
+            try save($0, in: container, client: client)
+        }
+        let worker = worker(container, client: client)
+        worker.debugHarness.nextIntervention = .failNextWrite
+        await worker.process()
+        #expect(client.writes.isEmpty)
+        #expect(worker.debugHarness.nextIntervention == .none)
+        #expect(try records(container).first?.status == "pending")
+        #expect(try records(container).first?.failureCategory == "temporary")
+        #expect(store.entries.map(\.id) == [entry.id])
+        #expect(analytics.events.count == 1)
+        await worker.process(retryNow: true)
+        #expect(client.writes.count == 1)
+        #expect(try records(container).first?.status == "succeeded")
+        #expect(analytics.events.count == 1)
+        #expect(client.requestCount == 0)
+    }
+
+    @Test func debugPauseKeepsDurableInFlightStateAndSerializesUntilResume() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        let worker = worker(container, client: client)
+        worker.debugHarness.nextIntervention = .pauseAfterSave
+        let running = Task { await worker.process() }
+        defer { worker.debugHarness.resumeAcknowledgement() }
+        for _ in 0..<1_000 where !worker.debugHarness.isPaused { await Task.yield() }
+        #expect(worker.debugHarness.isPaused)
+        #expect(worker.debugHarness.pausedType == .water)
+        #expect(client.writes.count == 1)
+        #expect(try records(container).first?.status == "inFlight")
+        #expect(try records(container).first?.mayHaveWritten == true)
+        await worker.process(retryNow: true)
+        #expect(client.writes.count == 1)
+        try worker.setEnabled(false)
+        worker.debugHarness.resumeAcknowledgement()
+        worker.debugHarness.resumeAcknowledgement() // Repeated taps are harmless.
+        await running.value
+        #expect(!worker.debugHarness.isPaused)
+        #expect(try records(container).first?.status == "succeeded")
+        try worker.setEnabled(true)
+        await worker.process(retryNow: true)
+        #expect(client.writes.count == 1)
+    }
+
+    @Test func debugPauseSurvivesFailureUntilSuccessAndRecoveryKeepsFrozenIdentity() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        client.failures[.water] = .temporary
+        var commits = 0
+        let worker = worker(container, client: client, beforeSave: {
+            commits += 1
+            if commits == 4 { throw TestFailure.failed }
+        })
+        worker.debugHarness.nextIntervention = .pauseAfterSave
+        await worker.process()
+        #expect(worker.debugHarness.nextIntervention == .pauseAfterSave)
+        #expect(!worker.debugHarness.isPaused)
+        client.failures = [:]
+        let running = Task { await worker.process(retryNow: true) }
+        defer { worker.debugHarness.resumeAcknowledgement() }
+        for _ in 0..<1_000 where !worker.debugHarness.isPaused { await Task.yield() }
+        #expect(worker.debugHarness.isPaused)
+        worker.debugHarness.resumeAcknowledgement()
+        await running.value
+        #expect(worker.persistenceFailed)
+        #expect(try records(container).first?.status == "inFlight")
+        let recovered = workerForReopen(container, client: client)
+        #expect(recovered.debugHarness.nextIntervention == .none)
+        #expect(!recovered.debugHarness.isPaused)
+        await recovered.process()
+        #expect(client.writes.count == 3)
+        #expect(Set(client.writes.map(\.syncIdentifier)).count == 1)
+        #expect(client.writes.allSatisfy { $0 == client.writes.first })
+        #expect(try records(container).first?.status == "succeeded")
+    }
+
+    @Test func deletionDuringDebugAcknowledgementPauseRetainsCleanupIntent() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        let worker = worker(container, client: client)
+        worker.debugHarness.nextIntervention = .pauseAfterSave
+        let running = Task { await worker.process() }
+        defer { worker.debugHarness.resumeAcknowledgement() }
+        for _ in 0..<1_000 where !worker.debugHarness.isPaused { await Task.yield() }
+        #expect(worker.debugHarness.isPaused)
+        let context = ModelContext(container)
+        let drinks = try context.fetch(FetchDescriptor<PersistentDrinkEntry>())
+        _ = try DrinkEntryPersistence.delete(drinks, in: context, tracksHealthExports: true)
+        worker.debugHarness.resumeAcknowledgement()
+        await running.value
+        await worker.process(retryNow: true)
+        #expect(client.writes.count == 1)
+        #expect(try records(container).first?.operation == "delete")
+        #expect(try records(container).first?.status == "pending")
+    }
+    #endif
+
     @Test func preferenceFailureRollsBackAndBackoffIsCappedWithJitter() throws {
         let container = try container()
         #expect(throws: TestFailure.failed) {

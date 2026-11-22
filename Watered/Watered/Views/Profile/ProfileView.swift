@@ -30,6 +30,9 @@ struct ProfileView: View {
     private var healthAuthorization: HealthAuthorizationController?
 
     #if DEBUG
+    @Environment(HealthExportCoordinator.self)
+    private var healthExport: HealthExportCoordinator?
+
     // MARK: - Developer Actions
 
     /// Requests history deletion; nil hides the control and a thrown error presents feedback.
@@ -104,6 +107,13 @@ struct ProfileView: View {
                 }
 
                 #if DEBUG
+                if let healthExport {
+                    Section("HealthKit verification · Debug") {
+                        NavigationLink("Verify HealthKit export") {
+                            DebugHealthExportView(coordinator: healthExport)
+                        }
+                    }
+                }
                 if let deleteAllDrinks = onDeleteAllDrinks {
                     Section("Developer Tools") {
                         Button("Delete all drinks", role: .destructive) {
