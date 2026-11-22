@@ -1,8 +1,11 @@
 import Foundation
 
 /// The reviewed write scope. App opt-in is a separate, persisted lifecycle decision (#109).
-nonisolated enum HealthWriteType: CaseIterable, Hashable, Sendable {
-    case water, caffeine, alcohol
+nonisolated enum HealthWriteType: String, Codable, CaseIterable, Hashable, Sendable {
+    // Persisted identity components; preserve these values when renaming Swift cases.
+    case water = "water"
+    case caffeine = "caffeine"
+    case alcohol = "alcohol"
 }
 
 nonisolated enum HealthWriteAuthorization: Equatable, Sendable {
