@@ -21,6 +21,7 @@ final class PersistentDrinkEntry {
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var source: String = "manual"
+    var deletedAt: Date? = nil
 
     /// The saved catalogue identity, independent of the current catalogue.
     var catalogueDrinkID: String? = nil
@@ -89,7 +90,7 @@ final class PersistentDrinkEntry {
     /// - Returns: The restored entry, or nil for incomplete metadata or invalid stored values.
     /// - Important: Old development rows without snapshots are not reinterpreted or deleted.
     func drinkEntry() -> DrinkEntry? {
-        guard let drinkID = catalogueDrinkID, !drinkID.isEmpty,
+        guard deletedAt == nil, let drinkID = catalogueDrinkID, !drinkID.isEmpty,
               let drinkName = catalogueDrinkName, !drinkName.isEmpty,
               let variantID = caffeineVariantID,
               let variant = CaffeineVariant(rawValue: variantID),

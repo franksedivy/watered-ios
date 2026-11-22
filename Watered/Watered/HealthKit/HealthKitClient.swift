@@ -46,3 +46,19 @@ final class FakeHealthKitClient: HealthKitClient {
         if let requestError { throw requestError }
     }
 }
+
+nonisolated enum HealthExportFailure: Error, Equatable {
+    case temporary, authorization, invalidPayload
+}
+
+@MainActor
+protocol HealthExportClient: HealthKitClient {
+    /// Writes one frozen type. Never requests permission; raw platform errors stay private.
+    func save(_ specification: HealthSampleSpecification) async throws
+}
+
+extension FakeHealthKitClient: HealthExportClient {
+    func save(_ specification: HealthSampleSpecification) async throws {
+        throw HealthExportFailure.authorization
+    }
+}

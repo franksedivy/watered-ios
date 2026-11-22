@@ -12,6 +12,7 @@ import SwiftData
 struct WateredApp: App {
     
     @Environment(\.scenePhase) private var scenePhase
+    @State private var healthExport: HealthExportCoordinator
     @State private var healthAuthorization: HealthAuthorizationController
 
     // MARK: - Dependencies
@@ -50,8 +51,9 @@ struct WateredApp: App {
         let usesFakeHealth = configuration.usesInMemoryStorage
             || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        let healthClient: any HealthKitClient = usesFakeHealth
+        let healthClient: any HealthExportClient = usesFakeHealth
             ? FakeHealthKitClient() : AppleHealthKitClient()
+        _healthExport = State(initialValue: HealthExportCoordinator(client: healthClient))
         _healthAuthorization = State(initialValue: HealthAuthorizationController(client: healthClient))
         launchConfiguration = configuration
         catalogueResult = Result { try DrinkCatalogueLoader().load() }
@@ -78,6 +80,7 @@ struct WateredApp: App {
                 WateredRootView(analytics: analytics, catalogueResult: catalogueResult)
                 #endif
             }
+            .environment(healthExport)
             .environment(healthAuthorization)
             .onChange(of: scenePhase, initial: true) { _, phase in
                 if phase == .active { healthAuthorization.refreshAuthorization() }
@@ -87,7 +90,9 @@ struct WateredApp: App {
             for: [
                 PersistentDrinkEntry.self,
                 PersistentAppSettings.self,
-                PersistentHydrationGoalChange.self
+                PersistentHydrationGoalChange.self,
+                PersistentHealthExport.self,
+                PersistentHealthSyncPreference.self
             ],
             inMemory: launchConfiguration.usesInMemoryStorage
         )

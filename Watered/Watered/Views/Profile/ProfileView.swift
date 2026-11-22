@@ -121,7 +121,7 @@ struct ProfileView: View {
                                 try deleteAllDrinks()
                                 dismiss()
                             } catch {
-                                wateredLog("Profile reset failed: \(error.localizedDescription)")
+                                wateredLog("Profile reset failed.")
                                 isShowingDrinkResetError = true
                             }
                         }

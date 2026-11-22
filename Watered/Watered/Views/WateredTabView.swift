@@ -140,13 +140,15 @@ struct WateredTabView: View {
     // UI role:
     // Lets the Add Drink submission boundary save new drink entries.
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(HealthExportCoordinator.self) private var healthExport: HealthExportCoordinator?
     
     // Purpose:
     // Reads persisted drink entries from SwiftData.
     //
     // UI role:
     // Lets WateredTabView hydrate WateredStore when the app starts.
-    @Query(sort: \PersistentDrinkEntry.loggedAt) private var persistentDrinkEntries: [PersistentDrinkEntry]
+    @Query(filter: #Predicate<PersistentDrinkEntry> { $0.deletedAt == nil }, sort: \PersistentDrinkEntry.loggedAt) private var persistentDrinkEntries: [PersistentDrinkEntry]
 
     // Purpose: Controls whether the Add Drink sheet is visible.
     //
@@ -295,6 +297,10 @@ struct WateredTabView: View {
             .onAppear {
                 loadPersistedDrinkEntries()
                 loadPersistedAppSettings()
+            }
+            .onChange(of: scenePhase, initial: true) { _, phase in
+                healthExport?.attach(to: modelContext.container)
+                healthExport?.setActive(phase == .active)
             }
             .onChange(of: persistentDrinkEntries) {
                 loadPersistedDrinkEntries()
@@ -508,7 +514,7 @@ struct WateredTabView: View {
             entry.id == id
         }
         
-        wateredLog("Deletion requested for drink entry \(id)")
+        wateredLog("Drink deletion requested.")
         try deleteDrinkEntries(matchingEntries)
     }
 
@@ -522,7 +528,8 @@ struct WateredTabView: View {
     ) throws {
         let deletedIDs = try DrinkEntryPersistence.delete(
             entriesToDelete,
-            in: modelContext
+            in: modelContext,
+            tracksHealthExports: healthExport != nil
         )
         
         guard deletedIDs.isEmpty == false else {
@@ -573,8 +580,9 @@ struct WateredTabView: View {
                 wateredLog("Add Drink session draft cleared after successful save")
             }
             isShowingAddDrinkSheet = false
+            healthExport?.wake()
         } catch {
-            wateredLog("Drink save failed: \(error.localizedDescription)")
+            wateredLog("Drink save failed.")
             if isShowingAddDrinkSheet {
                 isShowingDrinkSaveError = true
             } else {
@@ -595,6 +603,7 @@ struct WateredTabView: View {
         try DrinkEntryPersistence.save(
             entry,
             in: modelContext,
+            healthClient: healthExport?.client,
             beforeSave: beforeDrinkSave
         )
     }

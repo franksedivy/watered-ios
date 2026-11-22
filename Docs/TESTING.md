@@ -165,3 +165,30 @@ a Health store. Corrupt payloads and unsupported policies fail construction.
 
 These tests do not prove durable intent capture, scheduling, writes, deduplication or
 physical-device behavior. Those remain #109/#112. No simulator suite is run locally.
+
+## Durable Health export (#109)
+
+`HealthExportTests` uses synthetic entries, temporary SwiftData stores and injected
+clients. Coverage includes atomic entry/intent rollback, form/Recents analytics
+isolation, duplicate local identity, independent results, disabled gaps, backdating,
+permission restoration without backfill/prompts, due/manual retries, bounded jitter,
+corrupt/invalid payloads, pre-I/O and post-I/O/pre-acknowledgement failures, frozen
+recovery, concurrent triggers, disable/delete during suspended writes, deletion
+rollback, disk reopening, acknowledged non-resend and sanitized platform errors.
+The additive-entity test opens an existing drink-only store with the expanded schema;
+it does not independently prove migration of every historical schema version.
+
+No automated test writes into a real Health store or proves same-version platform
+deduplication. Before accepting the duplicate-prevention criterion in #109/#112,
+use disposable data on a controlled physical device and record revision/device/iOS:
+
+1. Enable sync through the forthcoming #111 controls; verify independent sample
+   quantities/dates/source and stable sync metadata for backdated new entries.
+2. Repeat a frozen write with the same identity/version, including stopping after
+   Health save but before local acknowledgement. Inspect actual sample counts.
+3. Delete an acknowledged sample in Health and reopen/re-enable/retry: it must
+   remain absent. Separately demonstrate the accepted unacknowledged-write limitation.
+4. Verify denial/revocation, partial grants, disabled gaps and disable during I/O;
+   local logging/dismissal and once-per-submission analytics must remain independent.
+5. Complete #110/#111/#112 cleanup, status/copy, UI and device scenarios before
+   treating optional export as release-ready. Retained delete intent is not cleanup.
