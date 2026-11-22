@@ -15,6 +15,12 @@ nonisolated enum AnalyticsEvent: Equatable {
     /// The user opened the Add Drink sheet
     case addDrinkOpened
     
+    /// The user opened Apple Health permissions. No permission or Health properties.
+    case appleHealthPermissionsOpened
+
+    /// The user tapped Review permissions, independent of grants or request outcome.
+    case appleHealthPermissionsReviewTapped
+
     /// A drink was successfully saved.
     ///
     /// - Parameter method: Whether the user submitted the form or tapped a recent drink.

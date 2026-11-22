@@ -68,3 +68,24 @@ for the approved 14 g standard-drink convention (`alcohol-14g-v1`). It returns
 positive, known-zero, unknown or invalid results without catalogue lookup, HealthKit
 calls or changes to saved entries. Sample dates, permissions and durable export
 policy/version context remain integration responsibilities. See the mapping decision.
+
+## HealthKit authorization boundary
+
+`WateredApp` retains `HealthAuthorizationController` and one injected `HealthKitClient`.
+`AppleHealthKitClient` owns a long-lived system store, checks availability before access,
+and requests only water, caffeine and alcohol write permissions with an empty read set.
+The controller refreshes per-type status on foreground entry without prompting; future
+operations must use `currentAuthorization(for:)` rather than cached presentation state.
+Only `requestAuthorizationFromUserAction()` may request permission. Profile’s Apple Health
+permissions screen invokes it in Debug and Release and displays per-type states/errors.
+#111 still owns sync opt-in and export status. The screen-opened and review-tapped
+analytics events carry no properties; Debug logs locally and Release discards them.
+Completion refreshes grants rather than assuming them.
+Denied/revoked and not-determined states are per type; restricted/unavailable request
+errors are separate from grants because the platform does not expose a distinct
+per-type restricted authorization status. Errors retain no raw Health data or descriptions.
+
+This boundary does not enable sync or persist opt-in. #109 owns that separate setting
+and eligibility transaction. No sample mapping, writes, queue, retries or deletion are
+implemented here. Local saving remains independent. Isolated tests and app previews use
+`FakeHealthKitClient`; standalone view previews do not construct a Health store.

@@ -20,6 +20,10 @@ struct DebugAnalyticsClient: AnalyticsClient {
         switch event {
         case .addDrinkOpened:
             wateredLog("Analytics: add_drink_opened")
+        case .appleHealthPermissionsOpened:
+            wateredLog("Analytics: apple_health_permissions_opened")
+        case .appleHealthPermissionsReviewTapped:
+            wateredLog("Analytics: apple_health_permissions_review_tapped")
         case .drinkAdded(let method):
             wateredLog("Analytics: drink_added | method: \(method.rawValue)")
         }

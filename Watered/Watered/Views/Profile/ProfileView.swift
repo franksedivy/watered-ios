@@ -23,6 +23,12 @@ struct ProfileView: View {
     /// Closes Profile through the parent's existing goal-commit-on-dismiss boundary.
     @Environment(\.dismiss) private var dismiss
     
+    var analytics: any AnalyticsClient = NoOpAnalyticsClient()
+
+    /// Optional so standalone previews do not require a live HealthKit dependency.
+    @Environment(HealthAuthorizationController.self)
+    private var healthAuthorization: HealthAuthorizationController?
+
     #if DEBUG
     // MARK: - Developer Actions
 
@@ -89,6 +95,14 @@ struct ProfileView: View {
                     .accessibilityHint("Changes the daily hydration goal used by Today.")
                 }
                 
+                if let healthAuthorization {
+                    Section {
+                        NavigationLink("Apple Health permissions") {
+                            HealthPermissionsView(authorization: healthAuthorization, analytics: analytics)
+                        }
+                    }
+                }
+
                 #if DEBUG
                 if let deleteAllDrinks = onDeleteAllDrinks {
                     Section("Developer Tools") {

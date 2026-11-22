@@ -388,6 +388,7 @@ struct WateredTabView: View {
                 ProfileView(
                     displayUnit: profileDisplayUnit,
                     dailyHydrationGoal: $profileDraftGoal,
+                    analytics: analytics,
                     onDeleteAllDrinks: {
                         try deleteDrinkEntries(persistentDrinkEntries)
                     }
@@ -395,7 +396,8 @@ struct WateredTabView: View {
                 #else
                 ProfileView(
                     displayUnit: profileDisplayUnit,
-                    dailyHydrationGoal: $profileDraftGoal
+                    dailyHydrationGoal: $profileDraftGoal,
+                    analytics: analytics
                 )
                 #endif
             }

@@ -62,3 +62,94 @@ For Add Drink prototype work under [#104](https://github.com/franksedivy/watered
 ## Report evidence precisely
 
 Record revision, command or CI run, environment, checks included, result and untested areas in the PR. Separate build success, focused tests, configured suite results and manual device review. A skipped test, cancelled run or unavailable toolchain is not a pass. Once relevant checks pass, repeat only for new changes or unresolved concerns.
+
+## HealthKit authorization (#107)
+
+`HealthAuthorizationTests` uses a fake system-store seam and synthetic states; it
+checks the exact three-type write scope, empty read set, mixed grants, availability,
+revocation refresh, sanitized failures, overlapping actions and independent local logging.
+It never opens a personal Health store. No simulator test proves device provisioning.
+
+Controlled-device checks remain required before closing #107:
+
+1. Enable HealthKit for App ID `com.franksedivy.wateredapp-ios` in the developer account.
+   The target uses manual signing and `Frank's Dev Profile` for team `A5EYYY25C3`;
+   regenerate/install that profile with the HealthKit entitlement, and confirm the
+   signed app and embedded profile both contain `com.apple.developer.healthkit`.
+   This change does not alter account configuration or signing identities.
+2. On a controlled iOS 27 device, launch and save a synthetic drink: no permission
+   sheet; local saving succeeds. Inspect both Debug and Release usage descriptions.
+3. Use Profile → Apple Health permissions → Review permissions (available in Debug
+   and Release; sync opt-in remains #111). This calls `requestAuthorizationFromUserAction()`. Check the sheet
+   contains only water, caffeine and alcohol writes, no reads, with the approved copy.
+   Check all-denied and mixed grants; completion must not imply authorization.
+   Review permissions checks fresh status: any not-requested type takes priority
+   and starts authorization; otherwise decided permissions (allowed or denied) show
+   instructions for changing permissions in Health without repeating the system
+   request. Unavailable or unknown states show explanatory feedback without requesting.
+4. Change grants in Health/Settings and return to Watered: per-type status refreshes
+   without another prompt. Check restrictions where a controlled device supports them.
+5. Record revision, device/iOS, signing evidence and each outcome. These steps are a
+   plan, not completed device evidence. Sample writes and lifecycle tests belong to #112.
+
+API references checked for this boundary: [authorization](https://developer.apple.com/documentation/healthkit/authorizing-access-to-health-data)
+and [capability configuration](https://developer.apple.com/documentation/xcode/configuring-healthkit-access).
+Both usage descriptions are configured, as Apple instructs; the read description states
+that Watered does not read Health data and the request read set is always empty.
+
+### Device evidence — 22 November 2026
+
+Frank performed these checks on an iPhone Air running iOS 27.2, using the working
+checkout based on `fbb5e3f` plus the Debug Profile verification controls committed
+with this record and the separate local marketing-version change to 0.5. Results
+below are user-reported device observations, not agent-run UI tests.
+
+- Xcode showed the HealthKit capability and both expected usage descriptions;
+  Clinical Health Records and Background Delivery were unchecked. No signing errors
+  were reported, and the app built, installed and launched successfully.
+- Launch and local drink saving showed no permission prompt; the drink appeared in history.
+- The explicit test action showed only Water, Caffeine and Alcoholic Beverages write
+  permissions, with no read section.
+- With all three denied, a repeated action showed no sheet; all three statuses were
+  denied and the request error was nil. Another drink saved without prompting.
+- Enabling only Water in Health refreshed Water to authorized while the other two
+  stayed denied, without pressing the test button. Revoking Water refreshed it to denied.
+- Enabling only Caffeine and Alcohol refreshed those two to authorized independently.
+  Those states survived closing and reopening the app, with no prompt.
+- Enabling all three refreshed all statuses to authorized. Repeating the explicit
+  request showed no sheet, preserved all grants and reported no error.
+
+Signing inspection followed the device checks, after checkpoint commit `e32efd8`.
+Frank supplied command output from the existing `Debug-iphoneos/Watered.app` build;
+the binary was not rebuilt or independently tied to a commit during this inspection.
+
+- `codesign -d --entitlements :- <Watered.app>` showed
+  `com.apple.developer.healthkit = true` in the signed app. Its application identifier
+  was `A5EYYY25C3.com.franksedivy.wateredapp-ios` and team identifier was `A5EYYY25C3`.
+- `security cms -D -i <Watered.app>/embedded.mobileprovision`, with its Entitlements
+  dictionary extracted using `plutil`, showed HealthKit enabled and matching app/team
+  identifiers. Both app and profile had `get-task-allow = true`, consistent with the
+  inspected development build.
+- The profile additionally permitted `com.apple.developer.healthkit.access` with
+  `health-records` and `com.apple.developer.healthkit.background-delivery = true`.
+  Neither entitlement appeared in the signed app. The broader profile permissions
+  therefore do not establish that Watered enabled those capabilities.
+
+These supplied outputs verify the HealthKit entitlement in both the signed Debug app
+and its embedded provisioning profile. They are not Release signing evidence.
+
+Still unverified: Release-build usage descriptions/behavior; device restrictions/unavailability;
+accessibility review of the temporary controls. No Health samples were written by this
+implementation. These observations do not close #107 or verify downstream export work.
+
+Baseline automated evidence remains [286 unit tests on fbb5e3f](https://github.com/franksedivy/watered-ios/actions/runs/45018482759)
+(Xcode 27.1, iPhone Air simulator/iOS 27.0), including HealthAuthorizationTests. That
+run predates the Profile verification controls and excludes UI tests.
+
+Permission-screen follow-up checks (not covered by the device evidence above):
+verify the Profile navigation row and detail screen in both Debug and Release;
+opening the detail screen emits only `apple_health_permissions_opened`, once per
+screen visit, and tapping Review permissions emits only
+`apple_health_permissions_review_tapped`, including when guidance is shown.
+Returning from Health or dismissing guidance must not count as a new screen visit.
+Neither event carries properties. Debug logs locally; Release uses NoOpAnalyticsClient.

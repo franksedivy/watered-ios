@@ -1,0 +1,45 @@
+import Foundation
+
+/// The reviewed write scope. App opt-in is a separate, persisted lifecycle decision (#109).
+nonisolated enum HealthWriteType: CaseIterable, Hashable, Sendable {
+    case water, caffeine, alcohol
+}
+
+nonisolated enum HealthWriteAuthorization: Equatable, Sendable {
+    case notDetermined, authorized, denied, unavailable
+    /// A future platform status must never be treated as permission.
+    case unknown
+}
+
+/// Non-sensitive operation failures; never retain HealthKit payloads or error descriptions.
+nonisolated enum HealthAuthorizationError: Error, Equatable {
+    case unavailable, restricted, requestFailed, requestInProgress
+}
+
+@MainActor
+protocol HealthKitClient: AnyObject {
+    func authorization(for type: HealthWriteType) -> HealthWriteAuthorization
+    /// Call only in response to an explicit permission action, never launch, save or retry.
+    func requestWriteAuthorization() async throws
+}
+
+/// Controllable, HealthKit-free dependency for previews and isolated tests.
+@MainActor
+final class FakeHealthKitClient: HealthKitClient {
+    var statuses: [HealthWriteType: HealthWriteAuthorization]
+    var requestError: HealthAuthorizationError?
+    private(set) var requestCount = 0
+
+    init(statuses: [HealthWriteType: HealthWriteAuthorization] = [:]) {
+        self.statuses = statuses
+    }
+
+    func authorization(for type: HealthWriteType) -> HealthWriteAuthorization {
+        statuses[type] ?? .unavailable
+    }
+
+    func requestWriteAuthorization() async throws {
+        requestCount += 1
+        if let requestError { throw requestError }
+    }
+}
