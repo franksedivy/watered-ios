@@ -1,18 +1,18 @@
 import Foundation
 
 /// The reviewed write scope. App opt-in is a separate, persisted lifecycle decision (#109).
-enum HealthWriteType: CaseIterable, Hashable, Sendable {
+nonisolated enum HealthWriteType: CaseIterable, Hashable, Sendable {
     case water, caffeine, alcohol
 }
 
-enum HealthWriteAuthorization: Equatable, Sendable {
+nonisolated enum HealthWriteAuthorization: Equatable, Sendable {
     case notDetermined, authorized, denied, unavailable
     /// A future platform status must never be treated as permission.
     case unknown
 }
 
 /// Non-sensitive operation failures; never retain HealthKit payloads or error descriptions.
-enum HealthAuthorizationError: Error, Equatable {
+nonisolated enum HealthAuthorizationError: Error, Equatable {
     case unavailable, restricted, requestFailed, requestInProgress
 }
 
