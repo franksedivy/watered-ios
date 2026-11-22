@@ -115,8 +115,26 @@ below are user-reported device observations, not agent-run UI tests.
 - Enabling all three refreshed all statuses to authorized. Repeating the explicit
   request showed no sheet, preserved all grants and reported no error.
 
-Still unverified: inspection of the signed app entitlement and embedded provisioning
-profile; Release-build usage descriptions/behavior; device restrictions/unavailability;
+Signing inspection followed the device checks, after checkpoint commit `e32efd8`.
+Frank supplied command output from the existing `Debug-iphoneos/Watered.app` build;
+the binary was not rebuilt or independently tied to a commit during this inspection.
+
+- `codesign -d --entitlements :- <Watered.app>` showed
+  `com.apple.developer.healthkit = true` in the signed app. Its application identifier
+  was `A5EYYY25C3.com.franksedivy.wateredapp-ios` and team identifier was `A5EYYY25C3`.
+- `security cms -D -i <Watered.app>/embedded.mobileprovision`, with its Entitlements
+  dictionary extracted using `plutil`, showed HealthKit enabled and matching app/team
+  identifiers. Both app and profile had `get-task-allow = true`, consistent with the
+  inspected development build.
+- The profile additionally permitted `com.apple.developer.healthkit.access` with
+  `health-records` and `com.apple.developer.healthkit.background-delivery = true`.
+  Neither entitlement appeared in the signed app. The broader profile permissions
+  therefore do not establish that Watered enabled those capabilities.
+
+These supplied outputs verify the HealthKit entitlement in both the signed Debug app
+and its embedded provisioning profile. They are not Release signing evidence.
+
+Still unverified: Release-build usage descriptions/behavior; device restrictions/unavailability;
 accessibility review of the temporary controls. No Health samples were written by this
 implementation. These observations do not close #107 or verify downstream export work.
 
