@@ -79,8 +79,8 @@ Controlled-device checks remain required before closing #107:
    This change does not alter account configuration or signing identities.
 2. On a controlled iOS 27 device, launch and save a synthetic drink: no permission
    sheet; local saving succeeds. Inspect both Debug and Release usage descriptions.
-3. Once #111 supplies the explicit action (or using a temporary contributor-owned
-   debug harness calling `requestAuthorizationFromUserAction()`), check the sheet
+3. Use Debug Profile → HealthKit verification → Test Health permissions (the production
+   control remains #111). This calls `requestAuthorizationFromUserAction()`. Check the sheet
    contains only water, caffeine and alcohol writes, no reads, with the approved copy.
    Check all-denied and mixed grants; completion must not imply authorization.
 4. Change grants in Health/Settings and return to Watered: per-type status refreshes
@@ -92,3 +92,34 @@ API references checked for this boundary: [authorization](https://developer.appl
 and [capability configuration](https://developer.apple.com/documentation/xcode/configuring-healthkit-access).
 Both usage descriptions are configured, as Apple instructs; the read description states
 that Watered does not read Health data and the request read set is always empty.
+
+### Device evidence — 22 November 2026
+
+Frank performed these checks on an iPhone Air running iOS 27.2, using the working
+checkout based on `fbb5e3f` plus the Debug Profile verification controls committed
+with this record and the separate local marketing-version change to 0.5. Results
+below are user-reported device observations, not agent-run UI tests.
+
+- Xcode showed the HealthKit capability and both expected usage descriptions;
+  Clinical Health Records and Background Delivery were unchecked. No signing errors
+  were reported, and the app built, installed and launched successfully.
+- Launch and local drink saving showed no permission prompt; the drink appeared in history.
+- The explicit test action showed only Water, Caffeine and Alcoholic Beverages write
+  permissions, with no read section.
+- With all three denied, a repeated action showed no sheet; all three statuses were
+  denied and the request error was nil. Another drink saved without prompting.
+- Enabling only Water in Health refreshed Water to authorized while the other two
+  stayed denied, without pressing the test button. Revoking Water refreshed it to denied.
+- Enabling only Caffeine and Alcohol refreshed those two to authorized independently.
+  Those states survived closing and reopening the app, with no prompt.
+- Enabling all three refreshed all statuses to authorized. Repeating the explicit
+  request showed no sheet, preserved all grants and reported no error.
+
+Still unverified: inspection of the signed app entitlement and embedded provisioning
+profile; Release-build usage descriptions/behavior; device restrictions/unavailability;
+accessibility review of the temporary controls. No Health samples were written by this
+implementation. These observations do not close #107 or verify downstream export work.
+
+Baseline automated evidence remains [286 unit tests on fbb5e3f](https://github.com/franksedivy/watered-ios/actions/runs/45018482759)
+(Xcode 27.1, iPhone Air simulator/iOS 27.0), including HealthAuthorizationTests. That
+run predates the Profile verification controls and excludes UI tests.

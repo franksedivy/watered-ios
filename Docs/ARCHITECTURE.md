@@ -76,8 +76,9 @@ policy/version context remain integration responsibilities. See the mapping deci
 and requests only water, caffeine and alcohol write permissions with an empty read set.
 The controller refreshes per-type status on foreground entry without prompting; future
 operations must use `currentAuthorization(for:)` rather than cached presentation state.
-Only `requestAuthorizationFromUserAction()` may request permission. No current UI calls
-it; #111 owns the explicit control. Completion refreshes grants rather than assuming them.
+Only `requestAuthorizationFromUserAction()` may request permission. A temporary Debug-only
+Profile section invokes it and displays per-type states/errors for device verification.
+#111 owns the production control. Completion refreshes grants rather than assuming them.
 Denied/revoked and not-determined states are per type; restricted/unavailable request
 errors are separate from grants because the platform does not expose a distinct
 per-type restricted authorization status. Errors retain no raw Health data or descriptions.

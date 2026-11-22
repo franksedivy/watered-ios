@@ -26,6 +26,10 @@ struct ProfileView: View {
     #if DEBUG
     // MARK: - Developer Actions
 
+    /// Optional so standalone previews do not require a live HealthKit dependency.
+    @Environment(HealthAuthorizationController.self)
+    private var healthAuthorization: HealthAuthorizationController?
+
     /// Requests history deletion; nil hides the control and a thrown error presents feedback.
     var onDeleteAllDrinks: (() throws -> Void)? = nil
     
@@ -90,6 +94,21 @@ struct ProfileView: View {
                 }
                 
                 #if DEBUG
+                if let healthAuthorization {
+                    Section("HealthKit verification") {
+                        Button("Test Health permissions") {
+                            Task {
+                                await healthAuthorization.requestAuthorizationFromUserAction()
+                            }
+                        }
+                        .disabled(healthAuthorization.isRequesting)
+                        Text("Water: \(String(describing: healthAuthorization.statuses[.water]))")
+                        Text("Caffeine: \(String(describing: healthAuthorization.statuses[.caffeine]))")
+                        Text("Alcohol: \(String(describing: healthAuthorization.statuses[.alcohol]))")
+                        Text("Error: \(String(describing: healthAuthorization.requestError))")
+                    }
+                }
+
                 if let deleteAllDrinks = onDeleteAllDrinks {
                     Section("Developer Tools") {
                         Button("Delete all drinks", role: .destructive) {
