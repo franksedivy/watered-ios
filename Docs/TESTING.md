@@ -62,3 +62,33 @@ For Add Drink prototype work under [#104](https://github.com/franksedivy/watered
 ## Report evidence precisely
 
 Record revision, command or CI run, environment, checks included, result and untested areas in the PR. Separate build success, focused tests, configured suite results and manual device review. A skipped test, cancelled run or unavailable toolchain is not a pass. Once relevant checks pass, repeat only for new changes or unresolved concerns.
+
+## HealthKit authorization (#107)
+
+`HealthAuthorizationTests` uses a fake system-store seam and synthetic states; it
+checks the exact three-type write scope, empty read set, mixed grants, availability,
+revocation refresh, sanitized failures, overlapping actions and independent local logging.
+It never opens a personal Health store. No simulator test proves device provisioning.
+
+Controlled-device checks remain required before closing #107:
+
+1. Enable HealthKit for App ID `com.franksedivy.wateredapp-ios` in the developer account.
+   The target uses manual signing and `Frank's Dev Profile` for team `A5EYYY25C3`;
+   regenerate/install that profile with the HealthKit entitlement, and confirm the
+   signed app and embedded profile both contain `com.apple.developer.healthkit`.
+   This change does not alter account configuration or signing identities.
+2. On a controlled iOS 27 device, launch and save a synthetic drink: no permission
+   sheet; local saving succeeds. Inspect both Debug and Release usage descriptions.
+3. Once #111 supplies the explicit action (or using a temporary contributor-owned
+   debug harness calling `requestAuthorizationFromUserAction()`), check the sheet
+   contains only water, caffeine and alcohol writes, no reads, with the approved copy.
+   Check all-denied and mixed grants; completion must not imply authorization.
+4. Change grants in Health/Settings and return to Watered: per-type status refreshes
+   without another prompt. Check restrictions where a controlled device supports them.
+5. Record revision, device/iOS, signing evidence and each outcome. These steps are a
+   plan, not completed device evidence. Sample writes and lifecycle tests belong to #112.
+
+API references checked for this boundary: [authorization](https://developer.apple.com/documentation/healthkit/authorizing-access-to-health-data)
+and [capability configuration](https://developer.apple.com/documentation/xcode/configuring-healthkit-access).
+Both usage descriptions are configured, as Apple instructs; the read description states
+that Watered does not read Health data and the request read set is always empty.

@@ -11,6 +11,9 @@ import SwiftData
 @main
 struct WateredApp: App {
     
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var healthAuthorization: HealthAuthorizationController
+
     // MARK: - Dependencies
     
     /// Selects the analytics implementation for the current build.
@@ -44,6 +47,12 @@ struct WateredApp: App {
         let configuration = AppLaunchConfiguration(
             arguments: ProcessInfo.processInfo.arguments
         )
+        let usesFakeHealth = configuration.usesInMemoryStorage
+            || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        let healthClient: any HealthKitClient = usesFakeHealth
+            ? FakeHealthKitClient() : AppleHealthKitClient()
+        _healthAuthorization = State(initialValue: HealthAuthorizationController(client: healthClient))
         launchConfiguration = configuration
         catalogueResult = Result { try DrinkCatalogueLoader().load() }
 
@@ -57,16 +66,22 @@ struct WateredApp: App {
     // MARK: - Body
     var body: some Scene {
         WindowGroup {
-            #if DEBUG
-            WateredRootView(
-                analytics: analytics,
-                catalogueResult: catalogueResult,
-                beforeDrinkSave: saveFailureController.beforeDrinkSave,
-                beforeDisplayUnitSave: saveFailureController.beforeDisplayUnitSave
-            )
-            #else
-            WateredRootView(analytics: analytics, catalogueResult: catalogueResult)
-            #endif
+            Group {
+                #if DEBUG
+                WateredRootView(
+                    analytics: analytics,
+                    catalogueResult: catalogueResult,
+                    beforeDrinkSave: saveFailureController.beforeDrinkSave,
+                    beforeDisplayUnitSave: saveFailureController.beforeDisplayUnitSave
+                )
+                #else
+                WateredRootView(analytics: analytics, catalogueResult: catalogueResult)
+                #endif
+            }
+            .environment(healthAuthorization)
+            .onChange(of: scenePhase, initial: true) { _, phase in
+                if phase == .active { healthAuthorization.refreshAuthorization() }
+            }
         }
         .modelContainer(
             for: [
