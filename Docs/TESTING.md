@@ -79,10 +79,14 @@ Controlled-device checks remain required before closing #107:
    This change does not alter account configuration or signing identities.
 2. On a controlled iOS 27 device, launch and save a synthetic drink: no permission
    sheet; local saving succeeds. Inspect both Debug and Release usage descriptions.
-3. Use Debug Profile → HealthKit verification → Test Health permissions (the production
-   control remains #111). This calls `requestAuthorizationFromUserAction()`. Check the sheet
+3. Use Profile → Apple Health permissions → Review permissions (available in Debug
+   and Release; sync opt-in remains #111). This calls `requestAuthorizationFromUserAction()`. Check the sheet
    contains only water, caffeine and alcohol writes, no reads, with the approved copy.
    Check all-denied and mixed grants; completion must not imply authorization.
+   Review permissions checks fresh status: any not-requested type takes priority
+   and starts authorization; otherwise decided permissions (allowed or denied) show
+   instructions for changing permissions in Health without repeating the system
+   request. Unavailable or unknown states show explanatory feedback without requesting.
 4. Change grants in Health/Settings and return to Watered: per-type status refreshes
    without another prompt. Check restrictions where a controlled device supports them.
 5. Record revision, device/iOS, signing evidence and each outcome. These steps are a
@@ -141,3 +145,11 @@ implementation. These observations do not close #107 or verify downstream export
 Baseline automated evidence remains [286 unit tests on fbb5e3f](https://github.com/franksedivy/watered-ios/actions/runs/45018482759)
 (Xcode 27.1, iPhone Air simulator/iOS 27.0), including HealthAuthorizationTests. That
 run predates the Profile verification controls and excludes UI tests.
+
+Permission-screen follow-up checks (not covered by the device evidence above):
+verify the Profile navigation row and detail screen in both Debug and Release;
+opening the detail screen emits only `apple_health_permissions_opened`, once per
+screen visit, and tapping Review permissions emits only
+`apple_health_permissions_review_tapped`, including when guidance is shown.
+Returning from Health or dismissing guidance must not count as a new screen visit.
+Neither event carries properties. Debug logs locally; Release uses NoOpAnalyticsClient.
