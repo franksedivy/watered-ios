@@ -86,6 +86,29 @@ errors are separate from grants because the platform does not expose a distinct
 per-type restricted authorization status. Errors retain no raw Health data or descriptions.
 
 This boundary does not enable sync or persist opt-in. #109 owns that separate setting
-and eligibility transaction. No sample mapping, writes, queue, retries or deletion are
-implemented here. Local saving remains independent. Isolated tests and app previews use
+and eligibility transaction. No writes, queue, retries or deletion are implemented here.
+Local saving remains independent. Isolated tests and app previews use
 `FakeHealthKitClient`; standalone view previews do not construct a Health store.
+
+## Frozen HealthKit sample mapping (#108)
+
+`HealthExport/HealthSampleMapping.swift` maps saved water ml, caffeine mg and the
+reviewed fractional alcohol count independently. The caller must supply the types
+eligible at entry creation; the mapper never consults authorization or infers consent
+from timestamps. Unknown, known zero, ineligible and invalid outcomes are distinct.
+Invalid dates/consumed volume reject eligible types; individual quantity failures
+leave other types available. Hydration credit and the current catalogue are unused.
+
+`HealthSampleSpecification` freezes quantities, units, loggedAt, manual provenance,
+catalogue/calculation context, export policy `health-export-v1`, alcohol policy where
+applicable, and a namespaced entry-UUID/type identity with sync version 1. Its Codable
+representation supports #109's pending-work storage; this change does not persist it.
+Retries must reuse that payload instead of mapping again. Policy versions are separate
+from HealthKit sync version, which must not increase on retry.
+
+`HealthKit/HealthSampleFactory.swift` validates the frozen specification and constructs
+an HKQuantitySample with equal loggedAt start/end dates, the reviewed units, manual
+metadata and sync identity/version. It rejects unsupported policies rather than
+reinterpreting them. It does not open a Health store or perform writes. #109 owns
+atomic eligibility capture, persistence, execution and retries; actual same-version
+write behavior still needs controlled-device verification under #112.

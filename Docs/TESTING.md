@@ -153,3 +153,15 @@ screen visit, and tapping Review permissions emits only
 `apple_health_permissions_review_tapped`, including when guidance is shown.
 Returning from Health or dismissing guidance must not count as a new screen visit.
 Neither event carries properties. Debug logs locally; Release uses NoOpAnalyticsClient.
+
+## HealthKit sample mapping (#108)
+
+`HealthSampleMappingTests` covers reviewed water/latte/beer/cocktail examples,
+regular/decaf/zero shots, bounded alcohol, all volume units, unknown versus zero,
+independent invalid quantities, invalid dates/volumes, all eight eligible-type sets,
+frozen payload serialization and stable per-entry/type identity. Platform-boundary
+assertions check HealthKit types, units, dates and manual/sync metadata without opening
+a Health store. Corrupt payloads and unsupported policies fail construction.
+
+These tests do not prove durable intent capture, scheduling, writes, deduplication or
+physical-device behavior. Those remain #109/#112. No simulator suite is run locally.
