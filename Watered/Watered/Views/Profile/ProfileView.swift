@@ -30,6 +30,9 @@ struct ProfileView: View {
     private var healthAuthorization: HealthAuthorizationController?
 
     #if DEBUG
+    @Environment(HealthExportCoordinator.self)
+    private var healthExport: HealthExportCoordinator?
+
     // MARK: - Developer Actions
 
     /// Requests history deletion; nil hides the control and a thrown error presents feedback.
@@ -104,40 +107,47 @@ struct ProfileView: View {
                 }
 
                 #if DEBUG
-                if let deleteAllDrinks = onDeleteAllDrinks {
+                if healthExport != nil || onDeleteAllDrinks != nil {
                     Section("Developer Tools") {
-                        Button("Delete all drinks", role: .destructive) {
-                            isConfirmingDrinkReset = true
-                        }
-                        .accessibilityIdentifier("deleteAllDrinksButton")
-                    }
-                    .confirmationDialog(
-                        "Delete all drinks?",
-                        isPresented: $isConfirmingDrinkReset,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Delete all drinks", role: .destructive) {
-                            do {
-                                try deleteAllDrinks()
-                                dismiss()
-                            } catch {
-                                wateredLog("Profile reset failed.")
-                                isShowingDrinkResetError = true
+                        if let healthExport {
+                            NavigationLink("Verify HealthKit export") {
+                                DebugHealthExportView(coordinator: healthExport)
                             }
                         }
-                        .accessibilityIdentifier("confirmDeleteAllDrinksButton")
+                        if let deleteAllDrinks = onDeleteAllDrinks {
+                            Button("Delete all drinks", role: .destructive) {
+                                isConfirmingDrinkReset = true
+                            }
+                            .accessibilityIdentifier("deleteAllDrinksButton")
+                            .confirmationDialog(
+                                "Delete all drinks?",
+                                isPresented: $isConfirmingDrinkReset,
+                                titleVisibility: .visible
+                            ) {
+                                Button("Delete all drinks", role: .destructive) {
+                                    do {
+                                        try deleteAllDrinks()
+                                        dismiss()
+                                    } catch {
+                                        wateredLog("Profile reset failed.")
+                                        isShowingDrinkResetError = true
+                                    }
+                                }
+                                .accessibilityIdentifier("confirmDeleteAllDrinksButton")
                         
-                        Button("Cancel", role: .cancel) {}
-                    } message: {
-                        Text("This permanently deletes your entire drink history. Are you sure?")
-                    }
-                    .alert(
-                        "Could not delete drinks",
-                        isPresented: $isShowingDrinkResetError
-                    ) {
-                        Button("OK", role: .cancel) {}
-                    } message: {
-                        Text("Your drink history could not be deleted.")
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text("This permanently deletes your entire drink history. Are you sure?")
+                            }
+                            .alert(
+                                "Could not delete drinks",
+                                isPresented: $isShowingDrinkResetError
+                            ) {
+                                Button("OK", role: .cancel) {}
+                            } message: {
+                                Text("Your drink history could not be deleted.")
+                            }
+                        }
                     }
                 }
                 #endif

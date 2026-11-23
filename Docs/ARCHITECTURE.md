@@ -155,3 +155,13 @@ Same-version HealthKit deduplication requires #112's controlled-device evidence;
 fake/simulator tests establish the local protocol only. The accepted limitation
 remains: if a successful write is unacknowledged and the user removes it in Health,
 recovery may recreate it. No exactly-once or background-completion guarantee.
+
+### Debug verification harness
+
+`Debug/DebugHealthExportHarness.swift` provides in-memory, one-shot pre-write failure
+and post-success/pre-acknowledgement pause hooks. `DebugHealthExportView` exposes the
+normal persisted switch, Retry now and local record inspection in Profile. It never
+requeues acknowledged samples, mutates frozen payloads, reads Health history or emits
+analytics. The hook calls and both Debug types are excluded from Release compilation.
+The persisted export preference retains its ordinary cross-launch behavior; disable
+it when device testing finishes. See [Testing](TESTING.md#debug-only-device-harness-109-112).
