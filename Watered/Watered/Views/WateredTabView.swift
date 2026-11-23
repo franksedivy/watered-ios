@@ -541,6 +541,7 @@ struct WateredTabView: View {
         }
         
         store.loadDrinkEntries(remainingEntries)
+        healthExport?.wake()
     }
     
     /// Repeats a supported shortcut with a fresh identity, time and current catalogue rules.

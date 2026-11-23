@@ -172,7 +172,7 @@ struct StatsDrinkEntryDetailView: View {
                     
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Delete \(amountText) of \(entry.displayName). This can't be undone.")
+                    Text("Delete \(amountText) of \(entry.displayName). This removes it from Watered. Apple Health cleanup may finish later if permission is unavailable. This can't be undone.")
                 }
                 .alert(
                     "Could not delete drink",

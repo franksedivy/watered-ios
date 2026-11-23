@@ -55,9 +55,15 @@ nonisolated enum HealthExportFailure: Error, Equatable {
 protocol HealthExportClient: HealthKitClient {
     /// Writes one frozen type. Never requests permission; raw platform errors stay private.
     func save(_ specification: HealthSampleSpecification) async throws
+    /// Deletes only this app's samples matching one entry/type identity. Zero matches succeeds.
+    func delete(_ target: HealthDeletionTarget) async throws
 }
 
 extension FakeHealthKitClient: HealthExportClient {
+    func delete(_ target: HealthDeletionTarget) async throws {
+        throw HealthExportFailure.authorization
+    }
+
     func save(_ specification: HealthSampleSpecification) async throws {
         throw HealthExportFailure.authorization
     }

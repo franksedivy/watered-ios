@@ -84,12 +84,17 @@ final class HealthExportCoordinator {
                     if startedActive && !active { break }
                     let attempt = ModelContext(context.container)
                     attempt.autosaveEnabled = false
-                    guard try HealthExportPersistence.isEnabled(in: attempt) else { break }
+                    let enabled = try HealthExportPersistence.isEnabled(in: attempt)
                     guard let record = try attempt.fetch(FetchDescriptor<PersistentHealthExport>(predicate: #Predicate { $0.identity == identity })).first else { continue }
-                    guard record.operation == "upload", ["pending", "inFlight", "authorizationBlocked"].contains(record.status) else { continue }
+                    guard ["upload", "delete"].contains(record.operation), ["pending", "inFlight", "authorizationBlocked"].contains(record.status) else { continue }
+                    if record.operation == "upload" && !enabled { continue }
                     if !force, record.status == "pending", let due = record.nextAttemptAt, due > now() { continue }
-                    try await upload(record, in: attempt)
+                    if record.operation == "delete" { try await cleanup(record, in: attempt) }
+                    else { try await upload(record, in: attempt) }
                 }
+                let purge = ModelContext(context.container)
+                try HealthExportPersistence.purgeCompletedDeletions(in: purge)
+                if purge.hasChanges { try commit(purge) }
             } while rerunRequested
         } catch {
             context.rollback()
@@ -104,6 +109,8 @@ final class HealthExportCoordinator {
             // Conservative recovery if an older caller removed the drink without a tombstone.
             if record.mayHaveWritten {
                 record.operation = "delete"
+                record.attemptCount = 0
+                rerunRequested = true
                 record.status = "pending"
                 record.nextAttemptAt = nil
             } else { context.delete(record) }
@@ -159,30 +166,81 @@ final class HealthExportCoordinator {
         let currentEntry = try acknowledgement.fetch(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.id == entryID })).first
         if current.operation == "delete" || currentEntry?.deletedAt != nil || currentEntry == nil {
             current.operation = "delete"
+            current.attemptCount = 0
+            rerunRequested = true
             current.status = "pending"
             current.nextAttemptAt = nil
             current.failureCategory = nil
         } else {
-            switch failure {
-            case nil:
-                current.status = "succeeded"
-                current.failureCategory = nil
-                current.nextAttemptAt = nil
-            case .authorization:
-                current.status = "authorizationBlocked"
-                current.failureCategory = "authorization"
-                current.nextAttemptAt = nil
-            case .invalidPayload:
-                current.status = "invalid"
-                current.failureCategory = "invalidPayload"
-                current.nextAttemptAt = nil
-            case .temporary:
-                current.status = "pending"
-                current.failureCategory = "temporary"
-                current.nextAttemptAt = now().addingTimeInterval(Self.retryDelay(attempt: current.attemptCount, jitter: jitter()))
-            }
+            apply(failure, to: current)
         }
         try commit(acknowledgement)
+    }
+
+    private func cleanup(_ record: PersistentHealthExport, in context: ModelContext) async throws {
+        let entryID = record.entryID
+        let entry = try context.fetch(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.id == entryID })).first
+        guard entry == nil || entry?.deletedAt != nil,
+              let type = HealthWriteType(rawValue: record.typeID),
+              record.identity == HealthSampleSpecification.syncIdentifier(entryID: entryID, type: type) else {
+            apply(.invalidPayload, to: record)
+            try commit(context)
+            return
+        }
+        guard client.authorization(for: type) == .authorized else {
+            apply(.authorization, to: record)
+            try commit(context)
+            return
+        }
+        let target = HealthDeletionTarget(entryID: entryID, type: type, syncIdentifier: record.identity)
+        record.status = "inFlight"
+        record.attemptCount = min(record.attemptCount, 1_000_000) + 1
+        record.nextAttemptAt = nil
+        try commit(context)
+        let failure: HealthExportFailure?
+        do {
+            #if DEBUG
+            try debugHarness.beforeDeletion()
+            #endif
+            try await client.delete(target)
+            #if DEBUG
+            await debugHarness.afterSuccessfulDeletion(type: type)
+            #endif
+            failure = nil
+        } catch { failure = error as? HealthExportFailure ?? .temporary }
+        let acknowledgement = ModelContext(context.container)
+        acknowledgement.autosaveEnabled = false
+        let identity = target.syncIdentifier
+        guard let current = try acknowledgement.fetch(FetchDescriptor<PersistentHealthExport>(predicate: #Predicate { $0.identity == identity })).first,
+              current.operation == "delete" else { throw PersistenceError.missingIntent }
+        apply(failure, to: current)
+        if failure == nil {
+            try HealthExportPersistence.purgeCompletedDeletions(in: acknowledgement)
+            // Orphaned intents from an older caller have no drink left to purge.
+            if entry == nil { acknowledgement.delete(current) }
+        }
+        try commit(acknowledgement)
+    }
+
+    private func apply(_ failure: HealthExportFailure?, to current: PersistentHealthExport) {
+        switch failure {
+        case nil:
+            current.status = "succeeded"
+            current.failureCategory = nil
+            current.nextAttemptAt = nil
+        case .authorization:
+            current.status = "authorizationBlocked"
+            current.failureCategory = "authorization"
+            current.nextAttemptAt = nil
+        case .invalidPayload:
+            current.status = "invalid"
+            current.failureCategory = "invalidPayload"
+            current.nextAttemptAt = nil
+        case .temporary:
+            current.status = "pending"
+            current.failureCategory = "temporary"
+            current.nextAttemptAt = now().addingTimeInterval(Self.retryDelay(attempt: current.attemptCount, jitter: jitter()))
+        }
     }
 
     private func commit(_ context: ModelContext) throws {
@@ -201,9 +259,9 @@ final class HealthExportCoordinator {
         guard active, let context else { return }
         do {
             let context = ModelContext(context.container)
-            guard try HealthExportPersistence.isEnabled(in: context) else { return }
+            let enabled = try HealthExportPersistence.isEnabled(in: context)
             let records = try context.fetch(FetchDescriptor<PersistentHealthExport>())
-            let due = records.filter { $0.operation == "upload" && $0.status == "pending" }
+            let due = records.filter { ($0.operation == "delete" || (enabled && $0.operation == "upload")) && $0.status == "pending" }
                 .compactMap(\.nextAttemptAt).min()
             guard persistenceFailed || due != nil else { return }
             let delay = persistenceFailed ? 30 : max(1, due!.timeIntervalSince(now()))

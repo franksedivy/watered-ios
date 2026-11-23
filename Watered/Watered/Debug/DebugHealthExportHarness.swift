@@ -10,6 +10,8 @@ final class DebugHealthExportHarness {
         case none = "Normal export"
         case failNextWrite = "Fail next upload before writing"
         case pauseAfterSave = "Pause next successful write before acknowledgement"
+        case failNextDeletion = "Fail next cleanup before deleting"
+        case pauseAfterDeletion = "Pause next successful cleanup before acknowledgement"
         var id: Self { self }
     }
 
@@ -34,6 +36,23 @@ final class DebugHealthExportHarness {
         nextIntervention = .none
         pausedType = type
         lastIntervention = "HealthKit reported success; acknowledgement paused"
+        await withCheckedContinuation { continuation = $0 }
+        pausedType = nil
+        lastIntervention = "Acknowledgement resumed"
+    }
+
+    func beforeDeletion() throws {
+        guard nextIntervention == .failNextDeletion else { return }
+        nextIntervention = .none
+        lastIntervention = "Simulated temporary failure before HealthKit deletion"
+        throw HealthExportFailure.temporary
+    }
+
+    func afterSuccessfulDeletion(type: HealthWriteType) async {
+        guard nextIntervention == .pauseAfterDeletion else { return }
+        nextIntervention = .none
+        pausedType = type
+        lastIntervention = "HealthKit reported cleanup success; acknowledgement paused"
         await withCheckedContinuation { continuation = $0 }
         pausedType = nil
         lastIntervention = "Acknowledgement resumed"

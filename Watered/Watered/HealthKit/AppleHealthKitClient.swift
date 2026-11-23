@@ -9,9 +9,12 @@ protocol HealthAuthorizationStore: AnyObject {
 }
 
 @MainActor
-private final class AppleHealthAuthorizationStore: HealthAuthorizationStore, HealthSampleStore {
+private final class AppleHealthAuthorizationStore: HealthAuthorizationStore, HealthSampleStore, HealthDeletionStore {
     private let store = HKHealthStore()
     func save(_ sample: HKQuantitySample) async throws { try await store.save(sample) }
+    func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int {
+        try await store.deleteObjects(of: type, predicate: predicate)
+    }
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
     func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus {
@@ -26,6 +29,11 @@ private final class AppleHealthAuthorizationStore: HealthAuthorizationStore, Hea
 @MainActor
 protocol HealthSampleStore: AnyObject {
     func save(_ sample: HKQuantitySample) async throws
+}
+
+@MainActor
+protocol HealthDeletionStore: AnyObject {
+    func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int
 }
 
 /// Owns one system store for the app lifetime. App opt-in remains a persistence concern.
@@ -79,22 +87,39 @@ final class AppleHealthKitClient: HealthExportClient {
         catch { throw HealthExportFailure.invalidPayload }
         guard let writer = store as? any HealthSampleStore else { throw HealthExportFailure.temporary }
         do { try await writer.save(sample) }
-        catch {
-            let failure = error as NSError
-            if failure.domain == HKErrorDomain {
-                switch failure.code {
-                case HKError.Code.errorAuthorizationDenied.rawValue,
-                     HKError.Code.errorAuthorizationNotDetermined.rawValue,
-                     HKError.Code.errorHealthDataRestricted.rawValue,
-                     HKError.Code.errorHealthDataUnavailable.rawValue:
-                    throw HealthExportFailure.authorization
-                case HKError.Code.errorInvalidArgument.rawValue:
-                    throw HealthExportFailure.invalidPayload
-                default: break
-                }
+        catch { throw Self.exportFailure(for: error) }
+    }
+
+    func delete(_ target: HealthDeletionTarget) async throws {
+        guard target.isValid else { throw HealthExportFailure.invalidPayload }
+        guard authorization(for: target.type) == .authorized else { throw HealthExportFailure.authorization }
+        guard let deletionStore = store as? any HealthDeletionStore else { throw HealthExportFailure.temporary }
+        let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            HKQuery.predicateForObjects(from: HKSource.default()),
+            HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier,
+                                       allowedValues: [target.syncIdentifier])
+        ])
+        do {
+            // HealthKit also enforces ownership. A successful zero-match request resolves cleanup.
+            _ = try await deletionStore.deleteObjects(of: Self.quantityType(for: target.type), predicate: predicate)
+        } catch { throw Self.exportFailure(for: error) }
+    }
+
+    private static func exportFailure(for error: Error) -> HealthExportFailure {
+        let failure = error as NSError
+        if failure.domain == HKErrorDomain {
+            switch failure.code {
+            case HKError.Code.errorAuthorizationDenied.rawValue,
+                 HKError.Code.errorAuthorizationNotDetermined.rawValue,
+                 HKError.Code.errorHealthDataRestricted.rawValue,
+                 HKError.Code.errorHealthDataUnavailable.rawValue:
+                return .authorization
+            case HKError.Code.errorInvalidArgument.rawValue:
+                return .invalidPayload
+            default: break
             }
-            throw HealthExportFailure.temporary
         }
+        return .temporary
     }
 
     private static func quantityType(for type: HealthWriteType) -> HKQuantityType {

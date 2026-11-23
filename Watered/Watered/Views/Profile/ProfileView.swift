@@ -29,10 +29,10 @@ struct ProfileView: View {
     @Environment(HealthAuthorizationController.self)
     private var healthAuthorization: HealthAuthorizationController?
 
-    #if DEBUG
     @Environment(HealthExportCoordinator.self)
     private var healthExport: HealthExportCoordinator?
 
+    #if DEBUG
     // MARK: - Developer Actions
 
     /// Requests history deletion; nil hides the control and a thrown error presents feedback.
@@ -106,6 +106,10 @@ struct ProfileView: View {
                     }
                 }
 
+                if let healthExport {
+                    HealthCleanupSection(coordinator: healthExport)
+                }
+
                 #if DEBUG
                 if healthExport != nil || onDeleteAllDrinks != nil {
                     Section("Developer Tools") {
@@ -137,7 +141,7 @@ struct ProfileView: View {
                         
                                 Button("Cancel", role: .cancel) {}
                             } message: {
-                                Text("This permanently deletes your entire drink history. Are you sure?")
+                                Text("This removes all drinks from Watered. Apple Health cleanup may finish later if permission is unavailable. Your settings and goal history stay unchanged. This cannot be undone.")
                             }
                             .alert(
                                 "Could not delete drinks",
