@@ -11,6 +11,7 @@ protocol HealthAuthorizationStore: AnyObject {
 @MainActor
 private final class AppleHealthAuthorizationStore: HealthAuthorizationStore, HealthSampleStore, HealthDeletionStore {
     private let store = HKHealthStore()
+    var appSourcePredicate: NSPredicate { HKQuery.predicateForObjects(from: HKSource.default()) }
     func save(_ sample: HKQuantitySample) async throws { try await store.save(sample) }
     func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int {
         try await store.deleteObjects(of: type, predicate: predicate)
@@ -33,6 +34,8 @@ protocol HealthSampleStore: AnyObject {
 
 @MainActor
 protocol HealthDeletionStore: AnyObject {
+    /// The production store resolves the app source; isolated tests never open that boundary.
+    var appSourcePredicate: NSPredicate { get }
     func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int
 }
 
@@ -95,7 +98,7 @@ final class AppleHealthKitClient: HealthExportClient {
         guard authorization(for: target.type) == .authorized else { throw HealthExportFailure.authorization }
         guard let deletionStore = store as? any HealthDeletionStore else { throw HealthExportFailure.temporary }
         let predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            HKQuery.predicateForObjects(from: HKSource.default()),
+            deletionStore.appSourcePredicate,
             HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier,
                                        allowedValues: [target.syncIdentifier])
         ])

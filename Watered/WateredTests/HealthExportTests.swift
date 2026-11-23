@@ -531,7 +531,7 @@ struct HealthExportTests {
             let compound = try #require(request.1 as? NSCompoundPredicate)
             #expect(compound.compoundPredicateType == .and)
             #expect(compound.subpredicates.count == 2)
-            #expect(compound.subpredicates.contains { ($0 as? NSPredicate)?.isEqual(HKQuery.predicateForObjects(from: HKSource.default())) == true })
+            #expect(compound.subpredicates.contains { ($0 as? NSPredicate)?.isEqual(store.appSourcePredicate) == true })
             #expect(compound.subpredicates.contains { ($0 as? NSPredicate)?.isEqual(HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, allowedValues: [target.syncIdentifier])) == true })
             let expected: [HealthWriteType: HKQuantityTypeIdentifier] = [.water: .dietaryWater, .caffeine: .dietaryCaffeine, .alcohol: .numberOfAlcoholicBeverages]
             #expect(request.0 == HKQuantityType(try #require(expected[type])))
@@ -796,6 +796,7 @@ private enum TestFailure: Error { case failed }
 
 @MainActor
 private final class ExportSystemStore: HealthAuthorizationStore, HealthSampleStore, HealthDeletionStore {
+    let appSourcePredicate = NSPredicate(format: "sourceBundleIdentifier == %@", "synthetic-watered")
     var deletions: [(HKObjectType, NSPredicate)] = []
     func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int {
         if let failure { throw failure }
