@@ -257,6 +257,9 @@ Reset tests combine older failed cleanup, exported entries and never-started ent
 a failed transaction leaves all visible history intact. A successful reset preserves
 older retry state, sync preference, profile settings and goal history. Identity validation
 prevents malformed cleanup; damaged upload payloads do not prevent valid cleanup.
+Confirmation coverage checks the selected entry state across switch changes: no Health
+wording for never-eligible drinks, but eligible/possibly-written records retain it even
+with exports off. Queued uploads can finish while the confirmation is open.
 
 The Debug inspector now shows **Retained deleted drinks**, plus two cleanup interventions:
 **Fail next cleanup before deleting** and **Pause next successful cleanup before acknowledgement**.
@@ -279,7 +282,8 @@ first establish that the entire selected visible history is disposable.
    verify local disappearance, its Health sample removed, controls unchanged and its
    retained details/records purged. Reopen to confirm no recreation.
 3. Delete a never-exported drink with exports off. Verify immediate local removal with
-   no cleanup intent. Separately delete an exported drink while exports are off;
+   no cleanup intent and local-only confirmation wording. Separately delete an exported
+   drink while exports are off; its confirmation must still explain Health cleanup;
    cleanup must still finish. Turning exports off alone must leave Health samples intact.
 4. For a multi-type drink, revoke one relevant grant before local deletion. Verify
    permitted types clean independently, the blocked type/details remain after relaunch,

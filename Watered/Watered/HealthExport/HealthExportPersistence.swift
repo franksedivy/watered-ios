@@ -43,6 +43,16 @@ enum HealthExportPersistence {
         }
     }
 
+    /// Include queued uploads: they may finish while the confirmation is open.
+    /// Entries without eligible or possible writes need only local-deletion wording.
+    static func needsCleanupNotice(for entryIDs: Set<UUID>, in context: ModelContext) throws -> Bool {
+        guard !entryIDs.isEmpty else { return false }
+        return try context.fetch(FetchDescriptor<PersistentHealthExport>()).contains {
+            entryIDs.contains($0.entryID) && ($0.mayHaveWritten ||
+                ($0.operation == "upload" && ["pending", "inFlight", "authorizationBlocked"].contains($0.status)))
+        }
+    }
+
     /// Atomically cancels never-started uploads and retains possibly-written types for cleanup.
     static func prepareDeletion(_ entry: PersistentDrinkEntry, in context: ModelContext, at date: Date) throws {
         // Repeated deletion/reset must not reopen completed cleanup or reset its backoff.

@@ -37,6 +37,8 @@ struct ProfileView: View {
 
     /// Requests history deletion; nil hides the control and a thrown error presents feedback.
     var onDeleteAllDrinks: (() throws -> Void)? = nil
+    var needsHealthCleanupNoticeForReset: () throws -> Bool = { false }
+    @State private var showsHealthCleanupNotice = false
     
     /// Controls confirmation before deleting the entire drink history.
     @State private var isConfirmingDrinkReset = false
@@ -120,7 +122,10 @@ struct ProfileView: View {
                         }
                         if let deleteAllDrinks = onDeleteAllDrinks {
                             Button("Delete all drinks", role: .destructive) {
-                                isConfirmingDrinkReset = true
+                                do {
+                                    showsHealthCleanupNotice = try needsHealthCleanupNoticeForReset()
+                                    isConfirmingDrinkReset = true
+                                } catch { isShowingDrinkResetError = true }
                             }
                             .accessibilityIdentifier("deleteAllDrinksButton")
                             .confirmationDialog(
@@ -141,7 +146,11 @@ struct ProfileView: View {
                         
                                 Button("Cancel", role: .cancel) {}
                             } message: {
-                                Text("This removes all drinks from Watered. Apple Health cleanup may finish later if permission is unavailable. Your settings and goal history stay unchanged. This cannot be undone.")
+                                if showsHealthCleanupNotice {
+                                    Text("This removes all drinks from Watered. Apple Health cleanup may finish later if permission is unavailable. Your settings and goal history stay unchanged. This cannot be undone.")
+                                } else {
+                                    Text("This removes all drinks from Watered. Your settings and goal history stay unchanged. This cannot be undone.")
+                                }
                             }
                             .alert(
                                 "Could not delete drinks",

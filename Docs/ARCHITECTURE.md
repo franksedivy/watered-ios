@@ -159,7 +159,10 @@ same transaction as the final acknowledgement. A failed acknowledgement leaves d
 in-flight work for the same constrained retry. The executor also recovers completed
 but unpurged tombstones. Debug reset uses the same atomic transaction for its selected
 visible history, preserving older cleanup, settings and goal history. Profile displays
-pending/blocked cleanup feedback; physical ownership and lifecycle checks remain required.
+pending/blocked cleanup feedback. Individual/reset confirmations mention Health only
+when the selected drinks have eligible or possibly-written records, independently of
+the current switch. Queued work is included because it can finish while confirmation
+is open. Physical ownership and lifecycle checks remain required.
 
 **#111 owns the full user-facing sync switch, status and Retry now controls**. The current
 permission-only screen does not enable export. New stores remain disabled.

@@ -20,6 +20,8 @@ struct StatsDrinkEntryDetailView: View {
     
     /// Requests deletion by entry ID. A thrown error keeps the view open and presents an alert.
     let onDeleteDrink: (UUID) throws -> Void
+    var needsHealthCleanupNotice: () throws -> Bool = { false }
+    @State private var showsHealthCleanupNotice = false
     
     /// Returns to Stats after a successful deletion.
     @Environment(\.dismiss) private var dismiss
@@ -148,7 +150,10 @@ struct StatsDrinkEntryDetailView: View {
             }
             Section {
                 Button(role: .destructive) {
-                    isConfirmingDeletion = true
+                    do {
+                        showsHealthCleanupNotice = try needsHealthCleanupNotice()
+                        isConfirmingDeletion = true
+                    } catch { isShowingDeletionError = true }
                 } label: {
                     Label("Delete drink", systemImage: "trash")
                 }
@@ -172,7 +177,11 @@ struct StatsDrinkEntryDetailView: View {
                     
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Delete \(amountText) of \(entry.displayName). This removes it from Watered. Apple Health cleanup may finish later if permission is unavailable. This can't be undone.")
+                    if showsHealthCleanupNotice {
+                        Text("Delete \(amountText) of \(entry.displayName). This removes it from Watered. Apple Health cleanup may finish later if permission is unavailable. This can't be undone.")
+                    } else {
+                        Text("Delete \(amountText) of \(entry.displayName). This can't be undone.")
+                    }
                 }
                 .alert(
                     "Could not delete drink",

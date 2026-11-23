@@ -479,6 +479,37 @@ struct HealthExportTests {
     }
     #endif
 
+    @Test func deletionNoticeFollowsSelectedExportStateAcrossSwitchChanges() throws {
+        let container = try container()
+        let client = TestExportClient()
+        let localOnly = entry(caffeine: 0, abv: nil)
+        try save(localOnly, in: container, client: client)
+        try enable(container)
+        let eligible = entry(caffeine: 0, abv: nil)
+        try save(eligible, in: container, client: client)
+        func notice(_ ids: Set<UUID>) throws -> Bool {
+            try HealthExportPersistence.needsCleanupNotice(for: ids, in: ModelContext(container))
+        }
+        #expect(try !notice([localOnly.id])) // switch on cannot backfill this drink
+        #expect(try notice([eligible.id])) // queued work may finish during confirmation
+        try enable(container, false)
+        #expect(try !notice([localOnly.id]))
+        #expect(try notice([eligible.id]))
+        let context = ModelContext(container)
+        let record = try #require(try context.fetch(FetchDescriptor<PersistentHealthExport>()).first)
+        record.status = "invalid"
+        try context.save()
+        #expect(try !notice([eligible.id])) // never-written invalid payload cannot upload
+        record.mayHaveWritten = true
+        record.operation = "delete"
+        record.status = "authorizationBlocked"
+        try context.save()
+        #expect(try notice([eligible.id])) // possible writes need cleanup even with sync off
+        #expect(try notice([localOnly.id, eligible.id]))
+        #expect(try !notice([localOnly.id])) // unrelated old cleanup does not affect selection
+        #expect(try !notice([]))
+    }
+
     @Test func bulkResetIsAtomicAndPreservesOlderCleanupSettingsAndGoalHistory() async throws {
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self,
                              PersistentAppSettings.self, PersistentHydrationGoalChange.self])
