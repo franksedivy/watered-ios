@@ -44,8 +44,12 @@ in the meantime. Retries do not promise exactly-once or background completion.
 Inspected `WateredApp`, the analytics clients/events, HealthKit client, mapping,
 preference/export persistence and coordinator, project dependencies and source API
 usage. Release discards analytics. Debug logs approved interaction events locally.
-The two Health permission actions have no properties; opt-in, retries, grants,
-denials, errors, quantities and identifiers introduce no analytics events/properties.
+The two Health permission actions have no properties. On 24 November 2026 Frank
+also approved `apple_health_sync_enabled`: Profile emits it only after a successful
+off-to-on preference commit. It has no properties, grants or export outcomes. Repeated
+on, failed saves, disabling and screen reopening emit no enablement event. Re-enabling
+counts as another action, not another unique person. Retries, grants, denials, errors,
+quantities and identifiers introduce no analytics events/properties.
 The Debug inspection screen displays synthetic/test records locally, not telemetry.
 
 Under Apple's [collection definition](https://developer.apple.com/app-store/app-privacy-details/),
@@ -74,7 +78,10 @@ validation or approval of every future dependency.
 
 ## Publication and verification boundary
 
-The in-app screen contains the relevant sharing, retention and recovery explanation.
+The always-available information destination (Privacy & information) contains the
+sharing, retention and recovery explanation. The main screen shows the sync switch,
+revealing permissions and status only when enabled; actionable errors remain visible.
+Cleanup and permission recovery are accessible through information even while off.
 No published policy URL or App Store Connect answers were available in this checkout;
 apply the reviewed wording to the published policy before release and compare the
 final archive's privacy report with the submitted answers. The wiki's

@@ -33,6 +33,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Connected"].exists)
         tapToggle(toggle)
         XCTAssertEqual(toggle.value as? String, "0")
+        XCTAssertFalse(app.buttons["healthReviewPermissions"].exists)
+        tapToggle(toggle)
         revealReview(in: app)
         app.buttons["Review permissions"].tap()
         XCTAssertTrue(app.alerts["Apple Health permissions"].waitForExistence(timeout: 3))
@@ -43,21 +45,23 @@ final class HealthSyncUITests: XCTestCase {
     @MainActor
     func testUnavailablePermissionExplainsLocalLogging() {
         let app = openHealth("unavailable")
+        tapToggle(app.switches["healthSyncToggle"])
         revealReview(in: app)
         app.buttons["Review permissions"].tap()
         XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "You can still log drinks")).firstMatch.waitForExistence(timeout: 3))
     }
 
-    // Given a restricted request, the screen explains the error without opting in.
+    // Given a restricted request, the screen explains the error without changing app opt-in.
     @MainActor
-    func testRestrictedRequestShowsErrorWithoutEnablingSync() {
+    func testRestrictedRequestPreservesSyncChoice() {
         let app = openHealth("restricted")
+        tapToggle(app.switches["healthSyncToggle"])
         revealReview(in: app)
         app.buttons["Review permissions"].tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Health access is restricted")).firstMatch.waitForExistence(timeout: 3))
         app.swipeDown()
         app.swipeDown()
-        XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "0")
+        XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
     }
 
     // A saved opt-in survives leaving the detail screen; permission request completion
@@ -65,6 +69,10 @@ final class HealthSyncUITests: XCTestCase {
     @MainActor
     func testMixedPermissionsAndPreferenceSurviveReopening() {
         let app = openHealth("mixed")
+        XCTAssertFalse(app.buttons["healthReviewPermissions"].exists)
+        XCTAssertFalse(app.buttons["healthSyncRetry"].exists)
+        XCTAssertFalse(app.buttons["healthExportStatusLink"].exists)
+        capture("Apple Health — disabled", in: app)
         tapToggle(app.switches["healthSyncToggle"])
         revealReview(in: app)
         app.buttons["healthReviewPermissions"].tap()
@@ -73,6 +81,7 @@ final class HealthSyncUITests: XCTestCase {
             XCTAssertEqual(permission.value as? String, value)
         }
         XCTAssertFalse(app.staticTexts["Connected"].exists)
+        capture("Apple Health — mixed permissions", in: app)
         app.navigationBars["Apple Health"].buttons.element(boundBy: 0).tap()
         app.buttons["Sync with Apple Health"].tap()
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
@@ -98,6 +107,7 @@ final class HealthSyncUITests: XCTestCase {
     @MainActor
     func testRetryUpdatesFailedTypeWithoutChangingOtherOutcomes() {
         let app = openHealth("retry")
+        openExportStatus(in: app)
         let water = app.descendants(matching: .any)["healthExportStatus-water"].firstMatch
         reveal(water, in: app)
         XCTAssertTrue(water.label.contains("Waiting to retry: 1"))
@@ -114,26 +124,27 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(caffeine.label.contains("Sent to Apple Health: 1"))
     }
 
-    // Turning sync off pauses pending uploads; Retry now cannot bypass the preference.
+    // Disabled sync hides the upload controls. Enabling reveals previously eligible
+    // pending work, and Retry now sends it without inventing a historical export.
     @MainActor
     func testPendingUploadsStayPausedUntilEnabled() {
         let app = openHealth("paused")
+        XCTAssertFalse(app.buttons["healthSyncRetry"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["healthExportStatus-water"].firstMatch.exists)
+        XCTAssertFalse(app.buttons["healthExportStatusLink"].exists)
+        tapToggle(app.switches["healthSyncToggle"])
+        openExportStatus(in: app)
         let water = app.descendants(matching: .any)["healthExportStatus-water"].firstMatch
         reveal(water, in: app)
-        XCTAssertTrue(water.label.contains("Paused: 1"))
+        XCTAssertTrue(water.label.contains("Pending: 1"))
         let retry = app.buttons["healthSyncRetry"]
         reveal(retry, in: app)
         retry.tap()
         reveal(water, in: app, upwards: false)
-        XCTAssertTrue(water.label.contains("Paused: 1"))
-        reveal(app.switches["healthSyncToggle"], in: app, upwards: false)
-        tapToggle(app.switches["healthSyncToggle"])
-        reveal(water, in: app)
-        XCTAssertTrue(water.label.contains("Pending: 1"))
-        reveal(retry, in: app)
-        retry.tap()
-        reveal(water, in: app, upwards: false)
         assertEventually(water, "label CONTAINS %@", "Sent to Apple Health: 1")
+        app.navigationBars["Export status"].buttons.element(boundBy: 0).tap()
+        tapToggle(app.switches["healthSyncToggle"])
+        XCTAssertTrue(app.buttons["healthExportStatusLink"].waitForNonExistence(timeout: 3))
     }
 
     // Blocked deletion remains visible with sync off. Restored fake permission plus
@@ -141,20 +152,25 @@ final class HealthSyncUITests: XCTestCase {
     @MainActor
     func testBlockedCleanupRecoversWhileSyncRemainsOff() {
         let app = openHealth("cleanup")
+        XCTAssertFalse(app.buttons["healthCleanupRetry"].exists)
+        reveal(app.buttons["healthSyncInformation"], in: app)
+        app.buttons["healthSyncInformation"].tap()
         let blocked = app.staticTexts["Deleted from Watered. To remove its Apple Health data, restore permission or delete it in Health."]
         reveal(blocked, in: app)
         XCTAssertTrue(blocked.exists)
-        let review = app.buttons["healthReviewPermissions"]
-        reveal(review, in: app, upwards: false)
-        review.tap()
+        let manage = app.buttons["healthManagePermissions"]
+        reveal(manage, in: app, upwards: false)
+        manage.tap()
+        revealReview(in: app)
+        app.buttons["healthReviewPermissions"].tap()
         let waterPermission = app.descendants(matching: .any)["healthPermission-water"].firstMatch
-        reveal(waterPermission, in: app, upwards: false)
         assertEventually(waterPermission, "value == %@", "Allowed")
+        app.navigationBars["Apple Health permissions"].buttons.element(boundBy: 0).tap()
         let retry = app.buttons["healthCleanupRetry"]
         reveal(retry, in: app)
         retry.tap()
         XCTAssertTrue(blocked.waitForNonExistence(timeout: 5))
-        reveal(app.switches["healthSyncToggle"], in: app, upwards: false)
+        app.navigationBars["Privacy & information"].buttons.element(boundBy: 0).tap()
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "0")
     }
 
@@ -167,13 +183,36 @@ final class HealthSyncUITests: XCTestCase {
         assertEventually(app.switches["healthSyncToggle"], "value == %@", "1")
         revealReview(in: app)
         XCTAssertTrue(app.buttons["healthReviewPermissions"].isHittable)
+        openExportStatus(in: app)
         let retry = app.buttons["healthSyncRetry"]
         reveal(retry, in: app)
         XCTAssertTrue(retry.isHittable)
+        capture("Apple Health export status at largest text", in: app)
+        app.navigationBars["Export status"].buttons.element(boundBy: 0).tap()
+        reveal(app.buttons["healthSyncInformation"], in: app)
+        app.buttons["healthSyncInformation"].tap()
         let privacy = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH %@", "Watered requests write access only")).firstMatch
         reveal(privacy, in: app, maxSwipes: 30)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Apple Health privacy at largest text"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
+    /// Exercises the production navigation rather than mounting a status-only test view.
+    @MainActor
+    private func openExportStatus(in app: XCUIApplication) {
+        let link = app.buttons["healthExportStatusLink"]
+        reveal(link, in: app)
+        link.tap()
+        XCTAssertTrue(app.navigationBars["Export status"].waitForExistence(timeout: 3))
+    }
+
+    /// Retains visual evidence for the focused screen review without reading personal data.
+    @MainActor
+    private func capture(_ name: String, in app: XCUIApplication) {
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = name
         screenshot.lifetime = .keepAlways
         add(screenshot)
     }

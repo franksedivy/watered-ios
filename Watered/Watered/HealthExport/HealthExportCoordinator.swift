@@ -53,9 +53,15 @@ final class HealthExportCoordinator {
         if active { wake() } else { timer?.cancel(); timer = nil }
     }
 
-    func setEnabled(_ enabled: Bool) throws {
+    /// Commits the preference before reporting a user-initiated off-to-on transition.
+    /// Profile supplies its analytics client; harness/operational callers default to no-op.
+    /// Permission grants and export outcomes never enter this property-free interaction event.
+    func setEnabled(_ enabled: Bool, analytics: (any AnalyticsClient)? = nil) throws {
         guard let context else { throw PersistenceError.notAttached }
-        try HealthExportPersistence.setEnabled(enabled, in: ModelContext(context.container), at: now(), beforeSave: beforeSave)
+        let preferenceContext = ModelContext(context.container)
+        let wasEnabled = try HealthExportPersistence.isEnabled(in: preferenceContext)
+        try HealthExportPersistence.setEnabled(enabled, in: preferenceContext, at: now(), beforeSave: beforeSave)
+        if enabled && !wasEnabled { analytics?.track(.appleHealthSyncEnabled) }
         wake()
     }
 

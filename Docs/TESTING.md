@@ -318,8 +318,9 @@ storage; Release ignores it. These UI tests remain outside hosted unit-only sele
 
 Final-screen review still required on a controlled device:
 
-- Profile → Sync with Apple Health: off by default; explanation precedes Review
-  permissions. Opening and toggling must not request authorization. Review permissions
+- Profile → Sync with Apple Health: off by default, showing the switch and bottom Privacy & information
+  row. Privacy & information contains the explanation/privacy text. Enabling reveals
+  permissions and the Export status link; disabling hides those controls. Opening and toggling must not request authorization. Review permissions
   alone may request undecided types; completion never implies all types allowed.
 - Decline, enable with mixed grants, disable, reopen and change permissions externally.
   Verify preference and permissions remain independent and local logging still works.
@@ -331,8 +332,9 @@ Final-screen review still required on a controlled device:
 - Check largest accessibility text sizes, VoiceOver reading order/control names,
   light/dark contrast and scroll access to all actions. Native controls and semantic
   colors are used; source inspection does not establish accessibility acceptance.
-- Inspect Debug logs: only the existing property-free permission-open/review actions;
-  no events for sync switches, grants, quantities, statuses or retry. Verify Release
+- Inspect Debug logs: the existing property-free permission-open/review actions and
+  the approved property-free `apple_health_sync_enabled` after a committed off-to-on
+  change; no events for failed saves, disabling, grants, quantities, statuses or retry. Verify Release
   discards events and omits Debug fixtures. Capture screenshots on the reviewed build.
 
 These final controls require their own evidence; #109/#110 device observations do
@@ -442,3 +444,31 @@ changes (`/tmp/watered-111-ui-release.log`). Whitespace and local documentation-
 checks passed. The CI workflow, runner guard and test plan are unchanged; hosted CI
 still selects only `WateredTests`. This local UI pass is not a full app suite,
 physical-device authorization test, VoiceOver assessment or Release signing check.
+
+### Sync enablement analytics (#111)
+
+Frank approved the property-free `apple_health_sync_enabled` event on 24 November
+2026 to measure enablement actions. `HealthExportStatusTests` verifies persistence
+is visible before emission, no event on failed saves, one event on successful retry,
+no duplicate for an already-on preference, and no disable event. Permissions do not
+gate this event: app opt-in is distinct from authorization and successful export.
+Profile supplies analytics explicitly; operational/harness calls default to no-op.
+Debug logs locally and Release still discards events. This does not provide production
+adoption reporting or a count of unique people without a separately approved provider.
+
+### Simplified Apple Health layout — 24 November 2026
+
+The main screen shows the sync toggle and a final Privacy & information navigation
+row. Enabling reveals write permissions and an Export status link; that subpage owns
+Water/Caffeine/Alcohol outcomes and Retry now. Allowed is green and Not allowed is
+amber, with explicit text/accessibility values and light/dark colour variants.
+
+Privacy & information contains sharing, retention, deletion and privacy explanations.
+Manage permissions and pending cleanup remain reachable there with sync off.
+Preference-save/read errors remain actionable on the main screen. These navigation
+changes do not change export eligibility, history, retry or deletion policy.
+
+Focused UI tests cover hidden/revealed controls, both destinations, reopening,
+retry and the off-state information → permissions → cleanup route. Largest-text
+coverage navigates all three screens. Earlier iPhone observations remain lifecycle
+evidence, not visual acceptance of this revised layout.

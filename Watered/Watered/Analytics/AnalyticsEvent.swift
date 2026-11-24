@@ -21,6 +21,10 @@ nonisolated enum AnalyticsEvent: Equatable {
     /// The user tapped Review permissions, independent of grants or request outcome.
     case appleHealthPermissionsReviewTapped
 
+    /// Profile successfully changed sync from off to on. No permission or Health properties.
+    /// Counts enablement actions, not unique people or successful Health exports.
+    case appleHealthSyncEnabled
+
     /// A drink was successfully saved.
     ///
     /// - Parameter method: Whether the user submitted the form or tapped a recent drink.

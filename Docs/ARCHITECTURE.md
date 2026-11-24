@@ -80,6 +80,9 @@ Only `requestAuthorizationFromUserAction()` may request permission. Profile’s 
 screen invokes it through Review permissions in Debug and Release and displays per-type states/errors.
 Its independent sync switch persists the app preference through the existing coordinator. The screen-opened and review-tapped
 analytics events carry no properties; Debug logs locally and Release discards them.
+Profile also supplies analytics to the coordinator's preference action: a committed
+off-to-on transition emits `apple_health_sync_enabled`, with no properties. Failed
+saves, already-on requests, disabling and operational/harness calls do not emit it.
 Completion refreshes grants rather than assuming them.
 Denied/revoked and not-determined states are per type; restricted/unavailable request
 errors are separate from grants because the platform does not expose a distinct
@@ -164,7 +167,12 @@ when the selected drinks have eligible or possibly-written records, independentl
 the current switch. Queued work is included because it can finish while confirmation
 is open. Physical ownership and lifecycle checks remain required.
 
-`HealthSyncView` exposes the persisted switch, per-type upload summaries and Retry now.
+`HealthSyncView` shows the persisted switch and final Privacy & information row
+while disabled. Enabling reveals per-type permissions and an Export status link. `HealthExportStatusView` owns the
+per-type summaries and Retry now on that subpage. The main view’s bottom
+Privacy & information row always opens `HealthSyncInformationView`, which owns the explanatory/privacy text and the
+permission/cleanup recovery route needed while uploads are off. Permission labels
+retain their text and accessibility values alongside green Allowed and amber Not allowed.
 Fresh contexts refresh the preference and value summaries after worker activity and
 foreground entry; failed reads disable preference edits, and failed writes preserve
 the previous choice. `HealthExportStatus` excludes deletion records from upload counts
