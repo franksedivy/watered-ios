@@ -51,8 +51,22 @@ struct WateredApp: App {
         let usesFakeHealth = configuration.usesInMemoryStorage
             || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        let healthClient: any HealthExportClient = usesFakeHealth
-            ? FakeHealthKitClient() : AppleHealthKitClient()
+        let fakeHealth = FakeHealthKitClient()
+        #if DEBUG
+        if configuration.usesInMemoryStorage {
+            switch configuration.healthTestScenario {
+            case "denied":
+                fakeHealth.statuses = Dictionary(uniqueKeysWithValues: HealthWriteType.allCases.map { ($0, .denied) })
+            case "mixed":
+                fakeHealth.statuses = [.water: .authorized, .caffeine: .denied, .alcohol: .notDetermined]
+            case "restricted":
+                fakeHealth.statuses = Dictionary(uniqueKeysWithValues: HealthWriteType.allCases.map { ($0, .notDetermined) })
+                fakeHealth.requestError = .restricted
+            default: break
+            }
+        }
+        #endif
+        let healthClient: any HealthExportClient = usesFakeHealth ? fakeHealth : AppleHealthKitClient()
         _healthExport = State(initialValue: HealthExportCoordinator(client: healthClient))
         _healthAuthorization = State(initialValue: HealthAuthorizationController(client: healthClient))
         launchConfiguration = configuration

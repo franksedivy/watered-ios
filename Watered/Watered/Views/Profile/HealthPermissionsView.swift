@@ -5,27 +5,21 @@ struct HealthPermissionsView: View {
     let authorization: HealthAuthorizationController
     var analytics: any AnalyticsClient = NoOpAnalyticsClient()
 
-    @State private var hasReportedOpen = false
-
     var body: some View {
         Form {
             HealthPermissionsSection(authorization: authorization, analytics: analytics)
         }
         .navigationTitle("Apple Health permissions")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            guard !hasReportedOpen else { return }
-            hasReportedOpen = true
-            analytics.track(.appleHealthPermissionsOpened)
-        }
     }
 }
 
-private struct HealthPermissionsSection: View {
+struct HealthPermissionsSection: View {
     let authorization: HealthAuthorizationController
     let analytics: any AnalyticsClient
     @State private var isShowingHealthGuidance = false
     @State private var healthGuidanceMessage = ""
+    @State private var hasReportedOpen = false
 
     var body: some View {
         Section {
@@ -62,11 +56,7 @@ private struct HealthPermissionsSection: View {
         } header: {
             Text("Write permissions")
         } footer: {
-            #if DEBUG
-            Text("Write permissions only. Allowing access does not enable syncing. Debug export is controlled separately in Profile → Verify HealthKit export. Change existing permissions in the Health app.")
-            #else
-            Text("Write permissions only. To change an existing choice, open Watered’s permissions in the Health app. Allowing access does not enable syncing.")
-            #endif
+            Text("Write permissions only. Allowing access does not turn sync on. Change existing permissions in the Health app.")
         }
         .alert("Apple Health permissions", isPresented: $isShowingHealthGuidance) {
             Button("OK", role: .cancel) {}
@@ -75,6 +65,10 @@ private struct HealthPermissionsSection: View {
         }
         .onAppear {
             authorization.refreshAuthorization()
+            if !hasReportedOpen {
+                hasReportedOpen = true
+                analytics.track(.appleHealthPermissionsOpened)
+            }
         }
     }
 

@@ -100,10 +100,10 @@ struct ProfileView: View {
                     .accessibilityHint("Changes the daily hydration goal used by Today.")
                 }
                 
-                if let healthAuthorization {
+                if let healthAuthorization, let healthExport {
                     Section {
-                        NavigationLink("Apple Health permissions") {
-                            HealthPermissionsView(authorization: healthAuthorization, analytics: analytics)
+                        NavigationLink("Sync with Apple Health") {
+                            HealthSyncView(authorization: healthAuthorization, coordinator: healthExport, analytics: analytics)
                         }
                     }
                 }

@@ -306,3 +306,35 @@ first establish that the entire selected visible history is disposable.
 9. Turn test exports off. Record precise results and any remaining device/Release or
    accessibility limits. Keep #110 open until device acceptance is supported; #111
    production controls and #112's broader matrix remain separate.
+
+## HealthKit Profile controls (#111)
+
+`HealthExportStatusTests` covers independent upload outcomes, exclusion of cleanup,
+paused/retry/sent wording and preference persistence failures without permission prompts.
+`HealthSyncUITests` uses isolated in-memory storage and fake denied, restricted and
+unavailable permissions. `-uiTestingHealth=…` is honored only with isolated Debug
+storage; Release ignores it. These UI tests remain outside hosted unit-only selection.
+
+Final-screen review still required on a controlled device:
+
+- Profile → Sync with Apple Health: off by default; explanation precedes Review
+  permissions. Opening and toggling must not request authorization. Review permissions
+  alone may request undecided types; completion never implies all types allowed.
+- Decline, enable with mixed grants, disable, reopen and change permissions externally.
+  Verify preference and permissions remain independent and local logging still works.
+- Exercise pending, retryable failure, permission-blocked and invalid work. Check
+  per-type counts, Retry now, sent acknowledgement wording and foreground refresh.
+  Disabling pauses uploads while cleanup and its recovery feedback remain available.
+- With the existing Debug failure hooks, verify cleanup feedback and that the reset
+  confirmation still describes delayed Health removal independently of the switch.
+- Check largest accessibility text sizes, VoiceOver reading order/control names,
+  light/dark contrast and scroll access to all actions. Native controls and semantic
+  colors are used; source inspection does not establish accessibility acceptance.
+- Inspect Debug logs: only the existing property-free permission-open/review actions;
+  no events for sync switches, grants, quantities, statuses or retry. Verify Release
+  discards events and omits Debug fixtures. Capture screenshots on the reviewed build.
+
+These final controls require their own evidence; #109/#110 device observations do
+not verify this screen. #112 retains the broader integration/device matrix. Published
+policy, distribution privacy report and App Store answers remain release checks in
+[HealthKit privacy review](HealthKit-Privacy.md).

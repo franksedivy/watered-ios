@@ -77,15 +77,15 @@ and requests only water, caffeine and alcohol write permissions with an empty re
 The controller refreshes per-type status on foreground entry without prompting; future
 operations read the client’s current authorization rather than cached presentation state.
 Only `requestAuthorizationFromUserAction()` may request permission. Profile’s Apple Health
-permissions screen invokes it in Debug and Release and displays per-type states/errors.
-#111 still owns sync opt-in and export status. The screen-opened and review-tapped
+screen invokes it through Review permissions in Debug and Release and displays per-type states/errors.
+Its independent sync switch persists the app preference through the existing coordinator. The screen-opened and review-tapped
 analytics events carry no properties; Debug logs locally and Release discards them.
 Completion refreshes grants rather than assuming them.
 Denied/revoked and not-determined states are per type; restricted/unavailable request
 errors are separate from grants because the platform does not expose a distinct
 per-type restricted authorization status. Errors retain no raw Health data or descriptions.
 
-The permission screen does not enable sync. The separate #109 setting, eligibility
+Permission grants do not enable sync. The #109 setting, eligibility
 transaction, upload executor and deletion cleanup are described below.
 Local saving remains independent. Isolated tests and app previews use
 `FakeHealthKitClient`; standalone view previews do not construct a Health store.
@@ -164,8 +164,13 @@ when the selected drinks have eligible or possibly-written records, independentl
 the current switch. Queued work is included because it can finish while confirmation
 is open. Physical ownership and lifecycle checks remain required.
 
-**#111 owns the full user-facing sync switch, status and Retry now controls**. The current
-permission-only screen does not enable export. New stores remain disabled.
+`HealthSyncView` exposes the persisted switch, per-type upload summaries and Retry now.
+Fresh contexts refresh the preference and value summaries after worker activity and
+foreground entry; failed reads disable preference edits, and failed writes preserve
+the previous choice. `HealthExportStatus` excludes deletion records from upload counts
+and never infers current Health contents from acknowledged writes. Permission recovery
+remains an explicit action, separate from enablement and retries. New stores remain disabled.
+See [HealthKit privacy review](HealthKit-Privacy.md) for user-facing and store wording.
 
 Same-version HealthKit deduplication requires #112's controlled-device evidence;
 fake/simulator tests establish the local protocol only. The accepted limitation
