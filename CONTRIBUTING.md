@@ -32,6 +32,8 @@ Complete these checks when creating any PR, including drafts, and recheck them w
 - **Reviewers:** request the agreed eligible reviewer or team. GitHub does not allow the PR author to review their own PR; do not invent a reviewer simply to populate the field. Explain when no eligible reviewer is designated.
 - **Development / issue links:** reference all relevant and parent tickets in the description. Use closing keywords or GitHub's closing links only when the PR fully resolves that issue. For partial category deliveries, use `Refs #…`; an empty Development field is acceptable when automatic closure would be incorrect.
 
+- **Acceptance criteria:** reconcile the owning issue’s checkboxes with recorded evidence before using a closing link. Check only satisfied criteria; document blockers or agreed scope decisions for anything unmet. After merge, verify the issue state and checklist, and update the relevant child-ticket checkbox on its parent. Do not treat a completion comment or automatic closure as a checklist update.
+
 Read back the saved metadata before reporting completion. Briefly identify any intentionally unset fields or permission limitations. Metadata completion does not authorize a merge or release.
 
 ## Repetitive checks and formatting
