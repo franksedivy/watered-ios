@@ -6,6 +6,7 @@ import SwiftData
 struct DebugHealthExportView: View {
     let coordinator: HealthExportCoordinator
     @Environment(\.modelContext) private var modelContext
+    @State private var retainedDrinks = 0
     @State private var enabled = false
     @State private var rows: [DebugHealthExportRow] = []
     @State private var errorMessage: String?
@@ -17,6 +18,7 @@ struct DebugHealthExportView: View {
                 Toggle("Enable test exports", isOn: Binding(get: { enabled }, set: setEnabled))
                 Button("Retry now") { coordinator.retryNow() }
                 Button("Refresh inspection") { refresh() }
+                LabeledContent("Retained deleted drinks", value: retainedDrinks.formatted())
                 LabeledContent("Worker", value: coordinator.isProcessing ? "Processing" : "Idle")
                 if coordinator.persistenceFailed {
                     Text("Export-state persistence failed. Pending work is retained; retry after resolving storage availability.")
@@ -25,11 +27,11 @@ struct DebugHealthExportView: View {
             } header: {
                 Text("Device verification only")
             } footer: {
-                Text("Enabling writes new, permitted drink estimates to your real Apple Health store and resumes eligible pending work. It does not export old history. Disabling pauses new uploads; existing Health data remains. This preference persists across relaunches and builds sharing this store; turn it off when testing finishes. Use disposable test drinks. Health cleanup is not implemented yet (#110).")
+                Text("Enabling writes new, permitted drink estimates to your real Apple Health store and resumes eligible pending work. It does not export old history. Disabling pauses new uploads; existing Health data remains. This preference persists across relaunches and builds sharing this store; turn it off when testing finishes. Use disposable test drinks. Deleting a drink also queues its Apple Health cleanup, even while exports are off.")
             }
 
             Section {
-                Picker("Next upload", selection: $harness.nextIntervention) {
+                Picker("Next operation", selection: $harness.nextIntervention) {
                     ForEach(DebugHealthExportHarness.Intervention.allCases) { intervention in
                         Text(intervention.rawValue).tag(intervention)
                     }
@@ -38,13 +40,13 @@ struct DebugHealthExportView: View {
                 Text(harness.lastIntervention).font(.footnote)
                 if let type = harness.pausedType {
                     LabeledContent("Paused type", value: type.rawValue)
-                    Text("HealthKit reported success. Local state is still inFlight. Stop the app with Xcode now to test recovery, or resume to record acknowledgement. Retry now cannot start another write while this one is paused.")
+                    Text("HealthKit reported success. Local state is still inFlight. Stop the app with Xcode now to test recovery, or resume to record acknowledgement. Retry now cannot start another operation while this one is paused.")
                     Button("Resume acknowledgement") { harness.resumeAcknowledgement() }
                 }
             } header: {
                 Text("One-shot intervention")
             } footer: {
-                Text("Interventions reset on relaunch. The pause arms the next successful write; a failed write leaves it armed. Simulated failure occurs before HealthKit I/O and follows normal backoff. Neither option rewrites acknowledged records.")
+                Text("Interventions reset on relaunch. Choose an upload or cleanup intervention. A pause arms the next successful matching operation; failures leave it armed. Simulated failures occur before HealthKit I/O and follow normal backoff. Completed cleanup purges records only after all types resolve.")
             }
 
             Section {
@@ -70,7 +72,7 @@ struct DebugHealthExportView: View {
             } header: {
                 Text("Local export records (\(rows.count))")
             } footer: {
-                Text("succeeded means a write was acknowledged, not that the sample still exists in Health. This inspector does not read Health data. Refresh after returning from Health to inspect current local state.")
+                Text("For uploads, succeeded means a write was acknowledged, not that the sample still exists in Health. Completed cleanup records disappear once every type for that drink is resolved. This inspector does not read Health data. Refresh after returning from Health to inspect current local state.")
             }
         }
         .navigationTitle("Verify HealthKit export")
@@ -92,6 +94,7 @@ struct DebugHealthExportView: View {
     private func refresh() {
         do {
             let context = ModelContext(modelContext.container)
+            retainedDrinks = try context.fetchCount(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.deletedAt != nil }))
             enabled = try HealthExportPersistence.isEnabled(in: context)
             rows = try context.fetch(FetchDescriptor<PersistentHealthExport>()).map { DebugHealthExportRow($0) }
                 .sorted { ($0.specification?.loggedAt ?? .distantPast) > ($1.specification?.loggedAt ?? .distantPast) }

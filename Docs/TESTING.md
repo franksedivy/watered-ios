@@ -195,7 +195,7 @@ use disposable data on a controlled physical device and record revision/device/i
 
 ### Debug-only device harness (#109, #112)
 
-Profile → **Verify HealthKit export** exposes the existing persisted switch and
+Profile → Developer Tools → **Verify HealthKit export** exposes the existing persisted switch and
 Retry now, plus a local record inspector. New stores remain disabled; opening the
 screen does not enable export, request permissions, or write samples. The switch
 uses the normal creation-time policy and persists across launches/builds sharing
@@ -243,3 +243,66 @@ remaining device acceptance has evidence. #110 cleanup/purge/reset and #111 fina
 controls are separate; the harness is not their completion. Backdated-entry mapping
 has synthetic coverage; the current Add Drink form has no date control, so this
 harness does not claim a new device route for that #112 scenario.
+
+## HealthKit deletion and reset (#110)
+
+`HealthExportTests` exercises deletion before upload and during a suspended upload,
+independent type outcomes, denied cleanup without permission prompts, retry/backoff,
+retention across a disk reopen and years of simulated time, and recovery from commit
+failure before I/O or before acknowledgement. A successful zero-match platform response
+is accepted; the seam verifies quantity type plus app-source and sync-identity predicates.
+These assertions do not establish real HealthKit ownership behavior.
+
+Reset tests combine older failed cleanup, exported entries and never-started entries;
+a failed transaction leaves all visible history intact. A successful reset preserves
+older retry state, sync preference, profile settings and goal history. Identity validation
+prevents malformed cleanup; damaged upload payloads do not prevent valid cleanup.
+Confirmation coverage checks the selected entry state across switch changes: no Health
+wording for never-eligible drinks, but eligible/possibly-written records retain it even
+with exports off. Queued uploads can finish while the confirmation is open.
+
+The Debug inspector now shows **Retained deleted drinks**, plus two cleanup interventions:
+**Fail next cleanup before deleting** and **Pause next successful cleanup before acknowledgement**.
+They use the ordinary worker, reset on relaunch, and are absent from Release. Resuming a
+pause acknowledges the operation; stopping with Xcode leaves durable in-flight cleanup
+for a constrained retry. A failed attempt leaves a successful-cleanup pause armed.
+
+### Physical-device plan — outstanding
+
+Guide one action at a time and record each observation with revision/device/iOS. Use
+explicitly selected disposable drinks. Do not run bulk reset on personal history:
+first establish that the entire selected visible history is disposable.
+
+1. Launch the Debug build without reinstalling or clearing storage. Confirm exports
+   remain off and the new cleanup controls/count are present. Record existing retained
+   cleanup: launching this build may resume cleanup already requested in an older build.
+2. With chosen grants and exports enabled, create a water-only drink and an unrelated
+   Watered control drink. Add a distinct manual Health control sample (and, if available,
+   identify an existing other-app control). Delete only the chosen Watered drink;
+   verify local disappearance, its Health sample removed, controls unchanged and its
+   retained details/records purged. Reopen to confirm no recreation.
+3. Delete a never-exported drink with exports off. Verify immediate local removal with
+   no cleanup intent and local-only confirmation wording. Separately delete an exported
+   drink while exports are off; its confirmation must still explain Health cleanup;
+   cleanup must still finish. Turning exports off alone must leave Health samples intact.
+4. For a multi-type drink, revoke one relevant grant before local deletion. Verify
+   permitted types clean independently, the blocked type/details remain after relaunch,
+   Profile shows the approved wording, and no prompt appears. Restore the grant and
+   verify cleanup/purge without another upload. Manual deletion in Health while blocked
+   does not itself acknowledge cleanup.
+5. Remove an acknowledged test sample directly in Health, then delete its Watered
+   drink: successful zero-match cleanup must purge without recreating it.
+6. Exercise injected cleanup failure, retry, and stop/relaunch after successful cleanup
+   but before acknowledgement. Verify no false purge before acknowledgement and safe
+   repeated cleanup afterward, with unrelated controls unchanged.
+7. Pause a successful upload before acknowledgement, delete its drink in Watered,
+   then resume. Verify the late result is cleaned, queued types never upload, and
+   details purge only after cleanup. Repeat with stop/relaunch while deleted/paused.
+8. Only with explicit confirmation that visible history is disposable, use Debug
+   **Delete all drinks** with an existing blocked cleanup and mixed exported/pending
+   drinks. Verify local history/totals/Recents disappear, settings/goal history and
+   export preference stay intact, old/new blocked cleanup survives relaunch, and
+   restoring grants finishes cleanup. Check all three sample types across these cases.
+9. Turn test exports off. Record precise results and any remaining device/Release or
+   accessibility limits. Keep #110 open until device acceptance is supported; #111
+   production controls and #112's broader matrix remain separate.

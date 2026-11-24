@@ -43,8 +43,20 @@ enum HealthExportPersistence {
         }
     }
 
-    /// #110 consumes retained delete intents. No cleanup I/O or purge of possibly-written data here.
+    /// Include queued uploads: they may finish while the confirmation is open.
+    /// Entries without eligible or possible writes need only local-deletion wording.
+    static func needsCleanupNotice(for entryIDs: Set<UUID>, in context: ModelContext) throws -> Bool {
+        guard !entryIDs.isEmpty else { return false }
+        return try context.fetch(FetchDescriptor<PersistentHealthExport>()).contains {
+            entryIDs.contains($0.entryID) && ($0.mayHaveWritten ||
+                ($0.operation == "upload" && ["pending", "inFlight", "authorizationBlocked"].contains($0.status)))
+        }
+    }
+
+    /// Atomically cancels never-started uploads and retains possibly-written types for cleanup.
     static func prepareDeletion(_ entry: PersistentDrinkEntry, in context: ModelContext, at date: Date) throws {
+        // Repeated deletion/reset must not reopen completed cleanup or reset its backoff.
+        guard entry.deletedAt == nil else { return }
         let id = entry.id
         let records = try context.fetch(FetchDescriptor<PersistentHealthExport>(predicate: #Predicate { $0.entryID == id }))
         var needsCleanup = false
@@ -52,6 +64,8 @@ enum HealthExportPersistence {
             if record.mayHaveWritten {
                 needsCleanup = true
                 record.operation = "delete"
+                record.attemptCount = 0
+                record.failureCategory = nil
                 // Preserve in-flight state until the outstanding callback settles.
                 if record.status != "inFlight" { record.status = "pending" }
                 record.nextAttemptAt = nil
@@ -61,4 +75,18 @@ enum HealthExportPersistence {
         }
         if needsCleanup { entry.deletedAt = date } else { context.delete(entry) }
     }
+
+    /// Only the serialized executor calls this, with no outstanding I/O for these records.
+    /// Purge and successful cleanup acknowledgements share a transaction.
+    static func purgeCompletedDeletions(in context: ModelContext) throws {
+        let deleted = try context.fetch(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.deletedAt != nil }))
+        for entry in deleted {
+            let id = entry.id
+            let records = try context.fetch(FetchDescriptor<PersistentHealthExport>(predicate: #Predicate { $0.entryID == id }))
+            guard records.allSatisfy({ $0.operation == "delete" && $0.status == "succeeded" }) else { continue }
+            for record in records { context.delete(record) }
+            context.delete(entry)
+        }
+    }
+
 }

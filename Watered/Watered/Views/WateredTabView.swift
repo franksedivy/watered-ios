@@ -284,7 +284,8 @@ struct WateredTabView: View {
                     onOpenProfile: openProfile,
                     entries: store.entries,
                     displayUnit: displayUnit,
-                    onDeleteDrink: deleteDrinkEntry
+                    onDeleteDrink: deleteDrinkEntry,
+                    needsHealthCleanupNotice: { try needsHealthCleanupNotice(for: [$0]) }
                 )
                     .tabItem {
                         Label("Stats", systemImage: "chart.bar")
@@ -397,6 +398,9 @@ struct WateredTabView: View {
                     analytics: analytics,
                     onDeleteAllDrinks: {
                         try deleteDrinkEntries(persistentDrinkEntries)
+                    },
+                    needsHealthCleanupNoticeForReset: {
+                        try needsHealthCleanupNotice(for: Set(persistentDrinkEntries.map(\.id)))
                     }
                 )
                 #else
@@ -503,6 +507,11 @@ struct WateredTabView: View {
         }
     }
     
+    private func needsHealthCleanupNotice(for ids: Set<UUID>) throws -> Bool {
+        guard healthExport != nil else { return false }
+        return try HealthExportPersistence.needsCleanupNotice(for: ids, in: ModelContext(modelContext.container))
+    }
+
     /// Deletes one logical dirnk entry identified by its stable UUID.
     ///
     /// Finds the matching persisted rows and delegates saving and store updates to the shared deletion function.
@@ -541,6 +550,7 @@ struct WateredTabView: View {
         }
         
         store.loadDrinkEntries(remainingEntries)
+        healthExport?.wake()
     }
     
     /// Repeats a supported shortcut with a fresh identity, time and current catalogue rules.

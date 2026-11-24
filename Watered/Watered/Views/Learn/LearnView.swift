@@ -23,6 +23,7 @@ struct LearnView: View {
 
     /// Requests deletion by entry UUID; errors are presented by the detail screen.
     let onDeleteDrink: (UUID) throws -> Void
+    var needsHealthCleanupNotice: (UUID) throws -> Bool = { _ in false }
 
     /// Newest-first calendar-day groups, with each group's entries also newest first.
     private var entriesByCalendarDay: [(day: Date, entries: [DrinkEntry])] {
@@ -68,7 +69,8 @@ struct LearnView: View {
                                     StatsDrinkEntryDetailView(
                                         entry: entry,
                                         displayUnit: displayUnit,
-                                        onDeleteDrink: onDeleteDrink
+                                        onDeleteDrink: onDeleteDrink,
+                                        needsHealthCleanupNotice: { try needsHealthCleanupNotice(entry.id) }
                                     )
                                 } label: {
                                     VStack(alignment: .leading, spacing: 4) {

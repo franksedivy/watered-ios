@@ -479,6 +479,291 @@ struct HealthExportTests {
     }
     #endif
 
+    @Test func deletionNoticeFollowsSelectedExportStateAcrossSwitchChanges() throws {
+        let container = try container()
+        let client = TestExportClient()
+        let localOnly = entry(caffeine: 0, abv: nil)
+        try save(localOnly, in: container, client: client)
+        try enable(container)
+        let eligible = entry(caffeine: 0, abv: nil)
+        try save(eligible, in: container, client: client)
+        func notice(_ ids: Set<UUID>) throws -> Bool {
+            try HealthExportPersistence.needsCleanupNotice(for: ids, in: ModelContext(container))
+        }
+        #expect(try !notice([localOnly.id])) // switch on cannot backfill this drink
+        #expect(try notice([eligible.id])) // queued work may finish during confirmation
+        try enable(container, false)
+        #expect(try !notice([localOnly.id]))
+        #expect(try notice([eligible.id]))
+        let context = ModelContext(container)
+        let record = try #require(try context.fetch(FetchDescriptor<PersistentHealthExport>()).first)
+        record.status = "invalid"
+        try context.save()
+        #expect(try !notice([eligible.id])) // never-written invalid payload cannot upload
+        record.mayHaveWritten = true
+        record.operation = "delete"
+        record.status = "authorizationBlocked"
+        try context.save()
+        #expect(try notice([eligible.id])) // possible writes need cleanup even with sync off
+        #expect(try notice([localOnly.id, eligible.id]))
+        #expect(try !notice([localOnly.id])) // unrelated old cleanup does not affect selection
+        #expect(try !notice([]))
+    }
+
+    @Test func bulkResetIsAtomicAndPreservesOlderCleanupSettingsAndGoalHistory() async throws {
+        let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self,
+                             PersistentAppSettings.self, PersistentHydrationGoalChange.self])
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
+        let client = TestExportClient()
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        await worker(container, client: client).process()
+        try deleteAll(container)
+        await worker(container, client: client).process() // retained temporary cleanup
+        let prior = try #require(try records(container).first)
+        let priorID = prior.identity
+        let priorDue = prior.nextAttemptAt
+        let priorAttempts = prior.attemptCount
+        try save(entry(), in: container, client: client)
+        await worker(container, client: client).process()
+        try save(entry(), in: container, client: client)
+        let setup = ModelContext(container)
+        let defaults = AppSettings.defaults(for: Locale(identifier: "en_GB"))
+        _ = try AppSettingsPersistence.loadOrCreate(defaults: defaults, in: setup, at: date)
+        let goalID = try #require(try setup.fetch(FetchDescriptor<PersistentHydrationGoalChange>()).first).id
+        let visible = try setup.fetch(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.deletedAt == nil }))
+        #expect(throws: TestFailure.failed) {
+            try DrinkEntryPersistence.delete(visible, in: setup, tracksHealthExports: true, beforeSave: { throw TestFailure.failed })
+        }
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.deletedAt == nil })) == 2)
+        #expect(try records(container).count == 7)
+        _ = try DrinkEntryPersistence.delete(visible, in: setup, tracksHealthExports: true)
+        let verify = ModelContext(container)
+        #expect(try verify.fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 2)
+        let retained = try #require(try records(container).first { $0.identity == priorID })
+        #expect(retained.identity == priorID)
+        #expect(retained.nextAttemptAt == priorDue)
+        #expect(retained.attemptCount == priorAttempts)
+        #expect(try records(container).count == 4)
+        #expect(try HealthExportPersistence.isEnabled(in: verify))
+        #expect(try verify.fetch(FetchDescriptor<PersistentAppSettings>()).first?.dailyGoalValue == defaults.dailyHydrationGoal.amount.value)
+        #expect(try verify.fetch(FetchDescriptor<PersistentHydrationGoalChange>()).first?.id == goalID)
+    }
+
+    @Test func platformCleanupScopesOwnershipTypeAndIdentityAndAcceptsZeroMatches() async throws {
+        let store = ExportSystemStore()
+        let client = AppleHealthKitClient(store: store)
+        let id = UUID()
+        for type in HealthWriteType.allCases {
+            let target = HealthDeletionTarget(entryID: id, type: type,
+                syncIdentifier: HealthSampleSpecification.syncIdentifier(entryID: id, type: type))
+            try await client.delete(target) // store returns zero, still success
+            let request = try #require(store.deletions.last)
+            let compound = try #require(request.1 as? NSCompoundPredicate)
+            #expect(compound.compoundPredicateType == .and)
+            #expect(compound.subpredicates.count == 2)
+            #expect(compound.subpredicates.contains { ($0 as? NSPredicate)?.isEqual(store.appSourcePredicate) == true })
+            #expect(compound.subpredicates.contains { ($0 as? NSPredicate)?.isEqual(HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, allowedValues: [target.syncIdentifier])) == true })
+            let expected: [HealthWriteType: HKQuantityTypeIdentifier] = [.water: .dietaryWater, .caffeine: .dietaryCaffeine, .alcohol: .numberOfAlcoholicBeverages]
+            #expect(request.0 == HKQuantityType(try #require(expected[type])))
+        }
+        let target = HealthDeletionTarget(entryID: id, type: .water,
+            syncIdentifier: HealthSampleSpecification.syncIdentifier(entryID: id, type: .water))
+        store.status = .sharingDenied
+        await #expect(throws: HealthExportFailure.authorization) { try await client.delete(target) }
+        #expect(store.deletions.count == 3)
+        store.status = .sharingAuthorized
+        store.failure = NSError(domain: HKErrorDomain, code: HKError.Code.errorAuthorizationDenied.rawValue)
+        await #expect(throws: HealthExportFailure.authorization) { try await client.delete(target) }
+        store.failure = NSError(domain: "private-platform-detail", code: 100)
+        await #expect(throws: HealthExportFailure.temporary) { try await client.delete(target) }
+        let corrupt = HealthDeletionTarget(entryID: UUID(), type: .water, syncIdentifier: target.syncIdentifier)
+        await #expect(throws: HealthExportFailure.invalidPayload) { try await client.delete(corrupt) }
+        #expect(store.requests == 0)
+        #expect(store.saved.isEmpty)
+    }
+
+    #if DEBUG
+    @Test func cleanupPauseRecoveryRepeatsOnlyUnacknowledgedDeletion() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        await worker(container, client: client).process()
+        try deleteAll(container)
+        var commits = 0
+        let first = worker(container, client: client, beforeSave: {
+            commits += 1
+            if commits == 2 { throw TestFailure.failed }
+        })
+        first.debugHarness.nextIntervention = .pauseAfterDeletion
+        let running = Task { await first.process() }
+        defer { first.debugHarness.resumeAcknowledgement() }
+        for _ in 0..<1_000 where !first.debugHarness.isPaused { await Task.yield() }
+        #expect(first.debugHarness.isPaused)
+        #expect(try records(container).first?.status == "inFlight")
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 1)
+        first.debugHarness.resumeAcknowledgement()
+        await running.value
+        await worker(container, client: client).process()
+        #expect(client.deletions.count == 2)
+        #expect(client.deletions[0] == client.deletions[1])
+        #expect(try records(container).isEmpty)
+    }
+    #endif
+
+    private func deleteAll(_ container: ModelContainer) throws {
+        let context = ModelContext(container)
+        _ = try DrinkEntryPersistence.delete(try context.fetch(FetchDescriptor<PersistentDrinkEntry>()),
+                                            in: context, tracksHealthExports: true)
+    }
+
+    @Test func cleanupIsIndependentPerTypeAndRunsWhileDisabled() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        try enable(container)
+        let drink = entry()
+        try save(drink, in: container, client: client)
+        let worker = worker(container, client: client)
+        await worker.process()
+        try enable(container, false)
+        try deleteAll(container)
+        client.statuses[.water] = .denied
+        client.deletionFailures[.caffeine] = .temporary
+        await worker.process()
+        let retained = try records(container)
+        #expect(retained.count == 3)
+        #expect(retained.first { $0.typeID == "alcohol" }?.status == "succeeded")
+        #expect(retained.first { $0.typeID == "water" }?.status == "authorizationBlocked")
+        #expect(retained.first { $0.typeID == "water" }?.attemptCount == 0)
+        #expect(retained.first { $0.typeID == "caffeine" }?.nextAttemptAt == date.addingTimeInterval(30))
+        #expect(try ModelContext(container).fetch(FetchDescriptor<PersistentDrinkEntry>()).first?.drinkEntry() == nil)
+        try deleteAll(container) // reset must preserve completed types and backoff
+        await worker.process()
+        #expect(client.deletions.count == 2)
+        client.statuses[.water] = .authorized
+        client.deletionFailures = [:]
+        await worker.process(retryNow: true)
+        #expect(try records(container).isEmpty)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 0)
+        #expect(client.deletions.filter { $0.type == .alcohol }.count == 1)
+        #expect(client.deletions.allSatisfy { $0.entryID == drink.id && $0.isValid })
+        #expect(client.writes.count == 3)
+        #expect(client.requestCount == 0)
+    }
+
+    @Test func lateUploadIsCleanedBeforePurgeWithoutRecreatingQueuedTypes() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        try enable(container)
+        try save(entry(), in: container, client: client)
+        client.suspendNext = true
+        let worker = worker(container, client: client)
+        let running = Task { await worker.process() }
+        await client.waitUntilSuspended()
+        try deleteAll(container)
+        try enable(container, false)
+        await worker.process(retryNow: true)
+        #expect(client.deletions.isEmpty)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 1)
+        client.resume()
+        await running.value
+        #expect(client.writes.count == 1)
+        #expect(client.deletions.count == 1)
+        #expect(try records(container).isEmpty)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 0)
+    }
+
+    @Test(arguments: [1, 2])
+    func cleanupCommitFailureRecoversBeforeIOOrBeforeAcknowledgement(failedCommit: Int) async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        await worker(container, client: client).process()
+        try deleteAll(container)
+        var commits = 0
+        let failed = worker(container, client: client, beforeSave: {
+            commits += 1
+            if commits == failedCommit { throw TestFailure.failed }
+        })
+        await failed.process()
+        #expect(failed.persistenceFailed)
+        #expect(client.deletions.count == failedCommit - 1)
+        #expect(try records(container).count == 1)
+        #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 1)
+        await worker(container, client: client).process()
+        #expect(client.deletions.count == failedCommit)
+        #expect(Set(client.deletions.map(\.syncIdentifier)).count == 1)
+        #expect(try records(container).isEmpty)
+    }
+
+    @Test func cleanupDiskReopenRetainsBlockedDetailsAndResumesWithoutExpiry() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("cleanup.store")
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        do {
+            let container = try container(url: url)
+            try enable(container)
+            try save(entry(), in: container, client: client)
+            await worker(container, client: client).process()
+            try deleteAll(container)
+            try enable(container, false)
+            client.statuses[.water] = .denied
+            await worker(container, client: client).process()
+        }
+        do {
+            let reopened = try container(url: url)
+            let yearsLater = HealthExportCoordinator(client: client, now: { date.addingTimeInterval(10 * 365 * 86400) })
+            yearsLater.attach(to: reopened)
+            await yearsLater.process()
+            #expect(try records(reopened).count == 3)
+            #expect(try ModelContext(reopened).fetch(FetchDescriptor<PersistentDrinkEntry>()).first?.deletedAt != nil)
+            #expect(client.deletions.count == 2)
+            client.statuses[.water] = .authorized
+            await yearsLater.process()
+            #expect(try records(reopened).isEmpty)
+            #expect(try ModelContext(reopened).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 0)
+        }
+        #expect(client.deletions.count == 3)
+        #expect(client.requestCount == 0)
+    }
+
+    @Test func cleanupNeedsValidIdentityButDoesNotNeedUploadPayload() async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.allowsDeletion = true
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        await worker(container, client: client).process()
+        try deleteAll(container)
+        let edit = ModelContext(container)
+        let row = try #require(try edit.fetch(FetchDescriptor<PersistentHealthExport>()).first)
+        row.payload = Data("corrupt".utf8)
+        row.policyVersion = "old-policy"
+        let originalIdentity = row.identity
+        row.identity = "another-entry"
+        try edit.save()
+        await worker(container, client: client).process()
+        #expect(client.deletions.isEmpty)
+        #expect(try records(container).first?.status == "invalid")
+        let repair = ModelContext(container)
+        let current = try #require(try repair.fetch(FetchDescriptor<PersistentHealthExport>()).first)
+        current.identity = originalIdentity
+        current.status = "pending"
+        try repair.save()
+        await worker(container, client: client).process()
+        #expect(client.deletions.count == 1)
+        #expect(try records(container).isEmpty)
+    }
+
     @Test func preferenceFailureRollsBackAndBackoffIsCappedWithJitter() throws {
         let container = try container()
         #expect(throws: TestFailure.failed) {
@@ -497,6 +782,9 @@ private final class TestExportClient: HealthExportClient {
     var statuses: [HealthWriteType: HealthWriteAuthorization] = Dictionary(uniqueKeysWithValues: HealthWriteType.allCases.map { ($0, .authorized) })
     var failures: [HealthWriteType: HealthExportFailure] = [:]
     var writes: [HealthSampleSpecification] = []
+    var deletions: [HealthDeletionTarget] = []
+    var deletionFailures: [HealthWriteType: HealthExportFailure] = [:]
+    var allowsDeletion = false
     var requestCount = 0
     var suspendNext = false
     var maximumConcurrentWrites = 0
@@ -516,6 +804,12 @@ private final class TestExportClient: HealthExportClient {
         }
         if let failure = failures[specification.type] { throw failure }
     }
+    func delete(_ target: HealthDeletionTarget) async throws {
+        #expect(concurrent == 0)
+        deletions.append(target)
+        if let failure = deletionFailures[target.type] { throw failure }
+        if !allowsDeletion { throw HealthExportFailure.temporary }
+    }
     func waitUntilSuspended() async {
         if continuation != nil { return }
         await withCheckedContinuation { suspendedObserver = $0 }
@@ -532,7 +826,14 @@ private final class ExportAnalyticsRecorder: AnalyticsClient {
 private enum TestFailure: Error { case failed }
 
 @MainActor
-private final class ExportSystemStore: HealthAuthorizationStore, HealthSampleStore {
+private final class ExportSystemStore: HealthAuthorizationStore, HealthSampleStore, HealthDeletionStore {
+    let appSourcePredicate = NSPredicate(format: "sourceBundleIdentifier == %@", "synthetic-watered")
+    var deletions: [(HKObjectType, NSPredicate)] = []
+    func deleteObjects(of type: HKObjectType, predicate: NSPredicate) async throws -> Int {
+        if let failure { throw failure }
+        deletions.append((type, predicate))
+        return 0
+    }
     var isAvailable = true
     var status: HKAuthorizationStatus = .sharingAuthorized
     var failure: Error?

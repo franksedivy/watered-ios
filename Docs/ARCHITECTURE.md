@@ -86,7 +86,7 @@ errors are separate from grants because the platform does not expose a distinct
 per-type restricted authorization status. Errors retain no raw Health data or descriptions.
 
 The permission screen does not enable sync. The separate #109 setting, eligibility
-transaction and upload executor are described below; cleanup remains #110.
+transaction, upload executor and deletion cleanup are described below.
 Local saving remains independent. Isolated tests and app previews use
 `FakeHealthKitClient`; standalone view previews do not construct a Health store.
 
@@ -144,11 +144,27 @@ invalid work stops. No retry requests permissions. Disabling prevents new upload
 starts while allowing an in-flight result to persist. Local save/state/analytics
 success does not await Health. Raw Health errors and payloads are not logged.
 
-The deletion boundary cancels never-started work, hides possibly-written drinks,
-and retains delete intent/details. Late upload results preserve that intent. **#110
-still owns cleanup I/O, recovery/purge and complete Debug reset behavior/copy**;
-this safety boundary must not be described as completed Health deletion. **#111
-owns the user-facing sync switch, status and Retry now controls**. The current
+The deletion boundary cancels never-started work and atomically hides possibly-written
+drinks while retaining their details and per-type cleanup intent. The same serialized
+worker settles late uploads before cleanup, including when exports are disabled.
+`HealthDeletionTarget` carries only the stable entry/type identity; cleanup does not
+need an intact upload payload, current catalogue or returned sample UUID.
+`AppleHealthKitClient.delete` constrains `deleteObjects` by quantity type, default app
+source and sync identifier. It performs no read query and requests no new permissions.
+A successful zero-match result resolves cleanup; denial retains blocked work indefinitely.
+
+Each type persists its own deletion acknowledgement. `purgeCompletedDeletions` removes
+the hidden drink and its records only when every required type has succeeded, in the
+same transaction as the final acknowledgement. A failed acknowledgement leaves durable
+in-flight work for the same constrained retry. The executor also recovers completed
+but unpurged tombstones. Debug reset uses the same atomic transaction for its selected
+visible history, preserving older cleanup, settings and goal history. Profile displays
+pending/blocked cleanup feedback. Individual/reset confirmations mention Health only
+when the selected drinks have eligible or possibly-written records, independently of
+the current switch. Queued work is included because it can finish while confirmation
+is open. Physical ownership and lifecycle checks remain required.
+
+**#111 owns the full user-facing sync switch, status and Retry now controls**. The current
 permission-only screen does not enable export. New stores remain disabled.
 
 Same-version HealthKit deduplication requires #112's controlled-device evidence;
@@ -158,8 +174,8 @@ recovery may recreate it. No exactly-once or background-completion guarantee.
 
 ### Debug verification harness
 
-`Debug/DebugHealthExportHarness.swift` provides in-memory, one-shot pre-write failure
-and post-success/pre-acknowledgement pause hooks. `DebugHealthExportView` exposes the
+`Debug/DebugHealthExportHarness.swift` provides in-memory, one-shot failure-before-I/O
+and success-before-acknowledgement pause hooks for both uploads and cleanup. `DebugHealthExportView` exposes the
 normal persisted switch, Retry now and local record inspection in Profile. It never
 requeues acknowledged samples, mutates frozen payloads, reads Health history or emits
 analytics. The hook calls and both Debug types are excluded from Release compilation.
