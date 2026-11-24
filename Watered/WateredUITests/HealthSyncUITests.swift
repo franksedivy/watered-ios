@@ -83,7 +83,7 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Connected"].exists)
         capture("Apple Health — mixed permissions", in: app)
         app.navigationBars["Apple Health"].buttons.element(boundBy: 0).tap()
-        app.buttons["Sync with Apple Health"].tap()
+        app.buttons["Apple Health"].tap()
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
     }
 

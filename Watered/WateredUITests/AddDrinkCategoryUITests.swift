@@ -424,14 +424,14 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let app = openAddDrink()
         let categories = app.scrollViews["addDrinkCategoryScrollView"]
         let category = categories.buttons["addDrinkCategoryScrollView.soft-drinks"]
-        for _ in 0..<5 where !category.isHittable { categories.swipeLeft() }
+        revealHorizontally(category, in: categories)
         XCTAssertTrue(category.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         category.tap()
         let types = app.scrollViews["addDrinkTypeScrollView"]
         let toggle = app.switches["addDrinkCaffeineFreeToggle"]
         for (id, volume) in [("cola", "330 ml"), ("lemonade", "330 ml"), ("tonic-water", "200 ml"), ("fruit-soda", "330 ml"), ("ginger-beer", "330 ml"), ("squash", "250 ml")] {
             let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
-            for _ in 0..<8 where !drink.isHittable { types.swipeLeft() }
+            revealHorizontally(drink, in: types)
             XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
             drink.tap()
             XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
@@ -518,19 +518,13 @@ final class AddDrinkCategoryUITests: XCTestCase {
         let app = openAddDrink()
         let categories = app.scrollViews["addDrinkCategoryScrollView"]
         let category = categories.buttons["addDrinkCategoryScrollView.milk-alternatives"]
-        for _ in 0..<10 {
-            if category.isHittable { break }
-            categories.swipeLeft()
-        }
+        revealHorizontally(category, in: categories)
         XCTAssertTrue(category.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
         category.tap()
         let types = app.scrollViews["addDrinkTypeScrollView"]
         for id in ["milk", "oat-milk", "soy-milk", "almond-milk", "coconut-milk", "rice-milk", "kefir", "drinking-yoghurt", "milkshake", "chocolate-milk", "hot-chocolate", "ayran"] {
             let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
-            for _ in 0..<10 {
-                if drink.isHittable { break }
-                types.swipeLeft()
-            }
+            revealHorizontally(drink, in: types)
             XCTAssertTrue(drink.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
             drink.tap()
             XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
@@ -617,4 +611,25 @@ extension XCTestCase {
         app.buttons["profileDoneButton"].tap()
         XCTAssertTrue(picker.waitForNonExistence(timeout: 10))
     }
+}
+
+extension AddDrinkCategoryUITests {
+    /// Short drags avoid skipping narrow items; reverse when a target has moved left
+    /// of the viewport instead of continuing toward the end of the carousel.
+    @MainActor
+    private func revealHorizontally(_ element: XCUIElement, in scrollView: XCUIElement) {
+        for _ in 0..<24 {
+            let viewport = scrollView.frame.insetBy(dx: 12, dy: 0)
+            let target = element.frame
+            if element.isHittable && viewport.contains(CGPoint(x: target.midX, y: target.midY)) {
+                return
+            }
+            let moveLeft = target.midX > viewport.midX
+            let start = scrollView.coordinate(withNormalizedOffset: CGVector(dx: moveLeft ? 0.7 : 0.3, dy: 0.5))
+            let end = scrollView.coordinate(withNormalizedOffset: CGVector(dx: moveLeft ? 0.3 : 0.7, dy: 0.5))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
+        XCTFail("Could not reveal horizontal item: \(element.identifier)")
+    }
+
 }
