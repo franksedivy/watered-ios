@@ -81,7 +81,7 @@ struct HealthSyncView: View {
         .navigationTitle("Apple Health")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { refresh() }
-        .onChange(of: coordinator.isProcessing) { refresh() }
+        .onChange(of: coordinator.progressRevision) { refresh() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { refresh() }
         }

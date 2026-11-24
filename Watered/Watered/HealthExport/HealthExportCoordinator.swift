@@ -13,6 +13,9 @@ final class HealthExportCoordinator {
     let client: any HealthExportClient
     private(set) var persistenceFailed = false
     private(set) var isProcessing = false
+    /// Advances after each completed pass, even if a fast pass coalesces busy-state updates.
+    /// Presentation uses this to reload durable outcomes from a fresh context.
+    private(set) var progressRevision = 0
     @ObservationIgnored private var context: ModelContext?
     @ObservationIgnored private var timer: Task<Void, Never>?
     @ObservationIgnored private var rerunRequested = false
@@ -71,6 +74,7 @@ final class HealthExportCoordinator {
         persistenceFailed = false
         defer {
             isProcessing = false
+            progressRevision += 1
             scheduleNextAttempt()
         }
         do {

@@ -50,6 +50,19 @@ struct HealthExportStatusTests {
         #expect(client.requestCount == 0)
     }
 
+    // A pass with no suspension must still invalidate presentation, even when SwiftUI
+    // observes isProcessing as false both before and after the worker runs.
+    @Test func completedPassAdvancesPresentationRevision() async throws {
+        let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
+        let coordinator = HealthExportCoordinator(client: FakeHealthKitClient())
+        coordinator.attach(to: container)
+        let revision = coordinator.progressRevision
+        await coordinator.process()
+        #expect(coordinator.progressRevision > revision)
+        #expect(!coordinator.isProcessing)
+    }
+
     // Permission fixtures require isolated Debug storage and cannot alter normal launches.
     @Test func fakeHealthScenarioRequiresIsolation() {
         #expect(AppLaunchConfiguration(arguments: ["-uiTestingHealth=denied"]).healthTestScenario == nil)
