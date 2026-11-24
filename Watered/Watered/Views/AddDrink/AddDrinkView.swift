@@ -308,14 +308,15 @@ struct AddDrinkView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 8) {
                 ForEach(availableDrinks) { definition in
+                    let artworkSize = AddDrinkArtworkSize.resolve(drinkID: definition.id)
                     Button {
                         selectDrink(definition)
                     } label: {
                         VStack(spacing: 8) {
                             AddDrinkThumbnail(drinkID: definition.id, categoryID: definition.categoryID)
                                 .frame(
-                                    width: definition.id == "espresso" ? 54 : 74,
-                                    height: definition.id == "espresso" ? 54 : 74
+                                    width: artworkSize.dimension,
+                                    height: artworkSize.dimension
                                 )
                                 .frame(width: 88, height: 88)
                                 .background(

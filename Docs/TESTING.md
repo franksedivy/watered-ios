@@ -63,6 +63,29 @@ For Add Drink prototype work under [#104](https://github.com/franksedivy/watered
 
 Record revision, command or CI run, environment, checks included, result and untested areas in the PR. Separate build success, focused tests, configured suite results and manual device review. A skipped test, cancelled run or unavailable toolchain is not a pass. Once relevant checks pass, repeat only for new changes or unresolved concerns.
 
+## Add Drink artwork presets (#161) — 24 November 2026
+
+Reviewed the working tree on `feature/161-artwork-presets`, based on `f46a211`.
+Debug simulator build passed with Xcode 27.2 (27B52), using
+`xcodebuild -project Watered/Watered.xcodeproj -scheme Watered -configuration Debug
+-sdk iphonesimulator -derivedDataPath /tmp/watered-161-build CODE_SIGNING_ALLOWED=NO build`.
+The initial sandboxed build failed accessing simulator services; the permitted
+retry passed. Log: `/tmp/watered-161-build.log`.
+
+A standalone macOS Swift smoke check exercised the actual presentation enum
+against all 60 bundled drink IDs, the unknown-ID default and 54/64/74 pt dimensions;
+all passed. The new `AddDrinkArtworkSizeTests` passed syntax parsing but has not
+run in hosted CI. No local simulator test suite ran; CI configuration is unchanged.
+
+Agent visual review used iPhone Air / iOS 27.0 with `-uiTestingInMemory`:
+Espresso and ordinary coffee artwork retained their different scales and fixed
+cells; Espresso and Sparkling wine selected correctly and exposed selected
+accessibility traits. Sparkling wine at 64 pt remained comfortably inside its
+selection border beside large artwork. Light/dark and one increased text-size
+step were inspected; text size and light appearance were restored afterward.
+No drink was saved or deleted. Largest accessibility sizes, spoken VoiceOver,
+Reduce Motion, physical-device review and hosted unit execution remain outstanding.
+
 ## HealthKit authorization (#107)
 
 `HealthAuthorizationTests` uses a fake system-store seam and synthetic states; it
