@@ -486,3 +486,21 @@ The working tree also includes Frank's Profile navigation-label edit; the test
 helper accepts both the previous and current labels. An initial run stopped at
 the old label before entering the screen; the helper was corrected before the
 passing runs. This is focused simulator evidence, not a new full-suite or device pass.
+
+### Final user-reported manual review — 24 November 2026
+
+After the information-page changes committed as `6cc660f`, Frank confirmed that
+VoiceOver and appearance looked good, the first-time permission sheet looked good,
+and the Release build on his iPhone was verified. The ongoing session used iPhone
+Air / iOS 27.2; the installed binary was not independently tied to a commit.
+These confirmations supersede the corresponding outstanding review notes above;
+no additional detailed signing or log assertions are inferred.
+
+Frank accepted real managed-device restrictions as an untested, non-blocking edge
+case for #111. Fake restricted/unavailable UI coverage remains. #112's broader
+integration matrix and release publication checks remain separate.
+
+Review screenshots use synthetic simulator data:
+- [Enabled sync screen](review/111/sync-enabled.png), captured at `2d102a8`.
+- [Plain information page and icon header](review/111/privacy-information.png),
+  captured from the source committed as `6cc660f`.
