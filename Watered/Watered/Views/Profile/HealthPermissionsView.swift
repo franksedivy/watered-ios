@@ -5,27 +5,25 @@ struct HealthPermissionsView: View {
     let authorization: HealthAuthorizationController
     var analytics: any AnalyticsClient = NoOpAnalyticsClient()
 
-    @State private var hasReportedOpen = false
-
     var body: some View {
         Form {
             HealthPermissionsSection(authorization: authorization, analytics: analytics)
         }
         .navigationTitle("Apple Health permissions")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            guard !hasReportedOpen else { return }
-            hasReportedOpen = true
-            analytics.track(.appleHealthPermissionsOpened)
-        }
     }
 }
 
-private struct HealthPermissionsSection: View {
+/// Shared permission controls; system grants remain independent of the app's sync preference.
+/// Only Review permissions may prompt. Existing decisions receive Health-app recovery guidance.
+struct HealthPermissionsSection: View {
     let authorization: HealthAuthorizationController
     let analytics: any AnalyticsClient
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isShowingHealthGuidance = false
     @State private var healthGuidanceMessage = ""
+    /// Guards the existing property-free event across redraws and returning from Health.
+    @State private var hasReportedOpen = false
 
     var body: some View {
         Section {
@@ -52,6 +50,7 @@ private struct HealthPermissionsSection: View {
                     isShowingHealthGuidance = true
                 }
             }
+            .accessibilityIdentifier("healthReviewPermissions")
             .disabled(authorization.isRequesting)
 
             if let error = authorization.requestError {
@@ -61,12 +60,6 @@ private struct HealthPermissionsSection: View {
             }
         } header: {
             Text("Write permissions")
-        } footer: {
-            #if DEBUG
-            Text("Write permissions only. Allowing access does not enable syncing. Debug export is controlled separately in Profile → Verify HealthKit export. Change existing permissions in the Health app.")
-            #else
-            Text("Write permissions only. To change an existing choice, open Watered’s permissions in the Health app. Allowing access does not enable syncing.")
-            #endif
         }
         .alert("Apple Health permissions", isPresented: $isShowingHealthGuidance) {
             Button("OK", role: .cancel) {}
@@ -75,16 +68,40 @@ private struct HealthPermissionsSection: View {
         }
         .onAppear {
             authorization.refreshAuthorization()
+            if !hasReportedOpen {
+                hasReportedOpen = true
+                analytics.track(.appleHealthPermissionsOpened)
+            }
         }
     }
 
     private func permissionRow(_ title: String, type: HealthWriteType) -> some View {
         LabeledContent {
             Text(statusLabel(for: authorization.statuses[type]))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(statusColor(for: authorization.statuses[type]))
                 .multilineTextAlignment(.trailing)
         } label: {
             Text(title)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(statusLabel(for: authorization.statuses[type]))
+        .accessibilityIdentifier("healthPermission-\(type.rawValue)")
+    }
+
+    /// Green and amber remain readable in both appearances; text also names each state.
+    private func statusColor(for status: HealthWriteAuthorization?) -> Color {
+        switch status {
+        case .authorized:
+            return colorScheme == .dark
+                ? Color(red: 0.39, green: 0.85, blue: 0.55)
+                : Color(red: 0.09, green: 0.44, blue: 0.24)
+        case .denied:
+            return colorScheme == .dark
+                ? Color(red: 1, green: 0.77, blue: 0.36)
+                : Color(red: 0.54, green: 0.34, blue: 0)
+        default:
+            return .secondary
         }
     }
 

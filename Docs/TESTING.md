@@ -306,3 +306,201 @@ first establish that the entire selected visible history is disposable.
 9. Turn test exports off. Record precise results and any remaining device/Release or
    accessibility limits. Keep #110 open until device acceptance is supported; #111
    production controls and #112's broader matrix remain separate.
+
+## HealthKit Profile controls (#111)
+
+`HealthExportStatusTests` covers independent upload outcomes, exclusion of cleanup,
+paused/retry/sent wording and preference persistence failures without permission prompts.
+`HealthSyncUITests` uses isolated in-memory storage and fake permissions/work for
+opt-in, save failure, mixed/denied/restricted/unavailable states, pending/invalid/sent
+status, retry, blocked cleanup and largest-text reachability. `-uiTestingHealth=…` is honored only with isolated Debug
+storage; Release ignores it. These UI tests remain outside hosted unit-only selection.
+
+Final-screen review still required on a controlled device:
+
+- Profile → Sync with Apple Health: off by default, showing the switch and bottom Privacy & information
+  row. Privacy & information contains the explanation/privacy text. Enabling reveals
+  permissions and the Export status link; disabling hides those controls. Opening and toggling must not request authorization. Review permissions
+  alone may request undecided types; completion never implies all types allowed.
+- Decline, enable with mixed grants, disable, reopen and change permissions externally.
+  Verify preference and permissions remain independent and local logging still works.
+- Exercise pending, retryable failure, permission-blocked and invalid work. Check
+  per-type counts, Retry now, sent acknowledgement wording and foreground refresh.
+  Disabling pauses uploads while cleanup and its recovery feedback remain available.
+- With the existing Debug failure hooks, verify cleanup feedback and that the reset
+  confirmation still describes delayed Health removal independently of the switch.
+- Check largest accessibility text sizes, VoiceOver reading order/control names,
+  light/dark contrast and scroll access to all actions. Native controls and semantic
+  colors are used; source inspection does not establish accessibility acceptance.
+- Inspect Debug logs: the existing property-free permission-open/review actions and
+  the approved property-free `apple_health_sync_enabled` after a committed off-to-on
+  change; no events for failed saves, disabling, grants, quantities, statuses or retry. Verify Release
+  discards events and omits Debug fixtures. Capture screenshots on the reviewed build.
+
+These final controls require their own evidence; #109/#110 device observations do
+not verify this screen. #112 retains the broader integration/device matrix. Published
+policy, distribution privacy report and App Store answers remain release checks in
+[HealthKit privacy review](HealthKit-Privacy.md).
+
+### #111 iPhone evidence — 24 November 2026
+
+Frank performed the following guided checks on **iPhone Air / iOS 27.2**, using
+**feature/111-healthkit-profile at 270f73a** built and launched from Xcode without
+clearing storage. These are user-reported observations, not automated assertions.
+
+| Check | Observed result |
+| --- | --- |
+| Launch | Built and launched successfully; no permission prompt before interaction. |
+| Existing state | Sync was on; Water, Caffeine and Alcoholic beverages each showed Allowed. This was an existing store, not a first-install/default-off test. |
+| Disable | Turning sync off stayed off, without an error or permission prompt. |
+| Reopen screen | Closing and reopening Profile → Sync with Apple Health still showed off. This verifies screen reopening, not process termination/relaunch. |
+| Decided permission recovery | Review permissions showed Health-app guidance and no system authorization sheet. |
+| External revocation | Frank turned Caffeine write permission off in Health and returned. Water and Alcoholic beverages remained Allowed, Caffeine showed Not allowed, and sync remained off. No prompt appeared. |
+| Local logging while off | A disposable 250 ml Still Water saved and appeared in Today, without errors or prompts. |
+| Re-enable with partial permission | Turning sync on stayed on; Caffeine remained Not allowed; no error or prompt appeared. |
+| No backfill | Health Water data around the 250 ml entry's time had no matching Watered sample after re-enablement. |
+| Eligible new entry | A new disposable 330 ml Still Water saved and appeared in Today without errors or prompts. |
+| Acknowledgement presentation | Water showed “Sent to Apple Health: 16”, with no pending, blocked or error status. The cumulative count includes earlier exports; no before-count was recorded. |
+| Actual new sample | Frank inspected the newest Health Water entry: 330 ml, matching log time, source Watered. This identifies the new entry independently of the cumulative count. |
+
+The proposed 250 ml Latte check **was not performed**. The manual session paused in
+favor of focused automated coverage at Frank's request. At the last reported state,
+sync was **on**, Water/Alcohol allowed and Caffeine denied. No subsequent restoration
+or deletion of either test drink has been reported. Do not change those settings or
+remove data automatically.
+
+Remaining device-specific #111 checks:
+
+- First-time/undecided real authorization sheet from the final screen: exact three
+  write-only types, readable explanation/usage text, and truthful results after denial
+  or mixed choices. Earlier #107 harness evidence does not verify the final screen.
+  Use a controlled fresh authorization state; do not reset personal data to obtain it.
+- Hands-on VoiceOver reading order, spoken status updates, control names and focus;
+  largest Dynamic Type layout and light/dark contrast. Automated accessibility labels
+  and simulated sizes alone do not establish usable spoken interaction or contrast.
+- Release build on the device: signing/usage descriptions, no Debug tools or fixture
+  behavior, and the Release no-op analytics boundary. Debug device success is not
+  Release verification.
+- Device-managed restrictions/unavailability only where a controlled device supports
+  them; fake-state tests cover the UI but not every real system restriction.
+
+The real water write, permission refresh and no-backfill checks above need not be
+repeated without a relevant change. Wider quantities, mixed-type writes, crash/retry
+platform behavior and cleanup ownership remain #112's integration matrix, using
+existing #109/#110 evidence rather than repeating it solely for the Profile screen.
+
+### Focused local UI execution exception
+
+On 24 November 2026 Frank explicitly requested adding and running #111's focused
+UI tests locally while keeping UI tests disabled in CI. This authorizes the direct
+Xcode test invocation below for this task; the hosted-runner script and its guard
+are unchanged. It does not change the repository's default verification policy.
+
+```sh
+xcodebuild -project Watered/Watered.xcodeproj -scheme Watered \
+  -configuration Debug \
+  -destination 'platform=iOS Simulator,id=E832F1AD-5F46-4FA5-B30C-6684180978F0' \
+  -derivedDataPath /tmp/watered-111-ui-build \
+  -resultBundlePath /tmp/watered-111-ui.xcresult \
+  -only-testing:WateredUITests/HealthSyncUITests \
+  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test
+```
+
+The destination is the local **iPhone Air / iOS 27.2** simulator, with **Xcode 27.2
+(27B52)**. The result path must be new for each run. `DebugHealthUITestClient` is
+constructed only for `-uiTestingInMemory` plus a named Health scenario. It seeds
+synthetic work before execution and fakes platform responses; the production
+preference, worker and cleanup transactions still execute. It cannot access Health.
+The real phone's state and data are unaffected.
+
+### #111 focused UI results — 24 November 2026
+
+The final consolidated local run passed **9 tests, 0 failures**, in **397.499 seconds**,
+using the environment/command above with result path
+`/tmp/watered-111-ui-final.xcresult`. Log: `/tmp/watered-111-ui-final.log`.
+Tested source: `270f73a` plus the UI-fixture/accessibility/test changes in the commit
+containing this record. Subsequent edits before committing were comments/docs only.
+
+Passed cases:
+
+1. Denied permissions leave the independent sync preference editable and show recovery guidance.
+2. Unavailable Health explains continued local logging.
+3. Restricted authorization explains the error without enabling sync.
+4. Mixed permissions remain truthful after request completion; the saved preference survives screen reopening.
+5. A failed preference transaction preserves the choice and a later edit succeeds.
+6. Retry updates the failed type while sent/invalid types remain independent.
+7. Pending uploads stay paused with sync off, including Retry now, and send after enablement/retry.
+8. Blocked cleanup resolves after fake permission restoration and retry while sync stays off.
+9. The toggle, permission/retry controls and privacy text remain reachable at the largest accessibility text size; a screenshot is retained in the result bundle.
+
+Earlier diagnostic runs had test-interaction/query failures: a labelled SwiftUI
+switch needs its trailing control tapped; an apparently hittable Form button can be
+behind navigation chrome; XCTest string queries have a 128-character limit. Those
+were corrected in the shared UI helpers/queries. Cleanup implementation was not
+changed. The final run includes all nine cases after those corrections.
+
+An unsigned generic-device **Release build passed** on Xcode 27.2 with these app
+changes (`/tmp/watered-111-ui-release.log`). Whitespace and local documentation-link
+checks passed. The CI workflow, runner guard and test plan are unchanged; hosted CI
+still selects only `WateredTests`. This local UI pass is not a full app suite,
+physical-device authorization test, VoiceOver assessment or Release signing check.
+
+### Sync enablement analytics (#111)
+
+Frank approved the property-free `apple_health_sync_enabled` event on 24 November
+2026 to measure enablement actions. `HealthExportStatusTests` verifies persistence
+is visible before emission, no event on failed saves, one event on successful retry,
+no duplicate for an already-on preference, and no disable event. Permissions do not
+gate this event: app opt-in is distinct from authorization and successful export.
+Profile supplies analytics explicitly; operational/harness calls default to no-op.
+Debug logs locally and Release still discards events. This does not provide production
+adoption reporting or a count of unique people without a separately approved provider.
+
+### Simplified Apple Health layout — 24 November 2026
+
+The main screen shows the sync toggle and a final Privacy & information navigation
+row. Enabling reveals write permissions and an Export status link; that subpage owns
+Water/Caffeine/Alcohol outcomes and Retry now. Allowed is green and Not allowed is
+amber, with explicit text/accessibility values and light/dark colour variants.
+
+Privacy & information contains sharing, retention, deletion and privacy explanations.
+The information page uses plain scrollable text without permission controls.
+Pending cleanup remains actionable on the main screen with sync off.
+Preference-save/read errors remain actionable on the main screen. These navigation
+changes do not change export eligibility, history, retry or deletion policy.
+
+Focused UI tests cover hidden/revealed controls, both destinations, reopening,
+retry and off-state cleanup on the main screen and the prose-only information page. Largest-text
+coverage navigates all three screens. Earlier iPhone observations remain lifecycle
+evidence, not visual acceptance of this revised layout.
+
+### Plain information page and icon header — 24 November 2026
+
+On the working tree based on `2d102a8`, the two affected UI checks passed
+(2 tests, 0 failures, 82.857 seconds) on Xcode 27.2 / iPhone Air simulator /
+iOS 27.2. Result: `/tmp/watered-111-info-icons.xcresult`.
+They verify off-state cleanup on the main screen, absence of duplicate controls
+on the information page, and largest-text scrolling through the prose.
+The normal-size screenshot was reviewed with the Watered/Apple Health icon header.
+The working tree also includes Frank's Profile navigation-label edit; the test
+helper accepts both the previous and current labels. An initial run stopped at
+the old label before entering the screen; the helper was corrected before the
+passing runs. This is focused simulator evidence, not a new full-suite or device pass.
+
+### Final user-reported manual review — 24 November 2026
+
+After the information-page changes committed as `6cc660f`, Frank confirmed that
+VoiceOver and appearance looked good, the first-time permission sheet looked good,
+and the Release build on his iPhone was verified. The ongoing session used iPhone
+Air / iOS 27.2; the installed binary was not independently tied to a commit.
+These confirmations supersede the corresponding outstanding review notes above;
+no additional detailed signing or log assertions are inferred.
+
+Frank accepted real managed-device restrictions as an untested, non-blocking edge
+case for #111. Fake restricted/unavailable UI coverage remains. #112's broader
+integration matrix and release publication checks remain separate.
+
+Review screenshots use synthetic simulator data:
+- [Enabled sync screen](review/111/sync-enabled.png), captured at `2d102a8`.
+- [Plain information page and icon header](review/111/privacy-information.png),
+  captured from the source committed as `6cc660f`.

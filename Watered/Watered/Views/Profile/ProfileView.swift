@@ -99,17 +99,18 @@ struct ProfileView: View {
                     .accessibilityIdentifier("dailyHydrationGoalStepper")
                     .accessibilityHint("Changes the daily hydration goal used by Today.")
                 }
-                
-                if let healthAuthorization {
-                    Section {
-                        NavigationLink("Apple Health permissions") {
-                            HealthPermissionsView(authorization: healthAuthorization, analytics: analytics)
+                Section("Syncing") {
+                    if let healthAuthorization, let healthExport {
+                        Section {
+                            NavigationLink("Apple Health") {
+                                HealthSyncView(authorization: healthAuthorization, coordinator: healthExport, analytics: analytics)
+                            }
                         }
                     }
-                }
 
-                if let healthExport {
-                    HealthCleanupSection(coordinator: healthExport)
+                    if let healthExport {
+                        HealthCleanupSection(coordinator: healthExport)
+                    }
                 }
 
                 #if DEBUG

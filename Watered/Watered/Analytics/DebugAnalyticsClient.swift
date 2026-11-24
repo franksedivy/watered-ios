@@ -24,6 +24,8 @@ struct DebugAnalyticsClient: AnalyticsClient {
             wateredLog("Analytics: apple_health_permissions_opened")
         case .appleHealthPermissionsReviewTapped:
             wateredLog("Analytics: apple_health_permissions_review_tapped")
+        case .appleHealthSyncEnabled:
+            wateredLog("Analytics: apple_health_sync_enabled")
         case .drinkAdded(let method):
             wateredLog("Analytics: drink_added | method: \(method.rawValue)")
         }

@@ -51,9 +51,16 @@ struct WateredApp: App {
         let usesFakeHealth = configuration.usesInMemoryStorage
             || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        let healthClient: any HealthExportClient = usesFakeHealth
-            ? FakeHealthKitClient() : AppleHealthKitClient()
-        _healthExport = State(initialValue: HealthExportCoordinator(client: healthClient))
+        var healthClient: any HealthExportClient = usesFakeHealth ? FakeHealthKitClient() : AppleHealthKitClient()
+        var beforeHealthSave: () throws -> Void = {}
+        #if DEBUG
+        if configuration.usesInMemoryStorage, let scenario = configuration.healthTestScenario {
+            let fixture = DebugHealthUITestClient(scenario: scenario)
+            healthClient = fixture
+            beforeHealthSave = fixture.beforeSave
+        }
+        #endif
+        _healthExport = State(initialValue: HealthExportCoordinator(client: healthClient, beforeSave: beforeHealthSave))
         _healthAuthorization = State(initialValue: HealthAuthorizationController(client: healthClient))
         launchConfiguration = configuration
         catalogueResult = Result { try DrinkCatalogueLoader().load() }

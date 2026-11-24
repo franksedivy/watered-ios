@@ -10,6 +10,9 @@
 /// Failure simulation requires in-memory storage. Release builds ignore all test arguments
 /// and use normal persistent storage.
 struct AppLaunchConfiguration {
+    /// Fake permission state, available only in isolated Debug launches.
+    let healthTestScenario: String?
+
     /// Whether the app should use an isolated, in-memory store.
     let usesInMemoryStorage: Bool
     
@@ -28,12 +31,17 @@ struct AppLaunchConfiguration {
         #if DEBUG
         let usesIsolatedStorage = arguments.contains("-uiTestingInMemory")
         
+        healthTestScenario = usesIsolatedStorage
+            ? arguments.first(where: { $0.hasPrefix("-uiTestingHealth=") })?
+                .split(separator: "=").last.map(String.init)
+            : nil
         usesInMemoryStorage = usesIsolatedStorage
         shouldFailFirstDrinkSave = usesIsolatedStorage
             && arguments.contains("-uiTestingFailFirstDrinkSave")
         shouldFailFirstDisplayUnitSave = usesIsolatedStorage
             && arguments.contains("-uiTestingFailFirstDisplayUnitSave")
         #else
+        healthTestScenario = nil
         usesInMemoryStorage = false
         shouldFailFirstDrinkSave = false
         shouldFailFirstDisplayUnitSave = false

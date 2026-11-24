@@ -21,6 +21,7 @@ struct HealthCleanupSection: View {
                     Text("Cleanup progress could not be saved. It will retry when storage is available.")
                 }
                 Button("Retry now") { coordinator.retryNow() }
+                    .accessibilityIdentifier("healthCleanupRetry")
             }
         }
     }
