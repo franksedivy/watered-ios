@@ -38,6 +38,12 @@ final class HealthExportCoordinator {
         guard context == nil else { return }
         let context = ModelContext(container)
         context.autosaveEnabled = false
+        #if DEBUG
+        if let fixture = client as? DebugHealthUITestClient {
+            do { try fixture.seed(in: context) }
+            catch { preconditionFailure("Could not prepare isolated Health UI fixture") }
+        }
+        #endif
         self.context = context
     }
 

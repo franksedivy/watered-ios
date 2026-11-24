@@ -186,3 +186,14 @@ requeues acknowledged samples, mutates frozen payloads, reads Health history or 
 analytics. The hook calls and both Debug types are excluded from Release compilation.
 The persisted export preference retains its ordinary cross-launch behavior; disable
 it when device testing finishes. See [Testing](TESTING.md#debug-only-device-harness-109-112).
+
+### Isolated Health UI fixtures (#111)
+
+`DebugHealthUITestClient` is selected only by an explicitly named Health scenario
+with isolated in-memory Debug storage. It seeds synthetic pending/failed/blocked
+work before the coordinator starts and supplies fake permission/write/delete results.
+The screen still uses the real preference transaction and serialized executor.
+No fixture opens a Health store; the type and seeding hook are absent from Release.
+Permission rows expose a quantity label plus a separate accessibility status value.
+See [the focused local UI exception](TESTING.md#focused-local-ui-execution-exception)
+for the authorized local run; CI continues to exclude UI tests.

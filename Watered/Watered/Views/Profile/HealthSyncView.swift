@@ -53,6 +53,7 @@ struct HealthSyncView: View {
                         Text(statuses[type]?.message(enabled: enabled) ?? "Checking…")
                     }
                     .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("healthExportStatus-\(type.rawValue)")
                 }
                 Button("Retry now") { coordinator.retryNow() }
                     .disabled(coordinator.isProcessing || !loaded)

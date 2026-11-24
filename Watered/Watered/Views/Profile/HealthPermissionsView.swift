@@ -49,6 +49,7 @@ struct HealthPermissionsSection: View {
                     isShowingHealthGuidance = true
                 }
             }
+            .accessibilityIdentifier("healthReviewPermissions")
             .disabled(authorization.isRequesting)
 
             if let error = authorization.requestError {
@@ -83,6 +84,10 @@ struct HealthPermissionsSection: View {
         } label: {
             Text(title)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(statusLabel(for: authorization.statuses[type]))
+        .accessibilityIdentifier("healthPermission-\(type.rawValue)")
     }
 
     private func statusLabel(for status: HealthWriteAuthorization?) -> String {
