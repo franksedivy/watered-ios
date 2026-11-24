@@ -170,8 +170,8 @@ is open. Physical ownership and lifecycle checks remain required.
 `HealthSyncView` shows the persisted switch and final Privacy & information row
 while disabled. Enabling reveals per-type permissions and an Export status link. `HealthExportStatusView` owns the
 per-type summaries and Retry now on that subpage. The main view’s bottom
-Privacy & information row always opens `HealthSyncInformationView`, which owns the explanatory/privacy text and the
-permission/cleanup recovery route needed while uploads are off. Permission labels
+Privacy & information row always opens `HealthSyncInformationView`, which presents explanatory/privacy prose without duplicate controls.
+Pending cleanup stays actionable on the main screen even while uploads are off. Permission labels
 retain their text and accessibility values alongside green Allowed and amber Not allowed.
 Fresh contexts refresh the preference and value summaries after worker activity and
 foreground entry; failed reads disable preference edits, and failed writes preserve

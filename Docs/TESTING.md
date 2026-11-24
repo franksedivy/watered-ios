@@ -464,11 +464,25 @@ Water/Caffeine/Alcohol outcomes and Retry now. Allowed is green and Not allowed 
 amber, with explicit text/accessibility values and light/dark colour variants.
 
 Privacy & information contains sharing, retention, deletion and privacy explanations.
-Manage permissions and pending cleanup remain reachable there with sync off.
+The information page uses plain scrollable text without permission controls.
+Pending cleanup remains actionable on the main screen with sync off.
 Preference-save/read errors remain actionable on the main screen. These navigation
 changes do not change export eligibility, history, retry or deletion policy.
 
 Focused UI tests cover hidden/revealed controls, both destinations, reopening,
-retry and the off-state information → permissions → cleanup route. Largest-text
+retry and off-state cleanup on the main screen and the prose-only information page. Largest-text
 coverage navigates all three screens. Earlier iPhone observations remain lifecycle
 evidence, not visual acceptance of this revised layout.
+
+### Plain information page and icon header — 24 November 2026
+
+On the working tree based on `2d102a8`, the two affected UI checks passed
+(2 tests, 0 failures, 82.857 seconds) on Xcode 27.2 / iPhone Air simulator /
+iOS 27.2. Result: `/tmp/watered-111-info-icons.xcresult`.
+They verify off-state cleanup on the main screen, absence of duplicate controls
+on the information page, and largest-text scrolling through the prose.
+The normal-size screenshot was reviewed with the Watered/Apple Health icon header.
+The working tree also includes Frank's Profile navigation-label edit; the test
+helper accepts both the previous and current labels. An initial run stopped at
+the old label before entering the screen; the helper was corrected before the
+passing runs. This is focused simulator evidence, not a new full-suite or device pass.

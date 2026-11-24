@@ -14,7 +14,7 @@ final class HealthSyncUITests: XCTestCase {
         let profile = app.buttons["profileButton"]
         XCTAssertTrue(profile.waitForExistence(timeout: 5))
         profile.tap()
-        let link = app.buttons["Sync with Apple Health"]
+        let link = app.buttons.matching(NSPredicate(format: "label IN %@", ["Apple Health", "Sync with Apple Health"])).firstMatch
         XCTAssertTrue(link.waitForExistence(timeout: 3))
         link.tap()
         XCTAssertTrue(app.switches["healthSyncToggle"].waitForExistence(timeout: 3))
@@ -147,31 +147,25 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.buttons["healthExportStatusLink"].waitForNonExistence(timeout: 3))
     }
 
-    // Blocked deletion remains visible with sync off. Restored fake permission plus
-    // Retry now resolves cleanup through the worker without enabling uploads.
+    // Cleanup stays actionable on the main screen while uploads are off; the
+    // information destination contains prose only, with no duplicate settings.
     @MainActor
-    func testBlockedCleanupRecoversWhileSyncRemainsOff() {
+    func testBlockedCleanupRemainsReachableWhileSyncIsOff() {
         let app = openHealth("cleanup")
-        XCTAssertFalse(app.buttons["healthCleanupRetry"].exists)
-        reveal(app.buttons["healthSyncInformation"], in: app)
-        app.buttons["healthSyncInformation"].tap()
         let blocked = app.staticTexts["Deleted from Watered. To remove its Apple Health data, restore permission or delete it in Health."]
         reveal(blocked, in: app)
         XCTAssertTrue(blocked.exists)
-        let manage = app.buttons["healthManagePermissions"]
-        reveal(manage, in: app, upwards: false)
-        manage.tap()
-        revealReview(in: app)
-        app.buttons["healthReviewPermissions"].tap()
-        let waterPermission = app.descendants(matching: .any)["healthPermission-water"].firstMatch
-        assertEventually(waterPermission, "value == %@", "Allowed")
-        app.navigationBars["Apple Health permissions"].buttons.element(boundBy: 0).tap()
         let retry = app.buttons["healthCleanupRetry"]
         reveal(retry, in: app)
         retry.tap()
-        XCTAssertTrue(blocked.waitForNonExistence(timeout: 5))
-        app.navigationBars["Privacy & information"].buttons.element(boundBy: 0).tap()
+        reveal(app.switches["healthSyncToggle"], in: app, upwards: false)
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "0")
+        reveal(app.buttons["healthSyncInformation"], in: app)
+        app.buttons["healthSyncInformation"].tap()
+        XCTAssertTrue(app.staticTexts["About syncing"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["healthManagePermissions"].exists)
+        XCTAssertFalse(app.buttons["healthCleanupRetry"].exists)
+        capture("Apple Health plain information", in: app)
     }
 
     // At the largest accessibility size, essential controls and privacy copy remain

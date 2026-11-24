@@ -81,7 +81,9 @@ validation or approval of every future dependency.
 The always-available information destination (Privacy & information) contains the
 sharing, retention and recovery explanation. The main screen shows the sync switch,
 revealing permissions and status only when enabled; actionable errors remain visible.
-Cleanup and permission recovery are accessible through information even while off.
+The information page uses plain scrollable prose without duplicate permission controls.
+Pending cleanup remains actionable on the main screen even while off; its guidance
+directs people to restore permission in Health.
 No published policy URL or App Store Connect answers were available in this checkout;
 apply the reviewed wording to the published policy before release and compare the
 final archive's privacy report with the submitted answers. The wiki's
@@ -92,3 +94,13 @@ Repository source and this review own current behavior.
 Final-screen VoiceOver, large text, contrast, real prompts and Release signing/device
 checks still need observed evidence. See [Testing](TESTING.md#healthkit-profile-controls-111).
 Broader lifecycle/device verification remains [#112](https://github.com/franksedivy/watered-ios/issues/112).
+
+### Information-page artwork
+
+The Apple Health icon is Apple's unmodified PNG from
+[Apple Design Resources](https://developer.apple.com/design/resources/), downloaded
+24 November 2026 under the accompanying Developer Artwork License for HealthKit.
+It appears at the same size as Watered's icon, with its name alongside, following
+[Apple's icon guidance](https://developer.apple.com/design/human-interface-guidelines/healthkit).
+WateredInformationIcon is a 256 px Default/iOS render of Resources/Watered.icon,
+exported with Icon Composer's ictool; regenerate it when the app icon changes.

@@ -7,7 +7,7 @@ import SwiftData
 /// of Profile's goal draft. Opening, toggling and retrying never request authorization;
 /// the embedded permission section owns the explicit permission action.
 /// Additional controls appear only when enabled; information and off-state cleanup
-/// recovery remain accessible through the final Privacy & information row.
+/// recovery remain accessible while disabled; the final row opens the information page.
 struct HealthSyncView: View {
     let authorization: HealthAuthorizationController
     let coordinator: HealthExportCoordinator
@@ -44,12 +44,13 @@ struct HealthSyncView: View {
                     }
                     .accessibilityIdentifier("healthExportStatusLink")
                 }
-                HealthCleanupSection(coordinator: coordinator)
             }
+
+            HealthCleanupSection(coordinator: coordinator)
 
             Section {
                 NavigationLink("Privacy & information") {
-                    HealthSyncInformationView(authorization: authorization, coordinator: coordinator, analytics: analytics)
+                    HealthSyncInformationView()
                 }
                 .accessibilityIdentifier("healthSyncInformation")
             }
