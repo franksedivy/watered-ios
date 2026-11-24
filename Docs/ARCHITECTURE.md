@@ -48,6 +48,12 @@ unit used by fresh/restored Add Drink forms and the recent menu. Settings `updat
 
 ## Catalogue and current UI boundary
 
+`ViewData/AddDrinkArtworkSize.swift` owns Add Drink's local artwork presentation
+hints and small/medium/large bounds (54/64/74 pt). Espresso selects small and
+Sparkling wine medium; absent hints resolve to large. The row retains its fixed
+88 × 88 pt cell. These hints do not enter catalogue definitions, preparations or
+saved snapshots, so catalogue schema/content/manifest versions are unchanged.
+
 The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The catalogue contains 60 definitions: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness, four Sports & Energy, twelve Milk & Alternatives, eight Alcohol and two Other, under content development-25 / schema 6. Alcohol uses discrete ABV choices and optional non-alcoholic preparations; calculation version 3 gives alcoholic preparations zero goal credit. Optional saved preparation/ABV fields preserve older rows without recalculating history. The four Water, seven Coffee, ten Tea, four Juice, six Soft Drink, three Wellness, four Sports & Energy and twelve Milk & Alternatives definitions have reviewed water-content fractions; the eight Alcohol definitions use reviewed strength tables and both Other definitions have reviewed fixed fractions. Coffee water fractions remain fixed across regular/decaf and shot counts. Calculation version 5 captures a separate optional water amount in snapshots and persistence; existing rows remain unknown. HealthKit mapping remains separate.
 
 The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
