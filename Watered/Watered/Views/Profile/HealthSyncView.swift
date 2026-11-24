@@ -1,15 +1,22 @@
 import SwiftUI
 import SwiftData
 
-/// Production controls use the same durable preference and worker as drink creation.
+/// Presents opt-in, independent permissions and durable export progress in Profile.
+///
+/// Preference changes commit immediately through the existing coordinator, independently
+/// of Profile's goal draft. Opening, toggling and retrying never request authorization;
+/// the embedded permission section owns the explicit permission action.
 struct HealthSyncView: View {
     let authorization: HealthAuthorizationController
     let coordinator: HealthExportCoordinator
     var analytics: any AnalyticsClient = NoOpAnalyticsClient()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    /// Last successfully read or committed preference, never inferred from Health grants.
     @State private var enabled = false
+    /// Prevents edits until the persisted preference and progress can be read together.
     @State private var loaded = false
+    /// Value snapshots refreshed after worker activity and foreground return.
     @State private var statuses: [HealthWriteType: HealthExportStatus] = [:]
     @State private var errorMessage: String?
 
@@ -80,6 +87,8 @@ struct HealthSyncView: View {
         }
     }
 
+    /// Updates the displayed choice only after persistence succeeds; a failed save retains it.
+    /// The coordinator decides whether eligible uploads or cleanup can run.
     private func setEnabled(_ value: Bool) {
         do {
             try coordinator.setEnabled(value)
@@ -91,6 +100,8 @@ struct HealthSyncView: View {
         }
     }
 
+    /// Reads a consistent presentation snapshot without touching Profile's pending settings.
+    /// A failed read disables preference edits and offers recovery without resetting storage.
     private func refresh() {
         do {
             // Fresh context observes worker acknowledgements without retaining stale models.
@@ -111,6 +122,7 @@ struct HealthSyncView: View {
 }
 
 extension HealthWriteType {
+    /// User-facing quantity label; persisted type identifiers remain unchanged.
     var displayName: String {
         switch self {
         case .water: "Water"

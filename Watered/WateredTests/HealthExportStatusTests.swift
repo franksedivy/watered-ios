@@ -3,8 +3,11 @@ import SwiftData
 import Testing
 @testable import Watered
 
+/// Verifies presentation boundaries using synthetic records and an isolated store.
 @MainActor
 struct HealthExportStatusTests {
+    // Given mixed upload and deletion work, each type keeps independent outcomes and
+    // disabling sync changes pending wording without losing sent acknowledgements.
     @Test func independentOutcomesExcludeCleanupAndPreserveSentWhileDisabled() {
         func record(_ type: HealthWriteType, _ status: String, operation: String = "upload", failure: String? = nil) -> PersistentHealthExport {
             let record = PersistentHealthExport(entryID: UUID(), type: type, payload: nil)
@@ -30,6 +33,8 @@ struct HealthExportStatusTests {
         #expect(HealthExportStatus(records: records, type: .alcohol).message(enabled: true) == "No eligible exports")
     }
 
+    // Given a failed preference transaction, both opt-in and opt-out preserve the last
+    // committed choice and neither path requests system permission.
     @Test func failedPreferenceCommitPreservesOptInAndDoesNotRequestPermission() throws {
         enum Failure: Error { case save }
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
@@ -45,6 +50,7 @@ struct HealthExportStatusTests {
         #expect(client.requestCount == 0)
     }
 
+    // Permission fixtures require isolated Debug storage and cannot alter normal launches.
     @Test func fakeHealthScenarioRequiresIsolation() {
         #expect(AppLaunchConfiguration(arguments: ["-uiTestingHealth=denied"]).healthTestScenario == nil)
         #if DEBUG

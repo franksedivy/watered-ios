@@ -2,6 +2,7 @@ import XCTest
 
 /// Isolated storage and fake permissions only; never opens a real Health authorization sheet.
 final class HealthSyncUITests: XCTestCase {
+    /// Opens the production screen against a fake client and a disposable store.
     @MainActor
     private func openHealth(_ scenario: String) -> XCUIApplication {
         continueAfterFailure = false
@@ -16,6 +17,8 @@ final class HealthSyncUITests: XCTestCase {
         return app
     }
 
+    // Given denied write access, the app preference remains editable and permission
+    // recovery explains the Health-app route without claiming a connection.
     @MainActor
     func testDeniedPermissionsDoNotControlAppPreference() {
         let app = openHealth("denied")
@@ -32,6 +35,7 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Open Health")).firstMatch.exists)
     }
 
+    // Given unavailable Health, reviewing permissions preserves the local-logging promise.
     @MainActor
     func testUnavailablePermissionExplainsLocalLogging() {
         let app = openHealth("unavailable")
@@ -40,6 +44,7 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "You can still log drinks")).firstMatch.waitForExistence(timeout: 3))
     }
 
+    // Given a restricted request, the screen explains the error without opting in.
     @MainActor
     func testRestrictedRequestShowsErrorWithoutEnablingSync() {
         let app = openHealth("restricted")
@@ -51,6 +56,7 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "0")
     }
 
+    /// Scrolls through the explanatory copy without relying on a fixed screen height.
     @MainActor
     private func revealReview(in app: XCUIApplication) {
         for _ in 0..<5 {

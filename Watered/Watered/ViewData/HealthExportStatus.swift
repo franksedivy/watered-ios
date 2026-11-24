@@ -1,13 +1,22 @@
 import Foundation
 
-/// Counts acknowledged actions, never inferred contents of the Health store.
+/// Presents a snapshot of one type's upload work without retaining persistence models.
+///
+/// Counts describe local work and acknowledgements. They never infer the current
+/// contents of Health; deletion work is presented separately by HealthCleanupSection.
 struct HealthExportStatus {
+    /// Acknowledged writes, including samples the person may since have removed in Health.
     var sent = 0
+    /// Work awaiting an attempt or acknowledgement; an in-flight write may already exist in Health.
     var pending = 0
+    /// Previously eligible work waiting for restored permission.
     var blocked = 0
+    /// Temporary failures retained for retry with the original payload.
     var failed = 0
+    /// Work that cannot be sent automatically, including unrecognised persisted states.
     var invalid = 0
 
+    /// Separates mutually exclusive outcomes for the requested type and excludes cleanup.
     init(records: [PersistentHealthExport], type: HealthWriteType) {
         for record in records where record.typeID == type.rawValue && record.operation == "upload" {
             switch record.status {
@@ -21,6 +30,8 @@ struct HealthExportStatus {
         }
     }
 
+    /// Applies the app preference to pending-work wording without rewriting recorded outcomes.
+    /// Permission recovery and invalid-data guidance remain visible while uploads are paused.
     func message(enabled: Bool) -> String {
         var parts: [String] = []
         if sent > 0 { parts.append("Sent to Apple Health: \(sent)") }

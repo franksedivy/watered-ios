@@ -14,11 +14,14 @@ struct HealthPermissionsView: View {
     }
 }
 
+/// Shared permission controls; system grants remain independent of the app's sync preference.
+/// Only Review permissions may prompt. Existing decisions receive Health-app recovery guidance.
 struct HealthPermissionsSection: View {
     let authorization: HealthAuthorizationController
     let analytics: any AnalyticsClient
     @State private var isShowingHealthGuidance = false
     @State private var healthGuidanceMessage = ""
+    /// Guards the existing property-free event across redraws and returning from Health.
     @State private var hasReportedOpen = false
 
     var body: some View {
