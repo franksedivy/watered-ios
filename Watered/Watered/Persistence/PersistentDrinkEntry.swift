@@ -21,6 +21,9 @@ final class PersistentDrinkEntry {
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var source: String = "manual"
+    /// Marks local deletion while the hidden record retains facts needed for Health cleanup.
+    /// The export executor purges it after all required cleanup is acknowledged; a timestamp
+    /// does not mean Health samples have already been removed.
     var deletedAt: Date? = nil
 
     /// The saved catalogue identity, independent of the current catalogue.
@@ -85,10 +88,12 @@ final class PersistentDrinkEntry {
         self.catalogueSchemaVersion = snapshot.catalogueSchemaVersion
     }
 
-    /// Restores an entry entirely from saved facts, without a catalogue lookup.
+    /// Restores a visible entry entirely from saved facts, without a catalogue lookup or recalculation.
     ///
-    /// - Returns: The restored entry, or nil for incomplete metadata or invalid stored values.
-    /// - Important: Old development rows without snapshots are not reinterpreted or deleted.
+    /// - Returns: The restored entry, or nil when the record is intentionally hidden by `deletedAt`,
+    ///   has incomplete metadata or contains invalid stored values. A hidden record is not necessarily corrupt.
+    /// - Important: This mapping does not mutate or delete stored records. Old development rows
+    ///   without snapshots are not reinterpreted, and hidden records remain available for cleanup.
     func drinkEntry() -> DrinkEntry? {
         guard deletedAt == nil, let drinkID = catalogueDrinkID, !drinkID.isEmpty,
               let drinkName = catalogueDrinkName, !drinkName.isEmpty,
