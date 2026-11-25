@@ -55,6 +55,8 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// A reason the app cannot use a decoded catalogue.
     nonisolated enum ValidationError: Error, Equatable {
         case unsupportedSchemaVersion(Int)
+        case emptyVersion
+        case emptyDrinkName(drinkID: String)
         case duplicateCategoryID(String)
         case duplicateDrinkID(String)
         case unknownCategoryID(drinkID: String, categoryID: String)
@@ -75,6 +77,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     
     /// Checks catalogue structure, numeric rules and preparation consistency.
     ///
+    /// Catalogue version and drink names must be nonempty so captured metadata remains restorable.
     /// Supplied default volume must be positive and finite.
     /// Missing defaults are valid. Hydration ratios must be finite and non negative, with no upper limit.
     /// Default ABV must be finite and between zero and one inclusive. Explicit unknown rules are valid without numeric values.
@@ -98,6 +101,8 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
+        guard !version.isEmpty else { throw ValidationError.emptyVersion }
+
         var categoryIDs = Set<String>()
         
         for category in categories {
@@ -119,6 +124,9 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var drinkIDs = Set<String>()
         
         for drink in drinks {
+            guard !drink.name.isEmpty else {
+                throw ValidationError.emptyDrinkName(drinkID: drink.id)
+            }
             let hasWhitespace = drink.id.contains(where: {character in
                 return character.isWhitespace
             })
