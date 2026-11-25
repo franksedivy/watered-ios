@@ -1,11 +1,18 @@
 # 001 — Capture water content independently of hydration credit
 
-- Status: Structure and quantity direction accepted by Frank on 10 November 2026. All catalogue water estimates are approved; alcohol conversion approved on 14 November; durable export lifecycle remains pending.
+- Status: Structure and quantity direction accepted by Frank on 10 November 2026. All catalogue water estimates are approved; alcohol conversion approved on 14 November. Lifecycle policy was subsequently approved in [decision 002](002-healthkit-export-lifecycle.md) and implemented through #109/#110.
 - Owner/reviewer: Frank Sedivy.
 - Related: [#95](https://github.com/franksedivy/watered-ios/issues/95), parent [#106](https://github.com/franksedivy/watered-ios/issues/106), mapping [#108](https://github.com/franksedivy/watered-ios/issues/108).
 - Supersedes: the narrow Still/Sparkling/Infused-only water policy approved earlier in this chat. The subsequent full-beverage-volume suggestion was also rejected.
 
 ## Context and decision
+
+Current implementation note, 25 November 2026: the mapping work merged in PR #164;
+#107–#111 now provide authorization, frozen mapping, durable export, cleanup and
+Profile controls. The handoff and verification sections below retain their original
+slice-specific evidence, not the current delivery status. See [Architecture](../ARCHITECTURE.md)
+and [Testing](../TESTING.md) for the implemented boundaries and recorded evidence.
+Final release reconciliation remains #113; this decision does not approve a release.
 
 Consumed beverage volume, estimated water content, hydration-goal contribution and
 caffeine mass are separate quantities. The reviewed catalogue had only beverage
@@ -177,9 +184,10 @@ for `9881bad`. Alcohol conversion tests passed in the [conversion unit run](http
 for `a299568`. Hosted environment: Xcode 27.1, iPhone Air/iOS 27.0; WateredTests only,
 UI suites excluded. Frank confirmed the suggested manual logging/strength/repeat/
 relaunch checks on 14 November; this is not physical-device HealthKit verification.
-Implementation is pushed on `feature/95-healthkit-mapping`, not merged or released.
+At that evidence checkpoint, implementation was pushed on `feature/95-healthkit-mapping`
+and was not yet merged. It subsequently merged in PR #164; no release is implied.
 
-## Outstanding handoffs
+## Original implementation handoffs
 
 - #95: policy, eligibility matrix, examples and implementation handoff complete on 14 November 2026. This closes the decision task, not the integration.
 - #108: map captured water, caffeine and alcohol quantities independently using this approved policy. Preserve quantities through catalogue retirement, display-unit changes and retries. Add explicit immutable export-policy context in coordination with #96; catalogue/calculation versions are not export-policy versions.

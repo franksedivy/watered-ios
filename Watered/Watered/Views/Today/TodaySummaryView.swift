@@ -18,7 +18,7 @@ import SwiftUI
 //
 // Returns:
 // A SwiftUI view containing the total liquid amount, daily goal text and
-// hydration prgoress display.
+// hydration progress display.
 //
 // UI role:
 // Keeps the main Today summary presentation separate from TodayView. This view

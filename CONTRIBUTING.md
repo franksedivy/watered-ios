@@ -13,7 +13,7 @@ Use synthetic data for testing. Before working with older development stores, re
 The README establishes focused branches from `main`, one issue or coherent change per PR, relevant verification, screenshots or recordings for UI changes, and documentation updates alongside behaviour changes.
 
 1. Check the current branch and uncommitted work. Confirm the issue's intended result and scope.
-2. Start a focused branch from the appropriate base. Existing history uses `feature/`, `bugfix/` and `refactor/`; agent-created branches can use `codex/<issue>-<description>`. Existing branches do not need renaming.
+2. Start a focused branch from the appropriate base. Use `feature/<issue>-<description>` or `bugfix/<issue>-<description>` for new agent-created branches, not `codex/`. Existing branches do not need renaming.
 3. Implement a small coherent slice following existing model and persistence boundaries.
 4. Run relevant checks from [Testing](Docs/TESTING.md), inspect `git diff --check` and review the diff, including new files.
 5. Only when Frank explicitly requests it, open a PR referencing the relevant and parent issues. Describe the concrete problem, resulting behaviour, verification and limitations. Include visual evidence for UI changes and complete the metadata checklist below.

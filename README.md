@@ -4,9 +4,9 @@ The hydration tracker Apple forgot. Realistic drink textures and playful fluid d
 ## Current Status
 `0.4 Persistence & Analytics` is complete. Drink logging, Today summaries, recent-drink shortcuts, and drink deletion are implemented. SwiftData stores drinks, display units, the current hydration goal, and goal-change history locally. Analytics events are logged locally in Debug builds and discarded in Release builds.
 
-The current focus is `0.5 Drink Catalogue & HealthKit syncing`: a scalable catalogue of 50-60 built-in drinks, optional export-only HealthKit integration, and focused refactoring of persistence responsibilities out of the app's navigation view. Existing drink history must remain compatible as the catalogue expands.
+The current focus is `0.5 Drink Catalogue & HealthKit syncing`. The implementation contains 60 built-in drinks across ten categories, optional export-only HealthKit integration, and persistence operations separated from the app's navigation view. Snapshot-backed history retains its captured facts as the catalogue changes. See [Development Drink Data](Docs/Development-Drink-Data.md) for the older enum-only development-store boundary.
 
-HealthKit is planned, not yet implemented; reading or importing HealthKit data is outside the initial scope. Widgets, a Watch app, iCloud sync, and production analytics collection remain future work.
+HealthKit export is implemented with independent app opt-in and per-type write permission, frozen quantities, retries and deletion cleanup. Reading/importing Health data and automatic historical export are excluded. Implementation does not establish 0.5 release approval: the standards audit and final release reconciliation remain in [#172](https://github.com/franksedivy/watered-ios/issues/172) and [#113](https://github.com/franksedivy/watered-ios/issues/113). Widgets, a Watch app, iCloud sync, and production analytics collection remain future work.
 
 ## Getting Started
 Requires Xcode 27 or later and an iOS 27 or later simulator or device.

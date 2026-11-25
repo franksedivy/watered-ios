@@ -36,7 +36,7 @@ struct WateredTabView: View {
     
     /// Receives product events from the app's top-level action handlers.
     ///
-    /// The app supplies the implementation. Child views remain indepenedent of analytics aclients and provider SDKs
+    /// The app supplies the implementation. Child views remain independent of analytics clients and provider SDKs
     private let analytics: any AnalyticsClient
 
     /// The loaded catalogue or a recoverable Add Drink availability failure.
@@ -512,7 +512,7 @@ struct WateredTabView: View {
         return try HealthExportPersistence.needsCleanupNotice(for: ids, in: ModelContext(modelContext.container))
     }
 
-    /// Deletes one logical dirnk entry identified by its stable UUID.
+    /// Deletes one logical drink entry identified by its stable UUID.
     ///
     /// Finds the matching persisted rows and delegates saving and store updates to the shared deletion function.
     /// An already-absent entry requires no deletion.
@@ -607,7 +607,9 @@ struct WateredTabView: View {
     /// or tracking simulated failures.
     ///
     /// - Parameter entry: The drink to persist.
-    /// - Throws: An error from the callback or saving, after pending changes are rolled back.
+    /// - Throws: A persistence, capture or callback error, including duplicate identity.
+    ///   Preliminary pending-edit save and lookup errors propagate without rollback;
+    ///   failures after insertion roll back the new transaction, preserving earlier commits.
     /// - Important: Store updates, analytics, and presentation are handled by the caller.
     private func persistDrinkEntry(_ entry: DrinkEntry) throws {
         try DrinkEntryPersistence.save(

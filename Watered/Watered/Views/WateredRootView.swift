@@ -9,9 +9,9 @@ import SwiftUI
 
 // MARK: - Watered Root View
 
-/// Defines Watere's root experience and forwards app-level dependencies
+/// Defines Watered's root experience and forwards app-level dependencies
 ///
-/// The tab view owns navigation and sheet presentation. This view connnects that app shell to the dependencies supplied
+/// The tab view owns navigation and sheet presentation. This view connects that app shell to the dependencies supplied
 /// at launch.
 struct WateredRootView: View {
     

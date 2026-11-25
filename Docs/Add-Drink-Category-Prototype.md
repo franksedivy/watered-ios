@@ -9,9 +9,11 @@ its selection. Changing categories or drink types preserves explicitly chosen/re
 preparation to the selected definition's defaults. Persistent last-used choices per
 category are not implemented in this slice.
 
-The eleven current drinks use bundled PNG artwork named by catalogue ID, rendered
+The 60 current drinks use bundled PNG artwork named by catalogue ID, rendered
 in original colours with aspect-fit sizing. Missing artwork uses the illustrative
-fallback. The selected card uses the category colour without a tick overlay.
+fallback. Shared presentation hints select 54 pt Espresso, 64 pt Sparkling wine and
+74 pt by default inside fixed 88 × 88 pt cells. The selected card uses the category
+colour without a tick overlay. These sizes do not affect serving volume or estimates.
 
 Preparation is visible beneath the drink cards. All seven coffees offer regular /
 decaf; Latte, Cappuccino, Espresso, Americano and Iced coffee also offer 0–4 shots.

@@ -7,22 +7,22 @@
 
 import Foundation
 
-/// Describes how to estimate caffeine for a prepared dirnk.
+/// Describes how to estimate caffeine for a prepared drink.
 ///
 /// Numeric amounts are expressed in milligrams. These rules describe estimates, not measured caffeine content or
-/// HealthKit export elibiligity.
+/// HealthKit export eligibility.
 nonisolated enum CaffeineRule: Equatable, Codable {
     /// Estimates caffeine from the finished drink's volume.
     ///
-    /// Concrentration is expressed as milligrams per 100 millilitres.
+    /// Concentration is expressed as milligrams per 100 millilitres.
     case perVolume(concentration: Double)
     
     /// Estimates caffeine from the selected number of espresso shots.
     ///
-    /// Amount is expressed as milligrams per shot, indepenedent of this finished drink's total volume
+    /// Amount is expressed as milligrams per shot, independent of this finished drink's total volume
     case perShot(amount: Double)
     
-    /// Indicates that no supported caffeine estimate is avialable.
+    /// Indicates that no supported caffeine estimate is available.
     ///
     /// Unknown is distinct from an explicitly known zero amount.
     case unknown
@@ -44,9 +44,11 @@ nonisolated enum CaffeineRule: Equatable, Codable {
     /// Decodes a caffeine rule using its explicit kind and required value.
     ///
     /// concentration is in milligrams per 100 millilitres. Per-shot amounts are in milligrams per shot.
+    /// Rejects fields outside the selected kind; numeric range validation belongs to the
+    /// catalogue and calculator, not this decoder.
     ///
     /// - Parameter decoder: The decoder supplying the rule data.
-    /// - Throws: A decoding error for an unsupported kind, missing required field or incorrectly typed value.
+    /// - Throws: A decoding error for an unsupported kind, unexpected or missing field, or incorrectly typed value.
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try container.decode(RuleKind.self, forKey: .kind)

@@ -1,15 +1,16 @@
 //
-//  SnapshotFormatter.swift
+//  ProgressFormatter.swift
 //  Watered
 //
 //  Created by Frank Sedivy on 04/07/2026.
 //
 import Foundation
 
-// Formats progress value for console output and early UI labels
+/// Formats progress and contribution ratios for presentation without changing saved values.
 nonisolated struct ProgressFormatter {
     nonisolated init() {}
     
+    /// Rounds progress to the nearest whole percentage; callers supply a finite representable value.
     nonisolated func percentageString(from progress: Double) -> String {
         let roundedPercentage = Int((progress * 100).rounded())
         return "\(roundedPercentage)%"

@@ -5,9 +5,9 @@
 //  Created by Frank Sedivy on 02/10/2026.
 //
 
-/// Defines the product interactions Watered can report though its analytics boundary.
+/// Defines the product interactions Watered can report through its analytics boundary.
 ///
-/// Events contain only explicitly allowed properies. Creating an even tdoe snot log, persist, or transmit it.
+/// Events contain only explicitly allowed properties. Creating an event does not log, persist, or transmit it.
 ///
 /// - Important: Do not include user identifiers, drink records or health data.
 nonisolated enum AnalyticsEvent: Equatable {

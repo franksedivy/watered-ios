@@ -5,6 +5,9 @@ nonisolated enum WaterContent: Codable, Equatable {
     case unknown
     case fraction(Double)
 
+    /// Reviewed water fractions keyed by exact alcoholic ABV, plus an optional non-alcoholic fraction.
+    /// Decoding checks values and duplicate strengths; catalogue validation checks schema support
+    /// and exact alignment with the drink's alcohol choices. No fraction is inferred from ABV.
     case alcoholOptions([AlcoholWaterOption], nonAlcoholic: Double?)
 
     struct AlcoholWaterOption: Codable, Equatable {

@@ -16,13 +16,13 @@ Release checklist agreed on 6 November 2026. Signing/upload automation and the d
 - [ ] Run the configured unit/UI plan on the candidate revision and inspect results. Record exclusions, failures and any explicitly accepted limitations.
 - [ ] Complete applicable [manual/device checks](TESTING.md), including persistence after relaunch and affected accessibility flows.
 - [ ] Confirm the Release build configuration and privacy behaviour: no accidental Debug hooks or production analytics collection.
-- [ ] If the release adds HealthKit, separately verify the implemented capability, permission text, export behaviour and device checks. These are future gates, not implemented behaviour in this baseline.
+- [ ] For HealthKit export, verify the implemented capability, permission text, export behaviour and device evidence against the candidate. Existing implementation and focused checks do not replace final release verification.
 - [ ] Attach exact evidence to the release PR or checklist; distinguish simulator and physical-device coverage.
 
 ## Prepare and approve
 
 - [ ] Agree the version, build number and tag convention. Inspect the app target's settings rather than confusing test-target versions with the product version.
-- [ ] Update version/build settings as needed, then verify the final candidate if those changes affect the build. The inspected app baseline is marketing version `0.4`, build `1`; this is an observation, not a next-release recommendation.
+- [ ] Update version/build settings as needed, then verify the final candidate if those changes affect the build. At `c22a53b` the app target uses marketing version `0.5`, build `1`; recheck the candidate rather than treating this observation as publication approval.
 - [ ] Draft release notes from completed, verified changes. Link related issues/PRs and describe known limitations.
 - [ ] Update README status and affected docs to reflect the candidate accurately.
 - [ ] Obtain explicit agreement for the merge and for the intended publication/distribution action. Review approval alone does not imply both.

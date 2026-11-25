@@ -1,6 +1,7 @@
 import Foundation
 
-/// Catalogue caffeine content. Absence is known zero; unknown is never inferred as zero.
+/// Catalogue caffeine content. Explicit `none` means known zero, not a missing JSON field.
+/// Unknown content is never inferred as zero; catalogue validation checks option consistency.
 nonisolated enum CaffeineContent: Codable, Equatable {
     case none
     case unknown

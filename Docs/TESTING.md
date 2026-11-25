@@ -33,7 +33,16 @@ are excluded from hosted execution; they remain available locally. Reintroduce t
 in focused increments as the app matures. A green CI check is a unit-suite pass,
 not a full unit/UI-suite pass, and does not close unresolved UI issues (#155/#138).
 
-The shared [test plan](../Watered/Watered.xctestplan) includes unit and UI targets but excludes `WateredUITestsLaunchTests`. The Stats UI test `testSavedImperialDrinkReformatsInMillilitres` is re-enabled with #104; #138 still requires runtime evidence before closure. “Configured suite passed” must not imply excluded or skipped tests ran. New pushes cancel older runs on the same branch; report cancellation separately from a test failure.
+The shared [test plan](../Watered/Watered.xctestplan) includes unit and UI targets but excludes `WateredUITestsLaunchTests`. The Stats UI test `testSavedImperialDrinkReformatsInMillilitres` is re-enabled with #104. As reviewed on 25 November 2026, #138 is deferred until after launch with hosted UI reliability unresolved; #155 remains open and deferred until hosted UI execution resumes. “Configured suite passed” must not imply excluded or skipped tests ran. New pushes cancel older runs on the same branch; report cancellation separately from a test failure.
+
+The [#112 verification record](https://github.com/franksedivy/watered-ios/issues/112)
+supersedes its earlier pending notes: the full local UI selection recorded 47 passes
+and five failures on iPhone Air / iOS 27.0. All five repaired scenarios subsequently
+passed across focused reruns on Xcode 27.2, with runner-kill interruptions recorded.
+PR #178 merged as `f46a2115e5ac9a3de6ede29e3f170e51e1076385`, and #112 closed on
+24 November. This is not one clean full-suite pass; local execution exceptions were
+task-specific and do not change the agent runner guard. Historical implementation
+checkpoints below retain their original evidence and are not current ticket status.
 
 UI tests use `-uiTestingInMemory` with synthetic data. Debug failure hooks include `-uiTestingFailFirstDrinkSave` and `-uiTestingFailFirstDisplayUnitSave`, which require isolated storage. Release builds ignore test arguments. Do not use personal drink history or Health data for automated tests.
 
@@ -74,8 +83,12 @@ retry passed. Log: `/tmp/watered-161-build.log`.
 
 A standalone macOS Swift smoke check exercised the actual presentation enum
 against all 60 bundled drink IDs, the unknown-ID default and 54/64/74 pt dimensions;
-all passed. The new `AddDrinkArtworkSizeTests` passed syntax parsing but has not
-run in hosted CI. No local simulator test suite ran; CI configuration is unchanged.
+all passed. The initial source review also passed syntax parsing. Subsequently,
+[hosted unit CI](https://github.com/franksedivy/watered-ios/actions/runs/45499864963)
+passed 328 tests across 45 suites, including the artwork assignments and unknown-ID
+fallback, at `8d0581528a9f2fc28fc6b6a3ac6fcec19ae7228e` on Xcode 27.1 / iPhone Air /
+iOS 27.0. PR #179 merged as `da49a0e3fdd36e56195fba42adc2474a9ecf8c7c`.
+No local simulator test suite ran for #161; hosted UI execution remained disabled.
 
 Agent visual review used iPhone Air / iOS 27.0 with `-uiTestingInMemory`:
 Espresso and ordinary coffee artwork retained their different scales and fixed
@@ -84,7 +97,9 @@ accessibility traits. Sparkling wine at 64 pt remained comfortably inside its
 selection border beside large artwork. Light/dark and one increased text-size
 step were inspected; text size and light appearance were restored afterward.
 No drink was saved or deleted. Largest accessibility sizes, spoken VoiceOver,
-Reduce Motion, physical-device review and hosted unit execution remain outstanding.
+Reduce Motion and physical-device review remain outstanding. Frank accepted pending
+daily-use manual review as non-blocking for #161 closure; its visual acceptance
+criterion remains unchecked. Audit completion must not count those checks as passed.
 
 ## HealthKit authorization (#107)
 
