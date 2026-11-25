@@ -118,6 +118,8 @@ struct RecentDrinkOptionTests {
         #expect(Set(options.map { $0.label(displayedAs: .milliliters) }).count == 1)
     }
 
+    // GIVEN a prepared recent drink labelled in every supported display unit,
+    // THEN conversion preserves shortcut identity and history while repetition retains exact amount and preparation.
     @Test(arguments: LiquidUnit.allCases, LiquidUnit.allCases)
     func displayConversionPreservesRecentIdentityHistoryAndRepeatedPreparation(
         source: LiquidUnit, display: LiquidUnit

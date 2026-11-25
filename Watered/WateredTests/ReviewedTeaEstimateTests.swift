@@ -4,6 +4,8 @@ import Testing
 
 @MainActor
 struct ReviewedTeaEstimateTests {
+    // GIVEN the four plain teas in the bundled catalogue,
+    // THEN their order, default selection, servings and supported decaf choices match the reviewed rules.
     @Test func bundledTeaMembershipAndPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let teas = Array(catalogue.activeDrinks(inCategoryID: "tea").prefix(4))
@@ -20,6 +22,8 @@ struct ReviewedTeaEstimateTests {
         #expect(teas.last?.caffeine == CaffeineContent.none)
     }
 
+    // GIVEN plain tea preparations at different physical volumes in each unit,
+    // THEN hydration and caffeine scale correctly while unsupported herbal decaf is rejected.
     @Test(arguments: LiquidUnit.allCases)
     func estimatesScaleWithPhysicalVolume(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -41,6 +45,8 @@ struct ReviewedTeaEstimateTests {
         }
     }
 
+    // GIVEN fresh, manually changed and restored tea volume selections,
+    // THEN the 250 ml default remains exact and never replaces a manual or restored amount.
     @Test(arguments: LiquidUnit.allCases)
     func servingDefaultPreservesExactAmountAndUserChoices(unit: LiquidUnit) {
         var fresh = AddDrinkVolumeSelection(value: AddDrinkVolumeSelection.defaultValue(for: unit), unit: unit)
@@ -56,6 +62,8 @@ struct ReviewedTeaEstimateTests {
         #expect(restored.unit == unit)
     }
 
+    // GIVEN an older decaf tea snapshot with unknown caffeine,
+    // THEN history preserves its captured facts while repetition creates a fresh entry with reviewed estimates.
     @Test func historyRetainsCapturedTeaFactsWhileRepeatUsesReviewedRules() throws {
         let old = DrinkCatalogueSnapshot(
             drinkID: "black-tea", drinkName: "Previously logged tea", caffeineVariant: .decaf,

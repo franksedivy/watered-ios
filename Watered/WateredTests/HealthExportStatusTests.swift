@@ -6,8 +6,8 @@ import Testing
 /// Verifies presentation boundaries using synthetic records and an isolated store.
 @MainActor
 struct HealthExportStatusTests {
-    // Given mixed upload and deletion work, each type keeps independent outcomes and
-    // disabling sync changes pending wording without losing sent acknowledgements.
+    // GIVEN mixed upload and deletion records with sync enabled or disabled,
+    // THEN per-type upload counts exclude cleanup and paused wording preserves sent acknowledgements.
     @Test func independentOutcomesExcludeCleanupAndPreserveSentWhileDisabled() {
         func record(_ type: HealthWriteType, _ status: String, operation: String = "upload", failure: String? = nil) -> PersistentHealthExport {
             let record = PersistentHealthExport(entryID: UUID(), type: type, payload: nil)
@@ -33,8 +33,8 @@ struct HealthExportStatusTests {
         #expect(HealthExportStatus(records: records, type: .alcohol).message(enabled: true) == "No eligible exports")
     }
 
-    // Given a failed preference transaction, both opt-in and opt-out preserve the last
-    // committed choice and neither path requests system permission.
+    // GIVEN failed opt-in and opt-out transactions,
+    // THEN the last committed preference survives and neither action requests system permission.
     @Test func failedPreferenceCommitPreservesOptInAndDoesNotRequestPermission() throws {
         enum Failure: Error { case save }
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
@@ -50,8 +50,8 @@ struct HealthExportStatusTests {
         #expect(client.requestCount == 0)
     }
 
-    // Only committed off-to-on actions count, even when every Health type is unavailable.
-    // Repeated on, disabling and permission state must not create extra enablement events.
+    // GIVEN repeated on/off preference actions with unavailable Health types,
+    // THEN only committed off-to-on transitions emit an event, after the enabled preference is readable.
     @Test func enablementAnalyticsFollowCommittedTransitionsOnly() throws {
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
         let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
@@ -72,8 +72,8 @@ struct HealthExportStatusTests {
         #expect(savedPreferences == [true, true])
     }
 
-    // A failed enablement cannot count as adoption; a successful retry reports once,
-    // after a separate context can observe the saved preference.
+    // GIVEN an enablement transaction that fails before a successful retry,
+    // THEN failure preserves disabled state without analytics and the retry emits one enablement event.
     @Test func failedEnablementEmitsNothingAndSuccessfulRetryEmitsOnce() throws {
         enum Failure: Error { case save }
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
@@ -92,8 +92,8 @@ struct HealthExportStatusTests {
         #expect(analytics.events == [.appleHealthSyncEnabled])
     }
 
-    // A pass with no suspension must still invalidate presentation, even when SwiftUI
-    // observes isProcessing as false both before and after the worker runs.
+    // GIVEN a coordinator attached to an empty isolated store,
+    // THEN a completed processing pass advances the presentation revision and clears its processing state.
     @Test func completedPassAdvancesPresentationRevision() async throws {
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self])
         let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true))
@@ -105,7 +105,8 @@ struct HealthExportStatusTests {
         #expect(!coordinator.isProcessing)
     }
 
-    // Permission fixtures require isolated Debug storage and cannot alter normal launches.
+    // GIVEN Health UI fixture arguments with and without isolated storage,
+    // THEN only isolated Debug launches select a fake scenario and Release ignores it.
     @Test func fakeHealthScenarioRequiresIsolation() {
         #expect(AppLaunchConfiguration(arguments: ["-uiTestingHealth=denied"]).healthTestScenario == nil)
         #if DEBUG

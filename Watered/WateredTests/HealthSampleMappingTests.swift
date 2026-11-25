@@ -9,6 +9,8 @@ struct HealthSampleMappingTests {
     private let id = UUID(uuidString: "00112233-4455-6677-8899-AABBCCDDEEFF")!
     private let loggedAt = Date(timeIntervalSince1970: 1_794_686_400)
 
+    // GIVEN captured estimates from reviewed catalogue preparations,
+    // THEN each eligible type maps its saved quantity or retains its zero/unknown outcome.
     @Test func approvedCatalogueExamplesMapCapturedEstimates() throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
         // Decision 001's reviewed recipe examples, not HealthKit conversion policy.
@@ -40,6 +42,8 @@ struct HealthSampleMappingTests {
         }
     }
 
+    // GIVEN a saved drink expressed in each supported volume unit,
+    // THEN mapping preserves unrounded water/alcohol quantities and the saved caffeine mass.
     @Test(arguments: LiquidUnit.allCases)
     func everyInputUnitKeepsFullPrecision(unit: LiquidUnit) throws {
         let amount = DrinkAmount(value: 8, unit: unit)
@@ -51,6 +55,8 @@ struct HealthSampleMappingTests {
         #expect(try sample(result, .caffeine).quantity == 40)
     }
 
+    // GIVEN unknown, zero or positive export quantities with unknown, negative or zero goal credit,
+    // THEN mapping distinguishes unknown from zero and leaves positive water unchanged.
     @Test func unknownZeroAndNegativeGoalCreditRemainDistinct() throws {
         for hydration in [nil, -20.0, 0] {
             let unknown = HealthSampleMapping.resolve(entry(water: nil, caffeine: nil, abv: nil, hydration: hydration), eligibleTypes: allTypes)
@@ -62,6 +68,8 @@ struct HealthSampleMappingTests {
         }
     }
 
+    // GIVEN an invalid quantity or an alcohol upper bound instead of an exact strength,
+    // THEN valid types still map independently and the bound never becomes an exact alcohol quantity.
     @Test func failuresAreIndependentAndBoundsAreNeverExactABV() throws {
         for invalid in [-1.0, .nan, .infinity] {
             let water = HealthSampleMapping.resolve(entry(water: invalid), eligibleTypes: allTypes)
@@ -83,6 +91,8 @@ struct HealthSampleMappingTests {
         #expect(HealthSampleMapping.resolve(entry(abv: 1.01), eligibleTypes: allTypes)[.alcohol] == .invalid(.invalidQuantity))
     }
 
+    // GIVEN a non-finite logged date or an invalid consumed volume,
+    // THEN every eligible type fails with the corresponding validation error.
     @Test func invalidDatesAndVolumesFailEveryEligibleTypeWithoutSubstitution() {
         for value in [Double.nan, .infinity, -.infinity] {
             let result = HealthSampleMapping.resolve(entry(date: Date(timeIntervalSinceReferenceDate: value)), eligibleTypes: allTypes)
@@ -94,6 +104,8 @@ struct HealthSampleMappingTests {
         }
     }
 
+    // GIVEN every combination of caller-supplied eligible types for the same saved entry,
+    // THEN only those types produce samples and all others remain ineligible.
     @Test func callerEligibilityIsIndependentAndNeverInferredFromLoggedDate() throws {
         for mask in 0..<8 {
             let types = Set(HealthWriteType.allCases.enumerated().compactMap { index, type in
@@ -107,6 +119,8 @@ struct HealthSampleMappingTests {
         }
     }
 
+    // GIVEN frozen per-type payloads round-tripped through storage and used to construct samples repeatedly,
+    // THEN quantities, saved instants, provenance, policy context and stable entry/type identities survive.
     @Test func frozenPayloadRoundTripAndRetryPreserveIdentityDatesAndContext() throws {
         let results = HealthSampleMapping.resolve(entry(), eligibleTypes: allTypes)
         var identities = Set<String>()
@@ -147,6 +161,8 @@ struct HealthSampleMappingTests {
             == HealthSampleMapping.resolve(entry(date: madrid), eligibleTypes: allTypes))
     }
 
+    // GIVEN a decoded payload with unsupported policy, unit, sync version or invalid quantity/identity,
+    // THEN sample construction rejects it rather than reinterpreting the frozen facts.
     @Test func constructionRejectsCorruptOrUnsupportedFrozenPayloads() throws {
         let original = try sample(HealthSampleMapping.resolve(entry(), eligibleTypes: allTypes), .water)
         for (key, value) in [("policyVersion", "future" as Any), ("unit", "count"),

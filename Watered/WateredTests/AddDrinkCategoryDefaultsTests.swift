@@ -3,6 +3,8 @@ import Testing
 
 @MainActor
 struct AddDrinkCategoryDefaultsTests {
+    // GIVEN Still water and Latte appear after other choices in their categories,
+    // THEN the preferred drinks remain the defaults regardless of list position.
     @Test
     func preferredDrinksDoNotDependOnTheirPosition() {
         let still = drink("still-water", category: "water")
@@ -15,6 +17,8 @@ struct AddDrinkCategoryDefaultsTests {
         ]) == latte)
     }
 
+    // GIVEN the preferred Still water definition is retired,
+    // THEN Water defaults to the first active alternative.
     @Test
     func unavailablePreferredDrinkFallsBackToFirstActiveDrink() {
         let sparkling = drink("sparkling-water", category: "water")
@@ -23,12 +27,16 @@ struct AddDrinkCategoryDefaultsTests {
         ]) == sparkling)
     }
 
+    // GIVEN a category without an explicit preferred drink,
+    // THEN its first active drink becomes the default.
     @Test
     func otherCategoriesUseTheirFirstActiveDrink() {
         let tea = drink("black-tea", category: "tea")
         #expect(AddDrinkCategoryDefaults.drink(in: "tea", from: [tea]) == tea)
     }
 
+    // GIVEN empty choices or only retired and wrong-category definitions,
+    // THEN no default drink is returned for the requested category.
     @Test
     func emptyRetiredAndWrongCategoryListsHaveNoDefault() {
         #expect(AddDrinkCategoryDefaults.drink(in: "water", from: []) == nil)

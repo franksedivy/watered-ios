@@ -12,6 +12,8 @@ struct ReviewedJuiceEstimateTests {
         ("aloe-vera-drink", "Aloe vera drink", 0.90)
     ]
 
+    // GIVEN the bundled juice definitions,
+    // THEN membership, names, servings, estimate rules and preparation availability match the reviewed fixtures.
     @Test func reviewedMembershipDefaultsAndNoPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         #expect(catalogue.activeDrinks(inCategoryID: "juices").map(\.id) == expected.map(\.id))
@@ -26,6 +28,8 @@ struct ReviewedJuiceEstimateTests {
         }
     }
 
+    // GIVEN juice drinks at several volumes in each supported unit,
+    // THEN hydration and caffeine follow reviewed physical-volume rules and unsupported preparations are rejected.
     @Test(arguments: LiquidUnit.allCases)
     func estimatesUsePhysicalVolumeAndRejectUnsupportedPreparations(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -46,6 +50,8 @@ struct ReviewedJuiceEstimateTests {
         }
     }
 
+    // GIVEN saved juice entries including an older juice snapshot with unknown caffeine,
+    // THEN persistence retains all captured facts while repeating the older entry uses current catalogue estimates.
     @Test func savedFactsSurviveAndRepeatsUseCurrentJuiceRules() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)

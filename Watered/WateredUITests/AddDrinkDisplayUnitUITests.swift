@@ -1,6 +1,8 @@
 import XCTest
 
 final class AddDrinkDisplayUnitUITests: XCTestCase {
+    // GIVEN a saved 500 ml decaf three-shot Latte displayed in a US-ounce recent menu,
+    // THEN repeating creates a second entry retaining the original physical volume and preparation.
     @MainActor
     func testRecentMenuConvertsAndRepeatPreservesVolumeAndPreparation() {
         let app = launchApp()
@@ -34,6 +36,8 @@ final class AddDrinkDisplayUnitUITests: XCTestCase {
         XCTAssertTrue(detail.staticTexts["statsCaffeineShotCount"].label.contains("3"))
     }
 
+    // GIVEN a draft and recent drink followed by a simulated Profile unit-save failure,
+    // THEN both retain the applied unit and successful shortcut submission clears the unsaved draft.
     @MainActor
     func testFailedProfileUnitSaveLeavesDraftAndRecentMenuInAppliedUnit() {
         let app = launchApp(failsUnitSave: true)

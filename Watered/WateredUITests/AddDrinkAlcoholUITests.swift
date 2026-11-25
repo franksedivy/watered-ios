@@ -1,6 +1,8 @@
 import XCTest
 
 final class AddDrinkAlcoholUITests: XCTestCase {
+    // GIVEN alcohol serving choices and a non-alcoholic cocktail draft with a previously selected strength,
+    // THEN controls and draft restore correctly, and saved details retain non-alcoholic preparation with unknown exact ABV.
     @MainActor
     func testAlcoholPreparationsRestoreDraftAndSaveUnknownABV() {
         continueAfterFailure = false

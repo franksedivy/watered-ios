@@ -2,6 +2,8 @@ import Testing
 @testable import Watered
 
 struct AddDrinkArtworkSizeTests {
+    // GIVEN bundled drink IDs and a new unconfigured ID,
+    // THEN Espresso resolves small, Sparkling wine medium and every unconfigured drink large.
     @Test func configuredArtworkAndUnconfiguredDrinks() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         #expect(catalogue.drink(withID: "espresso") != nil)

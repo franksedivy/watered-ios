@@ -14,6 +14,8 @@ struct RemainingTeaEstimateTests {
         ("iced-tea", "Iced tea", 0.95, 20, 330, true)
     ]
 
+    // GIVEN the bundled expanded tea category,
+    // THEN membership, servings, hydration rules and supported caffeine variants match the reviewed definitions.
     @Test func membershipDefaultsAndPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         #expect(catalogue.activeDrinks(inCategoryID: "tea").map(\.id) ==
@@ -30,6 +32,8 @@ struct RemainingTeaEstimateTests {
         }
     }
 
+    // GIVEN supported tea variants and volumes in each unit,
+    // THEN estimates scale with physical volume, caffeine-free retains hydration credit and unsupported variants fail.
     @Test(arguments: LiquidUnit.allCases)
     func estimatesScaleWithoutChangingHydrationForCaffeineFree(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -57,6 +61,8 @@ struct RemainingTeaEstimateTests {
         }
     }
 
+    // GIVEN fresh, manually changed and restored volume selections,
+    // THEN Iced tea applies its exact serving default only while defaults may still be applied.
     @Test(arguments: LiquidUnit.allCases)
     func icedTeaServingRetainsExactVolumeAndRespectsDrafts(unit: LiquidUnit) {
         var fresh = AddDrinkVolumeSelection(value: AddDrinkVolumeSelection.defaultValue(for: unit), unit: unit)
@@ -72,6 +78,8 @@ struct RemainingTeaEstimateTests {
         #expect(restored.value == 250)
     }
 
+    // GIVEN older tea snapshots and newly saved caffeine-free preparations,
+    // THEN persistence preserves their facts and repeats use current rules without rewriting old unknown caffeine.
     @Test func caffeineFreePersistsAndRepeatsWithoutRewritingOldHistory() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
@@ -115,6 +123,8 @@ struct RemainingTeaEstimateTests {
         #expect(store.entries.filter { $0.drinkID == "black-tea" }.allSatisfy { $0.catalogueSnapshot.caffeineAmount == nil })
     }
 
+    // GIVEN caffeine-free definitions with unknown, positive or per-shot rules,
+    // THEN catalogue validation rejects rules that do not satisfy the caffeine-free contract.
     @Test func rejectsNonzeroOrUnknownCaffeineFreeRules() throws {
         let bundled = try DrinkCatalogueLoader().load()
         for rule in [CaffeineRule.unknown, .perVolume(concentration: 1), .perShot(amount: 0)] {

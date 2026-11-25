@@ -74,6 +74,8 @@ struct PersistentDrinkEntryTests {
         #expect(restored.catalogueSnapshot.caffeineAmount == 0)
     }
 
+    // GIVEN stored shot counts of zero and then a negative value,
+    // THEN restoration preserves zero but rejects the invalid negative count.
     @Test func persistentEntryPreservesZeroShotsAndRejectsNegativeShots() throws {
         let record = PersistentDrinkEntry(drinkEntry: makeEntry())
         record.shotCount = 0

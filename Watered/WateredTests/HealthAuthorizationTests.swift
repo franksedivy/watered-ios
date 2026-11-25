@@ -5,6 +5,8 @@ import Testing
 
 @MainActor
 struct HealthAuthorizationTests {
+    // GIVEN a user-requested authorization with mixed per-type results from a store spy,
+    // THEN only the three reviewed write types are requested and completion preserves the actual grants.
     @Test func requestUsesOnlyReviewedWriteTypesAndDoesNotInferGrants() async throws {
         let store = AuthorizationStoreSpy()
         store.statuses = [
@@ -24,6 +26,8 @@ struct HealthAuthorizationTests {
         #expect(controller.requestError == nil)
     }
 
+    // GIVEN Health unavailable during refresh and a user authorization action,
+    // THEN the controller reports unavailability without querying grants or requesting access.
     @Test func unavailableNeverAccessesStoreOrPrompts() async {
         let store = AuthorizationStoreSpy()
         store.isAvailable = false
@@ -36,6 +40,8 @@ struct HealthAuthorizationTests {
         #expect(HealthWriteType.allCases.allSatisfy { controller.statuses[$0] == .unavailable })
     }
 
+    // GIVEN write permissions changed after an initial refresh,
+    // THEN operation checks and subsequent refresh observe current grants without prompting.
     @Test func refreshAndOperationCheckObserveRevocationWithoutPrompting() {
         let client = FakeHealthKitClient(statuses: [.water: .authorized, .alcohol: .denied])
         let controller = HealthAuthorizationController(client: client)
@@ -48,6 +54,8 @@ struct HealthAuthorizationTests {
         #expect(client.requestCount == 0)
     }
 
+    // GIVEN restricted, unavailable and unexpected authorization-request errors,
+    // THEN sanitized errors preserve per-type grants and a later successful request clears the error.
     @Test func operationErrorsAreSanitizedAndDoNotOverwritePerTypeGrants() async {
         let store = AuthorizationStoreSpy()
         let controller = HealthAuthorizationController(client: AppleHealthKitClient(store: store))
@@ -69,6 +77,8 @@ struct HealthAuthorizationTests {
         #expect(controller.requestError == nil)
     }
 
+    // GIVEN an authorization request suspended in the store spy,
+    // THEN another user action does not start a second request and completion clears the busy state.
     @Test func concurrentUserActionsDoNotStartOverlappingRequests() async {
         let store = AuthorizationStoreSpy()
         store.shouldSuspend = true
@@ -82,6 +92,8 @@ struct HealthAuthorizationTests {
         #expect(!controller.isRequesting)
     }
 
+    // GIVEN denied or unavailable Health access for every type,
+    // THEN local submission still saves and updates the store without requesting permissions.
     @Test(arguments: [HealthWriteAuthorization.denied, .unavailable])
     func localLoggingDoesNotNeedHealthAccess(status: HealthWriteAuthorization) throws {
         let client = FakeHealthKitClient(statuses: Dictionary(uniqueKeysWithValues:

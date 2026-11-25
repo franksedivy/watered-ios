@@ -6,6 +6,8 @@ import Testing
 /// Each disk operation owns and releases its container; only value types cross reopen boundaries.
 @MainActor
 struct CatalogueDiskIntegrationTests {
+    // GIVEN all 60 bundled drinks saved in each supported unit and reopened from disk,
+    // THEN history preserves captured facts and repeats create fresh entries with current rules and original amounts.
     @Test(arguments: LiquidUnit.allCases)
     func completeBundleSurvivesDiskReopenAndCurrentRuleRepeats(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -39,6 +41,8 @@ struct CatalogueDiskIntegrationTests {
         }
     }
 
+    // GIVEN saved coffee history followed by changed, removed, retired or unsupported catalogue choices,
+    // THEN history stays intact while repeats and stale submissions obey current availability and estimates.
     @Test(arguments: ["changed", "removed", "retired", "preparation"])
     func catalogueChangesPreserveDiskHistoryAndValidateBothSubmissionPaths(change: String) throws {
         let original = try DrinkCatalogueLoader().load()
@@ -86,6 +90,8 @@ struct CatalogueDiskIntegrationTests {
         }
     }
 
+    // GIVEN saved unknown, zero, negative and alcohol facts with an unavailable catalogue,
+    // THEN disk history remains readable, preserves those distinctions and supports deletion without catalogue lookup.
     @Test func unavailableCataloguePreservesUnknownZeroNegativeAndAlcoholFactsOnDisk() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
