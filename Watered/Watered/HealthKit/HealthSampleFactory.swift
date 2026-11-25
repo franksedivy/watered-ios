@@ -6,6 +6,16 @@ nonisolated enum HealthSampleFactory {
         case unsupportedPolicy, invalidSpecification
     }
 
+    /// Constructs a sample from frozen values without recalculating quantities or consulting the catalogue.
+    /// Authorization and saving remain the caller's responsibility.
+    ///
+    /// - Parameter specification: A `health-export-v1` payload with `alcohol-14g-v1` for alcohol,
+    ///   or nil alcohol policy for other types. Requires a positive finite quantity, finite logged
+    ///   date, the type's matching unit, sync version 1 and the expected entry/type sync identifier.
+    /// - Returns: An unsaved sample retaining the quantity, with both dates set to `loggedAt`
+    ///   and metadata carrying the sync identity, sync version and user-entered provenance.
+    /// - Throws: `Failure.unsupportedPolicy` for an unsupported policy combination, checked first;
+    ///   `Failure.invalidSpecification` for invalid quantity, date, unit or sync identity/version.
     static func makeSample(from specification: HealthSampleSpecification) throws -> HKQuantitySample {
         let spec = specification
         guard spec.policyVersion == "health-export-v1",
