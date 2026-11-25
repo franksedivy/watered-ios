@@ -1,6 +1,7 @@
 import Foundation
 
-/// Frozen values for #109 to persist with an eligible new entry and reuse without remapping.
+/// Frozen sample values staged by `HealthExportPersistence` for saving with an eligible new entry.
+/// Retries reuse the persisted quantity, timestamp, policy context and sync identity without remapping.
 nonisolated struct HealthSampleSpecification: Codable, Equatable {
     enum Unit: String, Codable {
         case milliliters, milligrams, count
@@ -33,14 +34,31 @@ nonisolated enum HealthSampleMapping {
         case invalidDate, invalidVolume, invalidQuantity
     }
 
+    /// One type's mapping outcome; only `sample` contains a positive quantity to export.
+    /// Ineligible types are not validated. Unknown and known-zero quantities remain distinct;
+    /// invalid facts carry a failure rather than being substituted with zero or another estimate.
     enum Result: Equatable {
         case sample(HealthSampleSpecification)
         case ineligible, unknown, knownZero
         case invalid(Failure)
     }
 
-    /// The caller supplies types eligible at entry creation; this never infers consent or backfill.
-    /// Retry the frozen specifications, not this function. Durable capture belongs to #109.
+    /// Maps captured facts independently for every write type without persistence or Health I/O.
+    ///
+    /// The caller supplies eligibility at entry creation; this never infers consent or backfill.
+    /// Eligible types require a finite logged date and positive finite consumed volume before
+    /// resolving quantities. Water and caffeine use saved estimates, not hydration goal credit;
+    /// water cannot exceed consumed volume. Alcohol uses `AlcoholExportQuantity` policy.
+    /// A quantity failure for one type does not prevent valid types from producing samples.
+    ///
+    /// `HealthExportPersistence` stages the results for the caller's drink transaction.
+    /// Retries must reuse persisted specifications instead of calling this mapping again.
+    ///
+    /// - Parameters:
+    ///   - entry: The logged amount, timestamp and captured facts to map without catalogue lookup.
+    ///   - eligibleTypes: Types allowed for this new entry by the caller's export policy.
+    /// - Returns: An outcome for every write type, including `.ineligible` for excluded types.
+    ///   Validation failures are returned as `.invalid`, not thrown.
     static func resolve(_ entry: DrinkEntry, eligibleTypes: Set<HealthWriteType>) -> [HealthWriteType: Result] {
         Dictionary(uniqueKeysWithValues: HealthWriteType.allCases.map { type in
             (type, eligibleTypes.contains(type) ? resolve(entry, type: type) : .ineligible)
