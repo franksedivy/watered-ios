@@ -359,6 +359,47 @@ struct HealthExportTests {
         #expect(try records(container).first?.nextAttemptAt == time.addingTimeInterval(60))
     }
 
+    // GIVEN pending work and one or more failures while reading the retry schedule,
+    // THEN each failure schedules bounded recovery and storage recovery resumes the frozen upload.
+    @Test(.timeLimit(.minutes(1)), arguments: [1, 2])
+    func schedulingReadFailuresRecoverWithoutAnotherUserAction(failedReads: Int) async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.failures[.water] = .temporary
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        let clock = SchedulingTestClock()
+        var time = date
+        var reads = 0
+        let worker = HealthExportCoordinator(client: client, now: { time }, jitter: { 1 },
+            beforeSchedulingRead: {
+                reads += 1
+                clock.didRead()
+                if reads <= failedReads { throw TestFailure.failed }
+            }, sleep: { try await clock.sleep($0) })
+        worker.attach(to: container)
+        worker.setActive(true)
+        defer { worker.setActive(false) }
+        for attempt in 1...failedReads {
+            await clock.waitForSleep(attempt)
+            #expect(worker.persistenceFailed)
+            #expect(clock.delays.last == 30)
+            // Keep the persisted deadline in the future until scheduling reads recover.
+            clock.advance()
+        }
+        await clock.waitForSleep(failedReads + 1)
+        #expect(!worker.persistenceFailed)
+        #expect(client.writes.count == 1)
+        let original = try #require(client.writes.first)
+        client.failures = [:]
+        time = date.addingTimeInterval(30)
+        clock.advance()
+        await clock.waitForRead(failedReads + 2)
+        #expect(client.writes == [original, original])
+        // Scheduling is reached after the upload acknowledgement is committed.
+        #expect(try records(container).first?.status == "succeeded")
+    }
+
     // GIVEN a system-store test double receiving a sample and returning different platform failures,
     // THEN the client preserves sync metadata, sanitizes errors and rejects denied writes without prompting.
     @Test func platformBoundaryWritesOneSampleAndSanitizesFailures() async throws {
@@ -898,5 +939,44 @@ private final class ExportSystemStore: HealthAuthorizationStore, HealthSampleSto
     func save(_ sample: HKQuantitySample) async throws {
         if let failure { throw failure }
         saved.append(sample)
+    }
+}
+
+/// Advances retry sleeps explicitly and observes scheduling reads without wall-clock delays.
+@MainActor
+private final class SchedulingTestClock {
+    private(set) var delays: [TimeInterval] = []
+    private var reads = 0
+    private var sleeper: CheckedContinuation<Void, Never>?
+    private var observer: CheckedContinuation<Void, Never>?
+
+    func sleep(_ delay: TimeInterval) async throws {
+        delays.append(delay)
+        await withCheckedContinuation {
+            sleeper = $0
+            observer?.resume()
+            observer = nil
+        }
+        try Task.checkCancellation()
+    }
+
+    func advance() {
+        let pending = sleeper
+        sleeper = nil
+        pending?.resume()
+    }
+
+    func didRead() {
+        reads += 1
+        observer?.resume()
+        observer = nil
+    }
+
+    func waitForSleep(_ count: Int) async {
+        while delays.count < count { await withCheckedContinuation { observer = $0 } }
+    }
+
+    func waitForRead(_ count: Int) async {
+        while reads < count { await withCheckedContinuation { observer = $0 } }
     }
 }

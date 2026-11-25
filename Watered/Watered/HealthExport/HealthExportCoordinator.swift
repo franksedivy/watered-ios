@@ -27,13 +27,21 @@ final class HealthExportCoordinator {
     @ObservationIgnored private let jitter: () -> Double
     @ObservationIgnored private let beforeSave: () throws -> Void
 
+    /// Narrow failure and timing seams for deterministic scheduler tests; production uses real reads and sleep.
+    @ObservationIgnored private let beforeSchedulingRead: () throws -> Void
+    @ObservationIgnored private let sleep: (TimeInterval) async throws -> Void
+
     init(client: any HealthExportClient, now: @escaping () -> Date = Date.init,
          jitter: @escaping () -> Double = { Double.random(in: 0...1) },
-         beforeSave: @escaping () throws -> Void = {}) {
+         beforeSave: @escaping () throws -> Void = {},
+         beforeSchedulingRead: @escaping () throws -> Void = {},
+         sleep: @escaping (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) }) {
         self.client = client
         self.now = now
         self.jitter = jitter
         self.beforeSave = beforeSave
+        self.beforeSchedulingRead = beforeSchedulingRead
+        self.sleep = sleep
     }
 
     func attach(to container: ModelContainer) {
@@ -293,20 +301,26 @@ final class HealthExportCoordinator {
 
     private func scheduleNextAttempt() {
         guard active, let context else { return }
+        let delay: TimeInterval
         do {
+            try beforeSchedulingRead()
             let context = ModelContext(context.container)
             let enabled = try HealthExportPersistence.isEnabled(in: context)
             let records = try context.fetch(FetchDescriptor<PersistentHealthExport>())
             let due = records.filter { ($0.operation == "delete" || (enabled && $0.operation == "upload")) && $0.status == "pending" }
                 .compactMap(\.nextAttemptAt).min()
             guard persistenceFailed || due != nil else { return }
-            let delay = persistenceFailed ? 30 : max(1, due!.timeIntervalSince(now()))
-            timer = Task { [weak self] in
-                do { try await Task.sleep(for: .seconds(delay)) } catch { return }
-                guard let self, self.active else { return }
-                await self.process()
-            }
-        } catch { persistenceFailed = true }
+            delay = persistenceFailed ? 30 : max(1, due!.timeIntervalSince(now()))
+        } catch {
+            // A failed queue read must not prevent the next recovery attempt.
+            persistenceFailed = true
+            delay = 30
+        }
+        timer = Task { [weak self, sleep] in
+            do { try await sleep(delay) } catch { return }
+            guard !Task.isCancelled, let self, self.active else { return }
+            await self.process()
+        }
     }
 
     enum PersistenceError: Error { case notAttached, missingIntent }
