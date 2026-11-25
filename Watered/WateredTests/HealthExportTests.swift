@@ -42,6 +42,8 @@ struct HealthExportTests {
         return worker
     }
 
+    // GIVEN drinks created before opt-in, with partial grants and during a disabled gap,
+    // THEN only the originally eligible water export resumes, retaining its backdated logged time.
     @Test func creationBoundaryBackdatingDisabledGapAndNewGrants() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -66,6 +68,8 @@ struct HealthExportTests {
         #expect(try records(container).count == 1)
     }
 
+    // GIVEN a form or recent submission whose local commit fails before a successful retry,
+    // THEN rollback leaves no work or success state, and later Health failures cannot undo the saved drink.
     @Test(arguments: [AddDrinkSubmissionMethod.form, .recent])
     func atomicRollbackAndLocalSuccessStayIndependentOfHealth(method: AddDrinkSubmissionMethod) async throws {
         let container = try container()
@@ -98,6 +102,8 @@ struct HealthExportTests {
         #expect(try records(container).count == 3)
     }
 
+    // GIVEN independent successful, temporary-failure and invalid upload outcomes,
+    // THEN only retryable work retries; acknowledged and invalid types stay untouched after reopening.
     @Test func partialResultsBackoffInvalidPayloadAndAcknowledgedSamplesNeverResend() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -127,6 +133,8 @@ struct HealthExportTests {
         worker(container, client: client)
     }
 
+    // GIVEN eligible work whose permissions are revoked before upload,
+    // THEN it waits without prompts and resumes only previously eligible types when permission returns.
     @Test func permissionRevocationBlocksWithoutPromptsAndRestorationResumesOnlyOldEligibleWork() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -148,6 +156,8 @@ struct HealthExportTests {
         #expect(client.requestCount == 0)
     }
 
+    // GIVEN an invalid mapped quantity and a corrupt frozen payload alongside valid work,
+    // THEN each invalid type stops independently while the valid alcohol export proceeds.
     @Test func invalidMappingAndCorruptPayloadStopIndependently() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -165,6 +175,8 @@ struct HealthExportTests {
         #expect(try records(container).filter { $0.status == "invalid" }.count == 2)
     }
 
+    // GIVEN commit failures before upload and after a successful upload,
+    // THEN no uncommitted intent reaches Health, and recovery reuses the frozen payload despite changed drink facts.
     @Test func beforeIOFailureDoesNotWriteAndAfterIOFailureRecoversFrozenPayload() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -197,6 +209,8 @@ struct HealthExportTests {
         #expect(try records(container).first?.status == "succeeded")
     }
 
+    // GIVEN a suspended upload, a concurrent retry and sync disabled before completion,
+    // THEN writes remain serialized, the result is acknowledged and remaining types resume after re-enablement.
     @Test func concurrentRetriesAndDisableDuringFlightSerializeAndKeepOutcome() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -219,6 +233,8 @@ struct HealthExportTests {
         #expect(Set(client.writes.map(\.syncIdentifier)).count == 3)
     }
 
+    // GIVEN a drink deleted while its upload is suspended and cleanup temporarily fails,
+    // THEN the late write retains cleanup intent and hidden drink details without uploading queued types.
     @Test func deletionDuringFlightWinsAndRetainsCleanupAfterLateSuccess() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -244,6 +260,8 @@ struct HealthExportTests {
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 1)
     }
 
+    // GIVEN a failed deletion transaction followed by deletion before any upload starts,
+    // THEN rollback preserves the drink and queue, then successful deletion removes both without Health writes.
     @Test func deletionRollbackAndNeverStartedDeletion() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -263,6 +281,8 @@ struct HealthExportTests {
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 0)
     }
 
+    // GIVEN a failed export persisted to disk and reopened for retry,
+    // THEN preference, retry state and frozen payload survive, and a later reopen does not resend acknowledged work.
     @Test func diskReopenPreservesPreferencePendingFrozenPayloadAndAcknowledgement() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -296,6 +316,8 @@ struct HealthExportTests {
         }
     }
 
+    // GIVEN an existing drink store reopened with the additional Health export entities,
+    // THEN saved identity and estimates survive with sync disabled and no historical export jobs.
     @Test func additiveEntityRolloutPreservesExistingStoreWithoutBackfill() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -315,6 +337,8 @@ struct HealthExportTests {
         #expect(try !HealthExportPersistence.isEnabled(in: ModelContext(upgraded)))
     }
 
+    // GIVEN a temporary upload failure and a controlled clock advancing to the retry deadline,
+    // THEN no early retry occurs, the original payload is reused and the next delay increases.
     @Test func dueRetriesUseOriginalPayloadAndIncreaseDelay() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -335,6 +359,49 @@ struct HealthExportTests {
         #expect(try records(container).first?.nextAttemptAt == time.addingTimeInterval(60))
     }
 
+    // GIVEN pending work and one or more failures while reading the retry schedule,
+    // THEN each failure schedules bounded recovery and storage recovery resumes the frozen upload.
+    @Test(.timeLimit(.minutes(1)), arguments: [1, 2])
+    func schedulingReadFailuresRecoverWithoutAnotherUserAction(failedReads: Int) async throws {
+        let container = try container()
+        let client = TestExportClient()
+        client.failures[.water] = .temporary
+        try enable(container)
+        try save(entry(caffeine: 0, abv: nil), in: container, client: client)
+        let clock = SchedulingTestClock()
+        var time = date
+        var reads = 0
+        let worker = HealthExportCoordinator(client: client, now: { time }, jitter: { 1 },
+            beforeSchedulingRead: {
+                reads += 1
+                clock.didRead()
+                if reads <= failedReads { throw TestFailure.failed }
+            }, sleep: { try await clock.sleep($0) })
+        worker.attach(to: container)
+        worker.setActive(true)
+        defer { worker.setActive(false) }
+        for attempt in 1...failedReads {
+            await clock.waitForSleep(attempt)
+            #expect(worker.persistenceFailed)
+            #expect(clock.delays.last == 30)
+            // Keep the persisted deadline in the future until scheduling reads recover.
+            clock.advance()
+        }
+        await clock.waitForSleep(failedReads + 1)
+        #expect(!worker.persistenceFailed)
+        #expect(client.writes.count == 1)
+        let original = try #require(client.writes.first)
+        client.failures = [:]
+        time = date.addingTimeInterval(30)
+        clock.advance()
+        await clock.waitForRead(failedReads + 2)
+        #expect(client.writes == [original, original])
+        // Scheduling is reached after the upload acknowledgement is committed.
+        #expect(try records(container).first?.status == "succeeded")
+    }
+
+    // GIVEN a system-store test double receiving a sample and returning different platform failures,
+    // THEN the client preserves sync metadata, sanitizes errors and rejects denied writes without prompting.
     @Test func platformBoundaryWritesOneSampleAndSanitizesFailures() async throws {
         let store = ExportSystemStore()
         let client = AppleHealthKitClient(store: store)
@@ -368,6 +435,8 @@ struct HealthExportTests {
     }
 
     #if DEBUG
+    // GIVEN a successful local submission with a one-shot Debug upload failure armed,
+    // THEN the first attempt makes no Health call and retry succeeds without duplicating local success analytics.
     @Test func debugFailureIsOneShotAndLeavesLocalSubmissionSuccessful() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -394,6 +463,8 @@ struct HealthExportTests {
         #expect(client.requestCount == 0)
     }
 
+    // GIVEN a Debug pause after upload but before acknowledgement,
+    // THEN durable in-flight state blocks duplicate writes and resuming records success even with sync disabled.
     @Test func debugPauseKeepsDurableInFlightStateAndSerializesUntilResume() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -422,6 +493,8 @@ struct HealthExportTests {
         #expect(client.writes.count == 1)
     }
 
+    // GIVEN an armed Debug pause, a temporary upload failure and a later acknowledgement commit failure,
+    // THEN the pause survives until upload succeeds and a fresh worker recovers the same frozen identity.
     @Test func debugPauseSurvivesFailureUntilSuccessAndRecoveryKeepsFrozenIdentity() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -456,6 +529,8 @@ struct HealthExportTests {
         #expect(try records(container).first?.status == "succeeded")
     }
 
+    // GIVEN a drink deleted during the Debug acknowledgement pause,
+    // THEN resuming retains pending cleanup for the possible write instead of restoring upload work.
     @Test func deletionDuringDebugAcknowledgementPauseRetainsCleanupIntent() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -479,6 +554,8 @@ struct HealthExportTests {
     }
     #endif
 
+    // GIVEN selected drinks with local-only, queued, invalid or possibly-written export state,
+    // THEN deletion wording follows those selected records independently of the sync switch or unrelated cleanup.
     @Test func deletionNoticeFollowsSelectedExportStateAcrossSwitchChanges() throws {
         let container = try container()
         let client = TestExportClient()
@@ -510,6 +587,8 @@ struct HealthExportTests {
         #expect(try !notice([]))
     }
 
+    // GIVEN a bulk reset with older cleanup, exported and queued drinks, settings and goal history,
+    // THEN failure preserves visible history and success retains required cleanup, its backoff and user settings.
     @Test func bulkResetIsAtomicAndPreservesOlderCleanupSettingsAndGoalHistory() async throws {
         let schema = Schema([PersistentDrinkEntry.self, PersistentHealthExport.self, PersistentHealthSyncPreference.self,
                              PersistentAppSettings.self, PersistentHydrationGoalChange.self])
@@ -550,6 +629,8 @@ struct HealthExportTests {
         #expect(try verify.fetch(FetchDescriptor<PersistentHydrationGoalChange>()).first?.id == goalID)
     }
 
+    // GIVEN cleanup targets for each type sent through a system-store test double,
+    // THEN deletion is scoped by app source and sync identity, accepts zero matches and sanitizes failures without prompting.
     @Test func platformCleanupScopesOwnershipTypeAndIdentityAndAcceptsZeroMatches() async throws {
         let store = ExportSystemStore()
         let client = AppleHealthKitClient(store: store)
@@ -584,6 +665,8 @@ struct HealthExportTests {
     }
 
     #if DEBUG
+    // GIVEN a Debug pause after deletion followed by an acknowledgement commit failure,
+    // THEN recovery repeats the same unacknowledged deletion before purging retained records.
     @Test func cleanupPauseRecoveryRepeatsOnlyUnacknowledgedDeletion() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -619,6 +702,8 @@ struct HealthExportTests {
                                             in: context, tracksHealthExports: true)
     }
 
+    // GIVEN cleanup with one denied type, one temporary failure and one success while sync is disabled,
+    // THEN types recover independently without repeating completed cleanup, and final success purges the drink.
     @Test func cleanupIsIndependentPerTypeAndRunsWhileDisabled() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -654,6 +739,8 @@ struct HealthExportTests {
         #expect(client.requestCount == 0)
     }
 
+    // GIVEN deletion and sync disablement while an upload is suspended,
+    // THEN cleanup waits for the late write, then purges the drink without uploading the remaining queued types.
     @Test func lateUploadIsCleanedBeforePurgeWithoutRecreatingQueuedTypes() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -677,6 +764,8 @@ struct HealthExportTests {
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<PersistentDrinkEntry>()) == 0)
     }
 
+    // GIVEN a cleanup commit failure before I/O or before acknowledgement,
+    // THEN details remain retained until recovery completes deletion using the same sync identity.
     @Test(arguments: [1, 2])
     func cleanupCommitFailureRecoversBeforeIOOrBeforeAcknowledgement(failedCommit: Int) async throws {
         let container = try container()
@@ -702,6 +791,8 @@ struct HealthExportTests {
         #expect(try records(container).isEmpty)
     }
 
+    // GIVEN permission-blocked cleanup persisted to disk and reopened ten simulated years later,
+    // THEN hidden details remain until permission returns, then cleanup finishes without expiry or prompts.
     @Test func cleanupDiskReopenRetainsBlockedDetailsAndResumesWithoutExpiry() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -736,6 +827,8 @@ struct HealthExportTests {
         #expect(client.requestCount == 0)
     }
 
+    // GIVEN cleanup with corrupt upload data and an invalid identity that is subsequently repaired,
+    // THEN invalid identity blocks deletion, but valid cleanup needs neither the upload payload nor its policy.
     @Test func cleanupNeedsValidIdentityButDoesNotNeedUploadPayload() async throws {
         let container = try container()
         let client = TestExportClient()
@@ -764,6 +857,8 @@ struct HealthExportTests {
         #expect(try records(container).isEmpty)
     }
 
+    // GIVEN a failed opt-in commit and retry-delay inputs spanning jitter extremes and large attempts,
+    // THEN the preference rolls back, delays stay capped and non-finite jitter still yields a finite delay.
     @Test func preferenceFailureRollsBackAndBackoffIsCappedWithJitter() throws {
         let container = try container()
         #expect(throws: TestFailure.failed) {
@@ -844,5 +939,44 @@ private final class ExportSystemStore: HealthAuthorizationStore, HealthSampleSto
     func save(_ sample: HKQuantitySample) async throws {
         if let failure { throw failure }
         saved.append(sample)
+    }
+}
+
+/// Advances retry sleeps explicitly and observes scheduling reads without wall-clock delays.
+@MainActor
+private final class SchedulingTestClock {
+    private(set) var delays: [TimeInterval] = []
+    private var reads = 0
+    private var sleeper: CheckedContinuation<Void, Never>?
+    private var observer: CheckedContinuation<Void, Never>?
+
+    func sleep(_ delay: TimeInterval) async throws {
+        delays.append(delay)
+        await withCheckedContinuation {
+            sleeper = $0
+            observer?.resume()
+            observer = nil
+        }
+        try Task.checkCancellation()
+    }
+
+    func advance() {
+        let pending = sleeper
+        sleeper = nil
+        pending?.resume()
+    }
+
+    func didRead() {
+        reads += 1
+        observer?.resume()
+        observer = nil
+    }
+
+    func waitForSleep(_ count: Int) async {
+        while delays.count < count { await withCheckedContinuation { observer = $0 } }
+    }
+
+    func waitForRead(_ count: Int) async {
+        while reads < count { await withCheckedContinuation { observer = $0 } }
     }
 }

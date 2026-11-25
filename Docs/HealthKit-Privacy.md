@@ -50,7 +50,8 @@ off-to-on preference commit. It has no properties, grants or export outcomes. Re
 on, failed saves, disabling and screen reopening emit no enablement event. Re-enabling
 counts as another action, not another unique person. Retries, grants, denials, errors,
 quantities and identifiers introduce no analytics events/properties.
-The Debug inspection screen displays synthetic/test records locally, not telemetry.
+The Debug inspection screen displays local records, not telemetry. Use synthetic
+data for controlled testing; the screen does not guarantee that stored records are synthetic.
 
 Under Apple's [collection definition](https://developer.apple.com/app-store/app-privacy-details/),
 on-device processing alone is not collection. The inspected app has no third-party
@@ -91,8 +92,12 @@ final archive's privacy report with the submitted answers. The wiki's
 page is historical context; its event inventory predates the permission events.
 Repository source and this review own current behavior.
 
-Final-screen VoiceOver, large text, contrast, real prompts and Release signing/device
-checks still need observed evidence. See [Testing](TESTING.md#healthkit-profile-controls-111).
+The [final #111 review](TESTING.md#final-user-reported-manual-review--24-november-2026)
+records Frank's confirmation of VoiceOver, appearance, the first-time permission sheet
+and the Release build on his iPhone. The installed binary was not independently tied
+to a commit; no additional signing or log assertions are inferred. Focused simulator
+tests cover largest-text reachability. Managed-device restrictions remain an accepted
+untested edge case. These results do not replace final archive/privacy validation.
 Broader lifecycle/device verification remains [#112](https://github.com/franksedivy/watered-ios/issues/112).
 
 ### Information-page artwork

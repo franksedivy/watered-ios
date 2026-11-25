@@ -16,6 +16,8 @@ struct ReviewedAlcoholEstimateTests {
         ("liqueur", 25, 0.20, [0.15, 0.20, 0.25, 0.30, 0.35, 0.40], false)
     ]
 
+    // GIVEN the bundled alcohol definitions encoded and decoded again,
+    // THEN membership, servings, strengths and supported preparations retain the reviewed configuration.
     @Test func membershipDefaultsAndContentRoundTrip() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         #expect(catalogue.activeDrinks(inCategoryID: "alcohol").map(\.id) == expected.map(\.id))
@@ -34,6 +36,8 @@ struct ReviewedAlcoholEstimateTests {
         }
     }
 
+    // GIVEN every supported alcohol strength and non-alcoholic preparation in each unit,
+    // THEN consumed volume stays exact while goal credit, caffeine and exact-versus-bounded ABV resolve independently.
     @Test(arguments: LiquidUnit.allCases)
     func allStepsPreserveFluidVolumeAndResolveIndependentEstimates(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -63,6 +67,8 @@ struct ReviewedAlcoholEstimateTests {
         }
     }
 
+    // GIVEN water, beer and a non-alcoholic cocktail in the same day,
+    // THEN raw intake includes all volume while goal progress uses their separate hydration contributions.
     @Test func fluidIntakeAndGoalProgressRemainSeparate() throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
         let water = try AddDrinkDraft(drinkID: "still-water", volumeValue: 500, unit: .milliliters).drinkEntry(using: resolver)
@@ -77,6 +83,8 @@ struct ReviewedAlcoholEstimateTests {
         #expect(tracker.dailyGoal.volume.value == 2100)
     }
 
+    // GIVEN saved alcohol choices followed by changed credit or removed preparations and strengths,
+    // THEN repeats use current rules and unsupported choices leave Recents without changing saved credit.
     @Test func repeatsRecalculateNonAlcoholicCreditAndExcludeRemovedChoices() throws {
         let bundled = try DrinkCatalogueLoader().load()
         let originalResolver = try DrinkCatalogueSnapshotResolver(catalogue: bundled)
@@ -103,6 +111,8 @@ struct ReviewedAlcoholEstimateTests {
         #expect(WateredStore(entries: [fourPercent]).recentDrinkOptions(in: revised).isEmpty)
     }
 
+    // GIVEN unsupported strengths, contradictory non-alcoholic selections or alcohol options on water,
+    // THEN snapshot resolution rejects the invalid preparation.
     @Test func rejectsUnsupportedAndContradictorySelections() throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
         let amount = DrinkAmount(value: 250, unit: .milliliters)
@@ -129,6 +139,8 @@ struct ReviewedAlcoholEstimateTests {
         }
     }
 
+    // GIVEN empty, inconsistent or out-of-range alcohol configurations and duplicate authored ABV,
+    // THEN validation or decoding rejects the malformed content.
     @Test func malformedConfigurationsFailValidation() throws {
         let bundled = try DrinkCatalogueLoader().load()
         let invalid = [
@@ -161,6 +173,8 @@ struct ReviewedAlcoholEstimateTests {
         }
     }
 
+    // GIVEN legacy wine facts and entries for every supported alcohol preparation,
+    // THEN persistence preserves snapshots and unknowns while fresh repeats capture current policy and preparation.
     @Test func savedFactsAndUnknownsSurviveWhileRepeatUsesCurrentPolicy() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)

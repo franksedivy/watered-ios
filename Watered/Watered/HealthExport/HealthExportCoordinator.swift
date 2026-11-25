@@ -11,6 +11,8 @@ final class HealthExportCoordinator {
     #endif
 
     let client: any HealthExportClient
+    /// Reports a processing or scheduling persistence failure, not a per-type Health failure.
+    /// Reset when an attached, non-coalesced processing call starts.
     private(set) var persistenceFailed = false
     private(set) var isProcessing = false
     /// Advances after each completed pass, even if a fast pass coalesces busy-state updates.
@@ -25,13 +27,21 @@ final class HealthExportCoordinator {
     @ObservationIgnored private let jitter: () -> Double
     @ObservationIgnored private let beforeSave: () throws -> Void
 
+    /// Narrow failure and timing seams for deterministic scheduler tests; production uses real reads and sleep.
+    @ObservationIgnored private let beforeSchedulingRead: () throws -> Void
+    @ObservationIgnored private let sleep: (TimeInterval) async throws -> Void
+
     init(client: any HealthExportClient, now: @escaping () -> Date = Date.init,
          jitter: @escaping () -> Double = { Double.random(in: 0...1) },
-         beforeSave: @escaping () throws -> Void = {}) {
+         beforeSave: @escaping () throws -> Void = {},
+         beforeSchedulingRead: @escaping () throws -> Void = {},
+         sleep: @escaping (TimeInterval) async throws -> Void = { try await Task.sleep(for: .seconds($0)) }) {
         self.client = client
         self.now = now
         self.jitter = jitter
         self.beforeSave = beforeSave
+        self.beforeSchedulingRead = beforeSchedulingRead
+        self.sleep = sleep
     }
 
     func attach(to container: ModelContainer) {
@@ -47,7 +57,10 @@ final class HealthExportCoordinator {
         self.context = context
     }
 
-    /// Foreground execution only; reopening also recovers uncertain in-flight work.
+    /// Controls foreground wake-ups and scheduled retries; activation requests a processing pass.
+    /// Deactivation cancels the timer, not an ongoing Health operation or its acknowledgement.
+    /// A pass started while active stops starting further record attempts after deactivation.
+    /// Direct `process()` calls can still run while inactive for deterministic tests.
     func setActive(_ active: Bool) {
         self.active = active
         if active { wake() } else { timer?.cancel(); timer = nil }
@@ -65,9 +78,14 @@ final class HealthExportCoordinator {
         wake()
     }
 
-    /// #111 can invoke this without requesting permissions or resubmitting the local drink.
+    /// Requests a retry without prompting for permissions or resubmitting the local drink.
+    /// Bypasses pending backoff only; authorization, upload preference and terminal states
+    /// still apply. Cleanup remains eligible with sync disabled. Inactive requests wait for a pass.
     func retryNow() { wake(retryNow: true) }
 
+    /// Coalesces a processing request and cancels any scheduled retry timer.
+    /// Starts processing only while active; otherwise retains the request for a later pass.
+    /// - Parameter retryNow: Whether the next pass should bypass pending retry deadlines.
     func wake(retryNow: Bool = false) {
         retryRequested = retryRequested || retryNow
         rerunRequested = true
@@ -77,7 +95,17 @@ final class HealthExportCoordinator {
         Task { await process() }
     }
 
-    /// Public for deterministic tests. Concurrent calls coalesce; no second worker can start I/O.
+    /// Processes durable upload and cleanup work, including uncertain in-flight attempts.
+    /// Requires attachment but can be called directly while inactive for deterministic tests.
+    /// Concurrent calls request another pass and return without awaiting the running worker;
+    /// no second worker starts I/O. Unattached calls retain a request and return.
+    ///
+    /// Uploads require sync enabled; cleanup does not. Both retain authorization checks,
+    /// and succeeded or invalid records are not retried. Persistence failures are reported
+    /// through `persistenceFailed`, not thrown; Health failures become per-record outcomes.
+    /// Finishing processing advances `progressRevision` and schedules retries only while active.
+    ///
+    /// - Parameter retryNow: Bypasses pending retry deadlines without overriding other checks.
     func process(retryNow: Bool = false) async {
         retryRequested = retryRequested || retryNow
         guard !isProcessing, let context else { rerunRequested = true; return }
@@ -273,20 +301,26 @@ final class HealthExportCoordinator {
 
     private func scheduleNextAttempt() {
         guard active, let context else { return }
+        let delay: TimeInterval
         do {
+            try beforeSchedulingRead()
             let context = ModelContext(context.container)
             let enabled = try HealthExportPersistence.isEnabled(in: context)
             let records = try context.fetch(FetchDescriptor<PersistentHealthExport>())
             let due = records.filter { ($0.operation == "delete" || (enabled && $0.operation == "upload")) && $0.status == "pending" }
                 .compactMap(\.nextAttemptAt).min()
             guard persistenceFailed || due != nil else { return }
-            let delay = persistenceFailed ? 30 : max(1, due!.timeIntervalSince(now()))
-            timer = Task { [weak self] in
-                do { try await Task.sleep(for: .seconds(delay)) } catch { return }
-                guard let self, self.active else { return }
-                await self.process()
-            }
-        } catch { persistenceFailed = true }
+            delay = persistenceFailed ? 30 : max(1, due!.timeIntervalSince(now()))
+        } catch {
+            // A failed queue read must not prevent the next recovery attempt.
+            persistenceFailed = true
+            delay = 30
+        }
+        timer = Task { [weak self, sleep] in
+            do { try await sleep(delay) } catch { return }
+            guard !Task.isCancelled, let self, self.active else { return }
+            await self.process()
+        }
     }
 
     enum PersistenceError: Error { case notAttached, missingIntent }

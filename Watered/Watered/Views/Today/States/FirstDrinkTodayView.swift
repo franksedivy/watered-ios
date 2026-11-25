@@ -21,8 +21,8 @@ import SwiftUI
 // breakdown.
 //
 // UI role:
-// Keeps the frist-drink presentation separate from TodayView. TodayView
-// decides which state is active' this view only knows how to display the
+// Keeps the first-drink presentation separate from TodayView. TodayView
+// decides which state is active; this view only knows how to display the
 // first-drink state.
 struct FirstDrinkTodayView: View {
     let summary: HydrationSummaryViewData

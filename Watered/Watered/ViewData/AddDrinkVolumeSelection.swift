@@ -16,6 +16,7 @@ nonisolated struct AddDrinkVolumeSelection: Equatable {
 
     var amount: DrinkAmount { DrinkAmount(value: value, unit: unit) }
 
+    /// Converts for display without changing the captured value/unit or rounding to label precision.
     func displayValue(in displayUnit: LiquidUnit) -> Double {
         if unit == displayUnit { return value }
         return amount.volume.converted(to: displayUnit.foundationUnit).value
@@ -32,6 +33,8 @@ nonisolated struct AddDrinkVolumeSelection: Equatable {
         return Array(Set(presets + [displayValue(in: displayUnit)])).sorted()
     }
 
+    /// Rounds presentation only: whole millilitres or up to three decimal places for ounces.
+    /// Picker tags and saved amounts use the numeric selection, never this label text.
     func label(for displayedValue: Double, in displayUnit: LiquidUnit, locale: Locale = .current) -> String {
         VolumeFormatter(locale: locale).string(
             from: Measurement(value: displayedValue, unit: displayUnit.foundationUnit),
@@ -41,6 +44,9 @@ nonisolated struct AddDrinkVolumeSelection: Equatable {
     }
 
     /// Only a deliberate change replaces the captured amount; display round-trips never do.
+    /// Equality with the current converted value is a no-op, including serving-default eligibility.
+    /// A different value is retained in the display unit and disables serving defaults.
+    /// The caller supplies a valid picker value; this method does not validate numeric ranges.
     mutating func select(_ displayedValue: Double, displayedAs displayUnit: LiquidUnit) {
         guard displayedValue != displayValue(in: displayUnit) else { return }
         value = displayedValue

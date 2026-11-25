@@ -70,7 +70,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertFalse(types.buttons["addDrinkTypeScrollView.still-water"].isSelected)
     }
 
-    // Changing preparation keeps the chosen cup volume and hides unsupported controls.
+    // GIVEN a manually selected coffee volume while decaf and shots are changed,
+    // THEN volume stays fixed, zero is the minimum shot count and switching to Water hides preparation controls.
     @MainActor
     func testCoffeePreparationPreservesVolume() {
         let app = openAddDrink()
@@ -99,6 +100,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertEqual(wheel.value as? String, "500 ml")
     }
 
+    // GIVEN each shot-based coffee selected in the sheet,
+    // THEN its default shots appear and Iced coffee supports incrementing its shot count.
     @MainActor
     func testShotBasedDrinkDefaultsAndIcedCoffeeControls() {
         let app = openAddDrink()
@@ -128,7 +131,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         }
     }
 
-    // Dismissing retains the unsaved preparation; successfully saving clears it.
+    // GIVEN an unsaved 500 ml decaf Latte with three shots,
+    // THEN dismissal and reopening restore the draft while a successful save clears it for a fresh form.
     @MainActor
     func testDismissedDraftRestoresAndSuccessfulSaveClearsIt() {
         let app = openAddDrink()
@@ -159,6 +163,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "330 ml")
     }
 
+    // GIVEN an unsaved coffee draft followed by app termination and relaunch,
+    // THEN the next form starts without a category and with the default volume.
     @MainActor
     func testAppRestartDiscardsUnsavedDraft() {
         let app = openAddDrink()
@@ -176,6 +182,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, "330 ml")
     }
 
+    // GIVEN a dismissed 500 ml decaf three-shot Latte draft and a Profile unit change,
+    // THEN reopening converts its display while saving preserves 500 ml and preparation, then clears the draft.
     @MainActor
     func testProfileUnitChangeConvertsDraftAndPreservesSavedVolumeAndPreparation() {
         let app = openAddDrink()
@@ -225,6 +233,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(detail.staticTexts["statsCaffeineShotCount"].label.contains("3"))
     }
 
+    // GIVEN fresh Add Drink forms after applying each Profile display unit,
+    // THEN the wheel uses that unit's default and submission remains disabled without a drink selection.
     @MainActor
     func testFreshFormUsesEachAppliedProfileUnit() {
         let app = openAddDrink()
@@ -240,6 +250,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         }
     }
 
+    // GIVEN a 500 ml draft converted to US ounces and then deliberately changed to 16 US fl oz,
+    // THEN the saved amount reflects the new preset rather than retaining 500 ml.
     @MainActor
     func testSelectingPresetAfterConversionChangesPhysicalAmount() {
         let app = openAddDrink()
@@ -261,6 +273,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(row.label.contains("473.176 ml"))
     }
 
+    // GIVEN the default plain tea with decaf enabled,
+    // THEN the sheet offers the reviewed serving and saved details show decaf caffeine and hydration estimates.
     @MainActor
     func testTeaDefaultsDecafAndSavedEstimates() {
         let app = openAddDrink()
@@ -292,6 +306,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertTrue(detail.staticTexts["statsCaffeinePreparation"].label.contains("Decaf"))
     }
 
+    // GIVEN a manually chosen volume while switching among plain teas,
+    // THEN the volume stays fixed and Herbal tea hides unsupported decaf controls.
     @MainActor
     func testTeaTypesPreserveChosenVolumeAndHerbalHidesDecaf() {
         let app = openAddDrink()
@@ -321,6 +337,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         add(screenshot)
     }
 
+    // GIVEN expanded tea choices followed by a caffeine-free Iced tea draft,
+    // THEN servings and controls match each tea and restored saved details retain the chosen volume and zero caffeine.
     @MainActor
     func testRemainingTeasDefaultsAndCaffeineFreeOptions() {
         let app = openAddDrink()
@@ -370,6 +388,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertFalse(detail.staticTexts["statsCaffeineAmount"].exists)
     }
 
+    // GIVEN Juice selections followed by a manually sized Smoothie,
+    // THEN default servings expose no preparation controls and saved details retain the manual amount and estimate.
     @MainActor
     func testJuicesDefaultVolumeNoPreparationAndSavedEstimates() {
         let app = openAddDrink()
@@ -419,6 +439,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertFalse(detail.staticTexts["statsCaffeineAmount"].exists)
     }
 
+    // GIVEN Soft Drink selections followed by caffeine-free Cola,
+    // THEN servings and controls match each drink and the saved Cola retains hydration credit with no caffeine section.
     @MainActor
     func testSoftDrinkDefaultsAndColaCaffeineFree() {
         let app = openAddDrink()
@@ -464,6 +486,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         XCTAssertFalse(detail.staticTexts["statsCaffeineAmount"].exists)
     }
 
+    // GIVEN Wellness and Sports selections followed by an Energy drink,
+    // THEN servings expose no preparation controls and saved details show the reviewed hydration and caffeine.
     @MainActor
     func testWellnessAndSportsDefaultsAndSavedCaffeine() {
         let app = openAddDrink()
@@ -513,6 +537,8 @@ final class AddDrinkCategoryUITests: XCTestCase {
         return XCTWaiter.wait(for: [expectation], timeout: readinessTimeout) == .completed
     }
 
+    // GIVEN Milk and Alternatives selections followed by Hot chocolate,
+    // THEN serving defaults expose no preparation controls and saved cocoa details retain hydration and caffeine estimates.
     @MainActor
     func testMilkDefaultsNoPreparationAndSavedCocoaEstimates() {
         let app = openAddDrink()

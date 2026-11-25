@@ -196,18 +196,62 @@ struct DrinkCatalogueManifestTests {
         }
     }
 
+    // GIVEN an empty catalogue version in the manifest,
+    // THEN loading rejects it before reading definitions that could produce unrestorable snapshots.
+    @Test func rejectsEmptyVersionBeforeReadingFiles() throws {
+        let manifest = try manifestData(version: "")
+        var reads = 0
+        #expect(throws: DrinkCatalogue.ValidationError.emptyVersion) {
+            _ = try DrinkCatalogueLoader().load(from: manifest) { _ in
+                reads += 1
+                return Data()
+            }
+        }
+        #expect(reads == 0)
+    }
+
+    // GIVEN an empty drink name in a required category file,
+    // THEN loading rejects the complete catalogue rather than allowing an unrestorable entry.
+    @Test func rejectsEmptyDrinkNameAfterAssembly() throws {
+        var files = try categoryFiles()
+        let invalid = DrinkDefinition(id: "test-coffee", name: "", categoryID: "coffee",
+                                      sortOrder: 1, isRetired: false)
+        files["coffee.json"] = try JSONEncoder().encode([invalid])
+        #expect(throws: DrinkCatalogue.ValidationError.emptyDrinkName(drinkID: invalid.id)) {
+            _ = try load(manifest: manifestData(), files: files)
+        }
+    }
+
+    // GIVEN valid authored metadata containing intentional spaces,
+    // THEN resolution and storage restoration preserve it exactly, without trimming or rewriting history.
+    @Test func validMetadataRemainsUnchangedThroughRestoration() throws {
+        let definition = DrinkDefinition(id: "test-water", name: " Test water ", categoryID: "water",
+                                         sortOrder: 1, isRetired: false)
+        let catalogue = try load(
+            manifest: manifestData(categories: [category("water", file: "water.json")], version: " version-1 "),
+            files: ["water.json": JSONEncoder().encode([definition])]
+        )
+        let entry = try AddDrinkDraft(drinkID: definition.id, volumeValue: 250, unit: .milliliters)
+            .drinkEntry(using: DrinkCatalogueSnapshotResolver(catalogue: catalogue))
+        let restored = try #require(PersistentDrinkEntry(drinkEntry: entry).drinkEntry())
+        #expect(restored.catalogueSnapshot == entry.catalogueSnapshot)
+        #expect(restored.displayName == " Test water ")
+        #expect(restored.catalogueSnapshot.catalogueVersion == " version-1 ")
+    }
+
     private func category(_ id: String, file: String) -> [String: Any] {
         ["id": id, "name": id, "sortOrder": 1, "file": file]
     }
 
     private func manifestData(
         categories: [[String: Any]]? = nil,
-        manifestVersion: Int = 1
+        manifestVersion: Int = 1,
+        version: String = "test-content-1"
     ) throws -> Data {
         try JSONSerialization.data(withJSONObject: [
             "manifestVersion": manifestVersion,
             "schemaVersion": 1,
-            "version": "test-content-1",
+            "version": version,
             "categories": categories ?? [
                 category("water", file: "water.json"),
                 category("coffee", file: "coffee.json")

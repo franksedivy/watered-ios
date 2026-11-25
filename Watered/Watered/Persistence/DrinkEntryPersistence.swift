@@ -13,15 +13,21 @@ import SwiftData
 enum DrinkEntryPersistence {
     enum SaveError: Error { case duplicateEntry }
 
-    /// Inserts a drink and explicitly saves the context.
+    /// Commits a new drink and any eligible frozen Health export intents together.
+    ///
+    /// Existing context edits are saved before checking for a duplicate entry. Failures in
+    /// that initial save or duplicate lookup propagate without this method rolling back.
+    /// After insertion, capture, callback or save failures roll back the supplied context;
+    /// previously committed edits remain saved.
     ///
     /// - Parameters:
     ///   - entry: The drink to persist.
     ///   - context: The context used to insert and save the record.
-    ///   - beforeSave: An optional action run after insertion and before saving
-    /// - Throws: An error from the callback or save, after rolling back pending changes.
-    /// - Important: Existing edits are saved first. The drink and eligible frozen export intents
-    /// commit together; rollback creates no success state or analytics.
+    ///   - healthClient: When supplied, captures eligibility from the committed sync preference
+    ///     and current write grants. Omission saves only the drink; no Health write occurs here.
+    ///   - beforeSave: An optional action after insertion and export capture, before committing.
+    /// - Throws: A persistence, capture or callback error, or `SaveError.duplicateEntry`.
+    /// - Important: The caller updates in-memory state and success analytics only after return.
     static func save(
         _ entry: DrinkEntry,
         in context: ModelContext,
@@ -47,17 +53,25 @@ enum DrinkEntryPersistence {
         }
     }
     
-    /// Deletes stored drinks and returns their indentifiers after saving succeeds.
+    /// Commits local removal and returns identifiers the caller can remove from visible history.
     ///
-    /// Pending changes are saved before deletion so rollback cannot discard them.
+    /// Empty input returns without saving pending edits or invoking the callback. Otherwise,
+    /// pending edits are committed first. Health-aware deletion re-fetches current records in
+    /// a fresh context, cancels never-started exports and hides drinks with possible Health writes.
+    /// Their details remain stored until the executor completes cleanup and commits final purge.
+    /// Without Health tracking, records are deleted directly in the supplied context.
     ///
     /// - Parameters:
     ///   - entries: Stored drink records belonging to the supplied context.
-    ///   - context: The context used to delete and save the records.
+    ///   - context: The records' context; Health-aware deletion uses its container for a fresh transaction.
+    ///   - tracksHealthExports: Whether to preserve cleanup intent for possible Health writes.
     ///   - beforeSave: An optional action run after marking records for deletion, before saving the deletion.
-    /// - Returns: The deleted identifiers, or an empty set when no records are supplied.
-    /// - Throws: An error from saving pending changes, the callback, or deletion saving.
-    /// - Important: This operation does not update the in-memory store.
+    /// - Returns: The requested identifiers after a successful commit, or an empty set for empty input.
+    ///   Returned identifiers do not imply that retained details or Health samples have been purged.
+    /// - Throws: An error from saving pending edits, fetching, preparing deletion, the callback or saving.
+    ///   Preparation, callback and deletion-save failures roll back the deletion context;
+    ///   earlier pending-edit saves and fetch failures are outside that rollback boundary.
+    /// - Important: This operation performs no Health I/O and does not update the in-memory store.
     static func delete(
         _ entries: [PersistentDrinkEntry],
         in context: ModelContext,

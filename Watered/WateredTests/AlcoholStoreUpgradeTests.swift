@@ -49,6 +49,8 @@ private enum PreAlcoholStore {
 
 @MainActor
 struct AlcoholStoreUpgradeTests {
+    // GIVEN a disk store written before the optional alcohol snapshot fields existed,
+    // THEN upgrade preserves the original wine facts and unknown alcohol fields while allowing a new entry.
     @Test func existingDiskStoreUpgradesWithoutRewritingSavedFacts() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

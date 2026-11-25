@@ -1,13 +1,19 @@
 import Foundation
 import SwiftData
 
+/// Owns local sync-preference commits and stages export lifecycle changes without Health I/O.
+/// Capture, deletion preparation and purge leave saving and rollback to their caller.
 @MainActor
 enum HealthExportPersistence {
     static func isEnabled(in context: ModelContext) throws -> Bool {
         try context.fetch(FetchDescriptor<PersistentHealthSyncPreference>()).first?.isEnabled == true
     }
 
-    /// Called synchronously inside the entry transaction; no awaits or permission prompts.
+    /// Stages frozen per-type export intents alongside a newly inserted drink.
+    /// Reads the committed preference through a fresh context and checks current write grants;
+    /// invalid mappings create invalid records, while unknown, zero and ineligible types add no work.
+    /// Runs synchronously without permission prompts or Health writes. The caller must commit
+    /// the drink and intents together, or roll back the supplied context if capture or saving fails.
     static func capture(_ entry: DrinkEntry, client: any HealthKitClient, in context: ModelContext) throws {
         guard try isEnabled(in: ModelContext(context.container)) else { return }
         let eligible = Set(HealthWriteType.allCases.filter { client.authorization(for: $0) == .authorized })
@@ -25,6 +31,9 @@ enum HealthExportPersistence {
     }
 
     /// Commits the switch independently of system permission. Never scans old drinks.
+    /// Pending context edits are saved before reading the preference, even for an unchanged choice.
+    /// Initial save/fetch failures propagate without rollback here. Once the preference is changed,
+    /// callback or save failures roll back the context, preserving earlier committed edits.
     static func setEnabled(_ enabled: Bool, in context: ModelContext, at date: Date = Date(),
                            beforeSave: () throws -> Void = {}) throws {
         if context.hasChanges { try context.save() }
@@ -53,7 +62,11 @@ enum HealthExportPersistence {
         }
     }
 
-    /// Atomically cancels never-started uploads and retains possibly-written types for cleanup.
+    /// Stages cancellation of never-started uploads and cleanup for possibly-written types.
+    /// Marks the drink hidden when cleanup is needed; otherwise stages its immediate deletion.
+    /// Already-hidden drinks are left unchanged, including existing retry state.
+    /// Does not save or perform Health cleanup: the caller owns the atomic commit and rollback
+    /// of these mutations before reporting local deletion or updating visible history.
     static func prepareDeletion(_ entry: PersistentDrinkEntry, in context: ModelContext, at date: Date) throws {
         // Repeated deletion/reset must not reopen completed cleanup or reset its backoff.
         guard entry.deletedAt == nil else { return }
@@ -76,8 +89,11 @@ enum HealthExportPersistence {
         if needsCleanup { entry.deletedAt = date } else { context.delete(entry) }
     }
 
+    /// Stages removal of hidden drinks whose remaining export records all acknowledge deletion.
+    /// Hidden drinks with no remaining export records are also eligible for purge.
     /// Only the serialized executor calls this, with no outstanding I/O for these records.
-    /// Purge and successful cleanup acknowledgements share a transaction.
+    /// The caller owns saving and rollback, committing purge with the final cleanup acknowledgement
+    /// or in a recovery transaction for previously completed cleanup. This method does not save.
     static func purgeCompletedDeletions(in context: ModelContext) throws {
         let deleted = try context.fetch(FetchDescriptor<PersistentDrinkEntry>(predicate: #Predicate { $0.deletedAt != nil }))
         for entry in deleted {

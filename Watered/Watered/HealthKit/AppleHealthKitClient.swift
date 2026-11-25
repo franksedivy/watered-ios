@@ -83,6 +83,12 @@ final class AppleHealthKitClient: HealthExportClient {
         }
     }
 
+    /// Writes one frozen specification after checking current write permission and factory validation.
+    /// Never prompts or checks app opt-in; the coordinator owns eligibility and durable acknowledgement.
+    /// - Parameter specification: Captured sample values to construct without recalculation.
+    /// - Throws: `HealthExportFailure.authorization` for missing permission or platform access failures,
+    ///   `.invalidPayload` for factory rejection or a platform invalid-argument error, and `.temporary`
+    ///   for an unavailable writer or other platform errors. Raw platform errors do not escape.
     func save(_ specification: HealthSampleSpecification) async throws {
         guard authorization(for: specification.type) == .authorized else { throw HealthExportFailure.authorization }
         let sample: HKQuantitySample
@@ -93,6 +99,14 @@ final class AppleHealthKitClient: HealthExportClient {
         catch { throw Self.exportFailure(for: error) }
     }
 
+    /// Deletes samples of the requested type matching both this app's source and entry/type sync identity.
+    /// Validates identity before checking current write permission; never prompts or checks app opt-in.
+    /// A successful zero-match deletion is success. The coordinator must persist acknowledgement
+    /// before treating cleanup as complete and purging retained local records.
+    /// - Parameter target: Stable cleanup identity; no upload payload or sample UUID is required.
+    /// - Throws: `HealthExportFailure.invalidPayload` for invalid identity or a platform invalid-argument
+    ///   error, `.authorization` for missing permission or platform access failures, and `.temporary`
+    ///   for an unavailable deletion store or other platform errors. Raw platform errors do not escape.
     func delete(_ target: HealthDeletionTarget) async throws {
         guard target.isValid else { throw HealthExportFailure.invalidPayload }
         guard authorization(for: target.type) == .authorized else { throw HealthExportFailure.authorization }

@@ -21,8 +21,8 @@ final class HealthSyncUITests: XCTestCase {
         return app
     }
 
-    // Given denied write access, the app preference remains editable and permission
-    // recovery explains the Health-app route without claiming a connection.
+    // GIVEN denied write permissions supplied by the isolated Health fixture,
+    // THEN app opt-in remains editable and permission recovery explains the Health-app route without claiming connection.
     @MainActor
     func testDeniedPermissionsDoNotControlAppPreference() {
         let app = openHealth("denied")
@@ -41,7 +41,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Open Health")).firstMatch.exists)
     }
 
-    // Given unavailable Health, reviewing permissions preserves the local-logging promise.
+    // GIVEN an unavailable Health fixture and a permission-review action,
+    // THEN the alert explains that local drink logging remains available.
     @MainActor
     func testUnavailablePermissionExplainsLocalLogging() {
         let app = openHealth("unavailable")
@@ -51,7 +52,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.alerts.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "You can still log drinks")).firstMatch.waitForExistence(timeout: 3))
     }
 
-    // Given a restricted request, the screen explains the error without changing app opt-in.
+    // GIVEN an isolated fixture returning a restricted authorization request,
+    // THEN the screen explains the restriction while retaining the enabled app preference.
     @MainActor
     func testRestrictedRequestPreservesSyncChoice() {
         let app = openHealth("restricted")
@@ -64,8 +66,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
     }
 
-    // A saved opt-in survives leaving the detail screen; permission request completion
-    // must preserve mixed per-type results rather than manufacturing a Connected state.
+    // GIVEN mixed fixture permissions and a saved opt-in,
+    // THEN permission results remain truthful and reopening retains the preference and its revealed controls.
     @MainActor
     func testMixedPermissionsAndPreferenceSurviveReopening() {
         let app = openHealth("mixed")
@@ -87,8 +89,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
     }
 
-    // A failed transaction must leave the toggle off and explain recovery; retrying
-    // the deliberate edit succeeds without a system permission sheet.
+    // GIVEN a simulated failure while saving opt-in,
+    // THEN the switch remains off with a recovery message and a deliberate retry enables it.
     @MainActor
     func testFailedPreferenceSavePreservesChoiceAndCanRetry() {
         let app = openHealth("saveFailure")
@@ -102,8 +104,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertEqual(app.switches["healthSyncToggle"].value as? String, "1")
     }
 
-    // Real Retry now processes only retryable work. Acknowledged caffeine and invalid
-    // alcohol remain independent, and the screen refreshes after the fake write returns.
+    // GIVEN retryable water, acknowledged caffeine and invalid alcohol in an isolated fixture,
+    // THEN Retry now refreshes water to sent while the caffeine acknowledgement remains intact.
     @MainActor
     func testRetryUpdatesFailedTypeWithoutChangingOtherOutcomes() {
         let app = openHealth("retry")
@@ -124,8 +126,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(caffeine.label.contains("Sent to Apple Health: 1"))
     }
 
-    // Disabled sync hides the upload controls. Enabling reveals previously eligible
-    // pending work, and Retry now sends it without inventing a historical export.
+    // GIVEN previously eligible pending work with sync disabled in the fixture,
+    // THEN enabling reveals it, Retry now sends it and disabling hides upload controls again.
     @MainActor
     func testPendingUploadsStayPausedUntilEnabled() {
         let app = openHealth("paused")
@@ -147,8 +149,8 @@ final class HealthSyncUITests: XCTestCase {
         XCTAssertTrue(app.buttons["healthExportStatusLink"].waitForNonExistence(timeout: 3))
     }
 
-    // Cleanup stays actionable on the main screen while uploads are off; the
-    // information destination contains prose only, with no duplicate settings.
+    // GIVEN blocked cleanup in an isolated fixture with sync disabled,
+    // THEN cleanup feedback and retry stay accessible while the information destination contains no duplicate controls.
     @MainActor
     func testBlockedCleanupRemainsReachableWhileSyncIsOff() {
         let app = openHealth("cleanup")
@@ -168,8 +170,8 @@ final class HealthSyncUITests: XCTestCase {
         capture("Apple Health plain information", in: app)
     }
 
-    // At the largest accessibility size, essential controls and privacy copy remain
-    // reachable. This does not replace spoken VoiceOver or visual contrast review.
+    // GIVEN the mixed Health fixture at the largest accessibility text size,
+    // THEN permission and retry controls and privacy prose remain reachable; spoken VoiceOver and contrast are not assessed.
     @MainActor
     func testLargestTextKeepsControlsAndPrivacyReachable() {
         let app = openHealth("mixed", largeText: true)

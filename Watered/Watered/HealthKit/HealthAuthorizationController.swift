@@ -18,7 +18,8 @@ final class HealthAuthorizationController {
         })
     }
 
-    /// Future export operations must use a fresh check, not cached presentation state.
+    /// Reads current permission and updates this type's presentation state without prompting.
+    /// Export operations use fresh client checks, not this controller's cached presentation state.
     /// A grant alone never enables sync or makes a historical entry eligible.
     func currentAuthorization(for type: HealthWriteType) -> HealthWriteAuthorization {
         let status = client.authorization(for: type)
@@ -26,7 +27,8 @@ final class HealthAuthorizationController {
         return status
     }
 
-    /// The only prompting entry point, for an explicit permission button in #111.
+    /// Requests permission from an explicit user action; overlapping calls return without prompting.
+    /// Refreshes per-type status after success or failure and exposes a sanitized request error.
     func requestAuthorizationFromUserAction() async {
         guard !isRequesting else { return }
         isRequesting = true

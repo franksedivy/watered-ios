@@ -1,6 +1,6 @@
 # Architecture
 
-Source baseline: main through `f47869c`, with the #104 interaction changes reviewed on 6 November 2026. This implementation map does not establish distribution or release readiness.
+Source review: `c22a53b04e907db13b61958e744ec1cf977e7186`, 25 November 2026, including the merged #161 artwork presets and subsequent #172 contract comments. This implementation map does not establish distribution or release readiness.
 
 ## Structure
 
@@ -21,7 +21,7 @@ Paths below are relative to `Watered/Watered/`.
 
 A new selection is resolved against the current validated catalogue. `DrinkCatalogueSnapshot` captures identity, name, preparation, resolved estimates and catalogue/calculation versions. `DrinkEntry` requires this snapshot.
 
-`DrinkSubmissionHandler` invokes persistence first. Only after saving succeeds does it update `WateredStore` and record a success event. `DrinkEntryPersistence` rolls back failed saves; callers handle presentation and retry. Rollback can affect pending changes in the supplied context, so transaction boundaries matter.
+`DrinkSubmissionHandler` invokes persistence first. Only after saving succeeds does it update `WateredStore` and record a success event. Before staging a drink transaction, `DrinkEntryPersistence` saves unrelated pending edits; that preliminary save is outside the new transaction's rollback scope. The subsequent insertion/export-intent or deletion transaction rolls back on failure. Callers handle presentation and retry; they must not assume every thrown error rolled back all pending work.
 
 Saved entries are restored from captured facts rather than recalculated using current definitions. Catalogue failure must not prevent history access. Removed or retired drinks remain readable from valid snapshots. Old enum-only development records are not automatically migrated or assigned invented estimates; see [Development Drink Data](Development-Drink-Data.md).
 
@@ -56,9 +56,9 @@ saved snapshots, so catalogue schema/content/manifest versions are unchanged.
 
 The manifest names category JSON resources explicitly; the loader validates the assembled catalogue and fails rather than returning a partial result. See [Drink Catalogue Files](Drink-Catalogue-Files.md) for formats and content maintenance. The catalogue contains 60 definitions: four Water, seven Coffee, ten Tea, four Juices, six Soft Drinks, three Wellness, four Sports & Energy, twelve Milk & Alternatives, eight Alcohol and two Other, under content development-25 / schema 6. Alcohol uses discrete ABV choices and optional non-alcoholic preparations; calculation version 3 gives alcoholic preparations zero goal credit. Optional saved preparation/ABV fields preserve older rows without recalculating history. The four Water, seven Coffee, ten Tea, four Juice, six Soft Drink, three Wellness, four Sports & Energy and twelve Milk & Alternatives definitions have reviewed water-content fractions; the eight Alcohol definitions use reviewed strength tables and both Other definitions have reviewed fixed fractions. Coffee water fractions remain fixed across regular/decaf and shot counts. Calculation version 5 captures a separate optional water amount in snapshots and persistence; existing rows remain unknown. HealthKit mapping remains separate.
 
-The #104 branch adds bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
+The merged #104 interaction work provides bundled drink artwork, category defaults, preparation controls, a long-press recent menu and a session-only unsaved draft owned by the app shell. See [Add Drink interaction](Add-Drink-Category-Prototype.md). Persistent last-used category choices remain unfinished.
 
-Widgets, a Watch app, iCloud sync and production analytics are outside the implemented baseline described here. HealthKit has the staged implementation described below. Keep proposed systems separate from this implementation map until code exists.
+Widgets, a Watch app, iCloud sync and production analytics are outside the implemented baseline described here. HealthKit's implemented boundaries are described below. Keep proposed systems separate from this implementation map until code exists.
 
 ## Maintaining this map
 

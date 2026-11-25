@@ -4,6 +4,8 @@ import Testing
 
 @MainActor
 struct DrinkContentStructureTests {
+    // GIVEN explicit absent and unknown caffeine definitions,
+    // THEN resolution retains zero versus unknown and the structured content round-trips without legacy fields.
     @Test func knownAbsenceAndUnknownResolveDifferently() throws {
         for (kind, expected) in [("none", Optional(0.0)), ("unknown", nil)] {
             let catalogue = try catalogue(caffeine: "{\"kind\":\"\(kind)\"}")
@@ -21,6 +23,8 @@ struct DrinkContentStructureTests {
         }
     }
 
+    // GIVEN the same ABV with different explicitly selected hydration policies,
+    // THEN goal credit follows the hydration rule rather than being inferred from alcohol content.
     @Test func alcoholContentDoesNotSelectHydrationPolicy() throws {
         let alcohol = "{\"kind\":\"abv\",\"value\":0.05}"
         let ratioCatalogue = try catalogue(alcohol: alcohol)
@@ -35,6 +39,8 @@ struct DrinkContentStructureTests {
         #expect(!String(decoding: data, as: UTF8.self).contains("defaultABV"))
     }
 
+    // GIVEN malformed or contradictory caffeine content JSON,
+    // THEN catalogue decoding or validation rejects it rather than inventing defaults.
     @Test(arguments: [
         "{}", "null", "{\"kind\":\"missing\"}",
         "{\"kind\":\"none\",\"options\":[]}",
@@ -49,6 +55,8 @@ struct DrinkContentStructureTests {
         #expect(throws: (any Error).self) { _ = try catalogue(caffeine: json) }
     }
 
+    // GIVEN missing, malformed or contradictory alcohol content JSON,
+    // THEN decoding rejects it instead of interpreting it as known absence.
     @Test(arguments: [
         "{}", "null", "{\"kind\":\"abv\"}",
         "{\"kind\":\"none\",\"value\":0.05}",
@@ -61,6 +69,8 @@ struct DrinkContentStructureTests {
         #expect(throws: DecodingError.self) { _ = try catalogue(alcohol: json) }
     }
 
+    // GIVEN an alcohol hydration rule paired with absent or unknown alcohol content,
+    // THEN decoding rejects the missing exact ABV.
     @Test(arguments: ["none", "unknown"])
     func alcoholHydrationRequiresABV(kind: String) {
         #expect(throws: DecodingError.self) {
@@ -68,6 +78,8 @@ struct DrinkContentStructureTests {
         }
     }
 
+    // GIVEN duplicate ABV, legacy content fields or shots without a compatible caffeine rule,
+    // THEN decoding or validation rejects the inconsistent definition.
     @Test func rejectsDuplicateABVAndMixedLegacyFields() {
         #expect(throws: DecodingError.self) {
             _ = try catalogue(alcohol: "{\"kind\":\"abv\",\"value\":0.05}",
@@ -84,6 +96,8 @@ struct DrinkContentStructureTests {
         }
     }
 
+    // GIVEN legacy definitions loaded through monolithic and manifest paths,
+    // THEN schemas 1 and 2 remain readable while schema 3 requires explicit caffeine and alcohol content.
     @Test func schemaThreeRequiresContentInBothLoadingPaths() throws {
         let definition = """
         {"id":"test","name":"Test","categoryID":"test","sortOrder":0,"isRetired":false,
@@ -121,6 +135,8 @@ struct DrinkContentStructureTests {
         }
     }
 
+    // GIVEN a saved water snapshot from an older schema with unknown caffeine,
+    // THEN history preserves it and repeating creates a new entry with current schema facts and known-zero caffeine.
     @Test func oldWaterSnapshotSurvivesWhileRepeatUsesNewSchema() throws {
         let old = DrinkCatalogueSnapshot(
             drinkID: "still-water", drinkName: "Still water", caffeineVariant: .regular, shotCount: nil,

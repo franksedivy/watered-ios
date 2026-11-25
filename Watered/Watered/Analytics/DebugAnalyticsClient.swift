@@ -9,7 +9,7 @@
 
 /// Writes analytics events to Watered's local debug log.
 ///
-/// This client is avialable only in Debug builds. It does not send events to an analytics provider or maintain an event history.
+/// This client is available only in Debug builds. It does not send events to an analytics provider or maintain an event history.
 @MainActor
 struct DebugAnalyticsClient: AnalyticsClient {
     

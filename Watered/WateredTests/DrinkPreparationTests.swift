@@ -201,7 +201,8 @@ struct DrinkPreparationTests {
         }
     }
 
-    // Schema 2 permits zero; schema 1 retains its original positive-shot contract.
+    // GIVEN a schema 2 drink whose supported and default shot counts include zero,
+    // THEN catalogue validation accepts the zero-shot preparation.
     @Test func schemaTwoAcceptsZeroShotPreparation() throws {
         let drink = DrinkDefinition(
             id: "test-coffee", name: "Coffee", categoryID: "coffee", sortOrder: 0,

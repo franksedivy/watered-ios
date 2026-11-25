@@ -30,7 +30,7 @@ Preserve these current contracts:
 - Repeating a recent drink creates a new entry under current catalogue rules.
 - Profile goal edits commit once on dismissal when changed; display-unit changes do not create goal history.
 - Never silently reset a user's database. Development-data deletion requires an explicit user action.
-- Debug analytics are local; Release analytics discard events. HealthKit remains planned in this baseline.
+- Debug analytics are local; Release analytics discard events. Optional HealthKit export uses explicit write consent, creation-time eligibility and durable per-type retry/cleanup; it never backfills history automatically.
 
 See [Architecture](Docs/ARCHITECTURE.md) for source pointers, and verify affected contracts against current code.
 

@@ -11,7 +11,8 @@ import Testing
 
 @MainActor
 struct DrinkEstimateCalculatorTests {
-    // Zero is a known count for a known per-shot rule; negatives remain invalid.
+    // GIVEN a known per-shot caffeine rule with zero or negative shots,
+    // THEN zero resolves to known-zero caffeine while a negative count is rejected.
     @Test func zeroShotsProduceZeroForKnownPerShotRule() throws {
         let amount = DrinkAmount(value: 330, unit: .milliliters)
         #expect(try DrinkEstimateCalculator.caffeineAmount(for: amount, rule: .perShot(amount: 60), shotCount: 0) == 0)

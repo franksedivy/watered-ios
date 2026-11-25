@@ -10,6 +10,8 @@ struct ReviewedOtherEstimateTests {
         ("miso", "Miso soup", 0.95)
     ]
 
+    // GIVEN the bundled Broth and Miso definitions,
+    // THEN membership, names, servings, estimate rules and preparation availability match the reviewed fixtures.
     @Test func reviewedMembershipDefaultsAndNoPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         #expect(catalogue.activeDrinks(inCategoryID: "other").map(\.id) == expected.map(\.id))
@@ -24,6 +26,8 @@ struct ReviewedOtherEstimateTests {
         }
     }
 
+    // GIVEN Broth and Miso drinks at several volumes in each supported unit,
+    // THEN hydration and caffeine follow reviewed physical-volume rules and unsupported preparations are rejected.
     @Test(arguments: LiquidUnit.allCases)
     func estimatesUsePhysicalVolumeAndRejectUnsupportedPreparations(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -44,6 +48,8 @@ struct ReviewedOtherEstimateTests {
         }
     }
 
+    // GIVEN fresh, manual and restored volumes for Broth and Miso in each unit,
+    // THEN their 250 ml defaults apply only to fresh selections without replacing manual or restored amounts.
     @Test(arguments: LiquidUnit.allCases)
     func servingDefaultsRetainManualAndRestoredVolumes(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -63,6 +69,8 @@ struct ReviewedOtherEstimateTests {
         }
     }
 
+    // GIVEN saved Broth and Miso entries including an older broth snapshot with unknown caffeine,
+    // THEN persistence retains all captured facts while repeating the older entry uses current catalogue estimates.
     @Test func savedFactsSurviveAndRepeatsUseCurrentOtherRules() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)

@@ -1,6 +1,8 @@
 import XCTest
 
 final class AddDrinkOtherUITests: XCTestCase {
+    // GIVEN Broth and Miso choices followed by a manually selected amount,
+    // THEN defaults offer no preparation controls and switching drinks preserves the amount saved with its hydration estimate.
     @MainActor
     func testOtherServingDefaultsAndManualAmountAreSavedWithoutPreparation() {
         continueAfterFailure = false

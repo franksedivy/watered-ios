@@ -193,7 +193,8 @@ struct DrinkCatalogueLoaderTests {
         }
     }
 
-    // Preparation changes retain cup volume and hydration while resolving caffeine independently.
+    // GIVEN each bundled coffee preparation resolved for the same cup volume,
+    // THEN variant and shot choices determine caffeine independently while volume and hydration stay unchanged.
     @Test func bundledCoffeePreparationsPreserveVolumeAndResolveCaffeine() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)

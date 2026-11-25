@@ -55,6 +55,8 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     /// A reason the app cannot use a decoded catalogue.
     nonisolated enum ValidationError: Error, Equatable {
         case unsupportedSchemaVersion(Int)
+        case emptyVersion
+        case emptyDrinkName(drinkID: String)
         case duplicateCategoryID(String)
         case duplicateDrinkID(String)
         case unknownCategoryID(drinkID: String, categoryID: String)
@@ -75,23 +77,32 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     
     /// Checks catalogue structure, numeric rules and preparation consistency.
     ///
+    /// Catalogue version and drink names must be nonempty so captured metadata remains restorable.
     /// Supplied default volume must be positive and finite.
     /// Missing defaults are valid. Hydration ratios must be finite and non negative, with no upper limit.
     /// Default ABV must be finite and between zero and one inclusive. Explicit unknown rules are valid without numeric values.
     /// Caffeine variants must be unique per drink and include the configured default
-    /// Caffiene concentrations and per-shot amounts must be finite and nonnegative.
+    /// Caffeine concentrations and per-shot amounts must be finite and nonnegative.
     /// Per-shot caffeine rules require a shot configuration.
     /// Shot configurations require nonempty, unique counts and an available default.
-    /// Schema 1 requires positive counts; schemas 2 and 3 also permit zero.
+    /// Schema 1 requires positive shot counts; schemas 2–6 also permit zero.
+    /// Schemas 3–6 reject shot configuration without a per-shot caffeine rule.
+    /// Alcohol choices require schema 4 or later, ordered unique positive ABVs and an
+    /// available default, with zero alcoholic hydration credit. Optional non-alcoholic
+    /// bounds must be below the lowest supported alcoholic strength.
+    /// Water fractions must be finite within 0...1. Alcohol water tables require schema 6
+    /// and match the supported ABVs in order and the availability of a non-alcoholic preparation.
     /// Category and drink IDs must be nonempty and contain no whitespace.
     ///
-    /// - Throws: A 'ValidationError' identifying the first invalid catalogue value.
+    /// - Throws: A `ValidationError` identifying the first invalid catalogue value.
     ///
     func validate() throws {
         guard (1...6).contains(schemaVersion) else {
             throw ValidationError.unsupportedSchemaVersion(schemaVersion)
         }
         
+        guard !version.isEmpty else { throw ValidationError.emptyVersion }
+
         var categoryIDs = Set<String>()
         
         for category in categories {
@@ -113,6 +124,9 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
         var drinkIDs = Set<String>()
         
         for drink in drinks {
+            guard !drink.name.isEmpty else {
+                throw ValidationError.emptyDrinkName(drinkID: drink.id)
+            }
             let hasWhitespace = drink.id.contains(where: {character in
                 return character.isWhitespace
             })
@@ -300,7 +314,7 @@ nonisolated struct DrinkCatalogue: Codable, Equatable {
     
     // MARK: - Selection
     
-    /// All catalogue categories, ordered by their configured positoin.
+    /// All catalogue categories, ordered by their configured position.
     ///
     /// Categories with equal sort positions are ordered by their stable IDs.
     /// This orders categories without filtering out those with no active drinks.

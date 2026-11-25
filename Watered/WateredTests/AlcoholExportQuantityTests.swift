@@ -3,6 +3,8 @@ import Testing
 @testable import Watered
 
 struct AlcoholExportQuantityTests {
+    // GIVEN reviewed volume/strength examples expressed in each supported unit,
+    // THEN the approved 14 g conversion preserves their fractional standard-drink counts.
     @Test(arguments: LiquidUnit.allCases)
     func approvedExamplesKeepFractionalCountsInEveryUnit(unit: LiquidUnit) throws {
         // Expected grams are worked examples, independent of the conversion implementation.
@@ -18,6 +20,8 @@ struct AlcoholExportQuantityTests {
         }
     }
 
+    // GIVEN zero, missing or upper-bound-only ABV, including contradictory exact/bound facts,
+    // THEN conversion retains zero/unknown or rejects the contradiction without inventing a positive count.
     @Test func zeroUnknownAndUpperBoundNeverBecomePositiveSamples() {
         #expect(AlcoholExportQuantity.resolve(entry(abv: 0)) == .knownZero)
         #expect(AlcoholExportQuantity.resolve(entry(abv: 0, nonAlcoholic: true)) == .knownZero)
@@ -26,6 +30,8 @@ struct AlcoholExportQuantityTests {
         #expect(AlcoholExportQuantity.resolve(entry(abv: 0.005, bound: 0.005, nonAlcoholic: true)) == .invalid)
     }
 
+    // GIVEN invalid volume or strength values, or positive ABV marked non-alcoholic,
+    // THEN conversion rejects the saved facts as invalid.
     @Test func invalidFactsAreRejected() {
         for volume in [0.0, -1, .nan, .infinity] {
             #expect(AlcoholExportQuantity.resolve(entry(amount: .init(value: volume, unit: .milliliters), abv: 0.05)) == .invalid)
@@ -37,6 +43,8 @@ struct AlcoholExportQuantityTests {
         #expect(AlcoholExportQuantity.resolve(entry(abv: 0.05, nonAlcoholic: true)) == .invalid)
     }
 
+    // GIVEN saved volume/ABV with changed names or unrelated estimates, and a doubled strength,
+    // THEN only the strength change affects the count under the same versioned conversion policy.
     @Test func savedFactsRemainIndependentOfRecipeNamesAndOtherEstimates() {
         let original = entry(abv: 0.05)
         let renamed = entry(abv: 0.05, name: "Retired recipe", hydration: -100, water: nil, caffeine: 80)

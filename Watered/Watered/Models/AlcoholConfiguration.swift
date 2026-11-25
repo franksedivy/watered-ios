@@ -1,6 +1,8 @@
 import Foundation
 
 /// ABV choices for new logs; fractions are stored independently of hydration credit.
+/// Decoding checks the object structure; `DrinkCatalogue.validate()` checks supported
+/// strengths, their default and non-alcoholic bounds before resolution.
 nonisolated struct AlcoholConfiguration: Codable, Equatable {
     let defaultABV: Double
     let supportedABVs: [Double]

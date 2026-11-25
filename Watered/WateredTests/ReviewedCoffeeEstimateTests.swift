@@ -4,6 +4,8 @@ import Testing
 
 @MainActor
 struct ReviewedCoffeeEstimateTests {
+    // GIVEN fresh, manually edited and restored coffee volumes in each unit,
+    // THEN serving defaults update only fresh selections and preserve exact manually chosen or restored amounts.
     @Test(arguments: LiquidUnit.allCases)
     func coffeeServingDefaultsRespectManualAndRestoredAmounts(unit: LiquidUnit) throws {
         let coffee = try DrinkCatalogueLoader().load().activeDrinks(inCategoryID: "coffee")
@@ -30,6 +32,8 @@ struct ReviewedCoffeeEstimateTests {
         }
     }
 
+    // GIVEN 375 ml coffee entries saved and repeated for each bundled coffee,
+    // THEN serving defaults do not resize them or rewrite their captured estimates.
     @Test func coffeeServingDefaultsDoNotResizeSavedOrRepeatedDrinks() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
@@ -50,6 +54,8 @@ struct ReviewedCoffeeEstimateTests {
         }
     }
 
+    // GIVEN shot-based coffees resolved without explicit shot counts,
+    // THEN each drink uses its reviewed default shots and corresponding caffeine amount.
     @Test func defaultsResolvePerDrink() throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
         for (id, shots) in [("espresso", 1), ("cappuccino", 1), ("latte", 2), ("americano", 2), ("iced-coffee", 2)] {
@@ -59,6 +65,8 @@ struct ReviewedCoffeeEstimateTests {
         }
     }
 
+    // GIVEN regular and decaf coffees at several volumes and shot counts in each unit,
+    // THEN volume-based caffeine scales with volume and shot-based caffeine follows shots independently of hydration.
     @Test(arguments: LiquidUnit.allCases)
     func estimatesUsePhysicalVolumeAndShots(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -80,6 +88,8 @@ struct ReviewedCoffeeEstimateTests {
         }
     }
 
+    // GIVEN an older decaf Latte snapshot with unknown caffeine,
+    // THEN history retains that unknown while a new repeat captures the reviewed three-shot estimate.
     @Test func oldUnknownSnapshotSurvivesPersistenceAndRepeat() throws {
         let snapshot = DrinkCatalogueSnapshot(
             drinkID: "latte", drinkName: "Latte", caffeineVariant: .decaf, shotCount: 3,
@@ -102,6 +112,8 @@ struct ReviewedCoffeeEstimateTests {
         #expect(store.entries.first?.catalogueSnapshot == snapshot)
     }
 
+    // GIVEN an older Iced coffee snapshot without a shot count,
+    // THEN history stays readable but the unsupported preparation is excluded from current Recents.
     @Test func oldIcedCoffeeWithoutShotsRemainsReadableButUnavailableInRecents() throws {
         let snapshot = DrinkCatalogueSnapshot(
             drinkID: "iced-coffee", drinkName: "Iced coffee", caffeineVariant: .regular, shotCount: nil,
@@ -116,6 +128,8 @@ struct ReviewedCoffeeEstimateTests {
         #expect(store.entries.first?.catalogueSnapshot == snapshot)
     }
 
+    // GIVEN fractional and negative contribution ratios across locales,
+    // THEN contribution labels round down to one decimal while progress keeps its separate percentage formatting.
     @Test func contributionDisplayRoundsDownWithoutChangingProgressFormatting() {
         let formatter = ProgressFormatter()
         let locale = Locale(identifier: "en_US")

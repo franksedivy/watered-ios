@@ -4,6 +4,8 @@ import Testing
 
 @MainActor
 struct AddDrinkVolumeSelectionTests {
+    // GIVEN an exact captured amount displayed repeatedly in different units,
+    // THEN unchanged wheel selections and submission preserve its original value, unit and preparation.
     @Test(arguments: LiquidUnit.allCases, LiquidUnit.allCases)
     func displayAndSavePreserveExactAmount(source: LiquidUnit, display: LiquidUnit) throws {
         var selection = AddDrinkVolumeSelection(value: 500.123456789, unit: source)
@@ -36,6 +38,8 @@ struct AddDrinkVolumeSelectionTests {
         #expect(entry.catalogueSnapshot.shotCount == 3)
     }
 
+    // GIVEN a fresh volume selection in each supported unit,
+    // THEN its default is selectable and deliberately choosing a preset replaces the captured value.
     @Test(arguments: LiquidUnit.allCases)
     func freshDefaultsAndDeliberatePresetSelection(unit: LiquidUnit) {
         var selection = AddDrinkVolumeSelection(
@@ -47,6 +51,8 @@ struct AddDrinkVolumeSelectionTests {
         #expect(selection.unit == unit)
     }
 
+    // GIVEN 12 US fl oz displayed as a rounded millilitre label,
+    // THEN selecting that existing converted value retains the original 12 US fl oz.
     @Test func metricDisplayRoundsWithoutChangingCapturedOunces() {
         var selection = AddDrinkVolumeSelection(value: 12, unit: .usFluidOunces)
         let displayedValue = selection.displayValue(in: .milliliters)
@@ -57,6 +63,8 @@ struct AddDrinkVolumeSelectionTests {
         #expect(selection.unit == .usFluidOunces)
     }
 
+    // GIVEN 500 ml displayed between US-ounce presets,
+    // THEN the exact conversion remains selectable until a deliberate preset replaces the physical amount.
     @Test func convertedNonPresetIsSelectableWithoutRoundingAndNewPresetReplacesIt() {
         var selection = AddDrinkVolumeSelection(value: 500, unit: .milliliters)
         let converted = selection.displayValue(in: .usFluidOunces)

@@ -9,7 +9,7 @@ import Foundation
 
 /// Describes how to estimate a drink's hydration contribution.
 ///
-/// Rules are indpenedent of browsing categories and display names. They do not determine quantities exported to HealthKit.
+/// Rules are independent of browsing categories and display names. They do not determine quantities exported to HealthKit.
 nonisolated enum HydrationContributionRule: Equatable, Codable {
     /// Applies a multiplier to the logged liquid volume.
     ///
@@ -21,9 +21,9 @@ nonisolated enum HydrationContributionRule: Equatable, Codable {
     /// ABV is expressed as a fraction: 0.05 represents 5%
     case alcohol(defaultABV: Double)
     
-    /// Indicates that no supported contribution estimate is avialable.
+    /// Indicates that no supported contribution estimate is available.
     ///
-    /// Uknown must not be interepreted as zero contribution.
+    /// Unknown must not be interpreted as zero contribution.
     case unknown
     
     // MARK: - Decoding
@@ -41,9 +41,12 @@ nonisolated enum HydrationContributionRule: Equatable, Codable {
     }
     
     /// Decodes a contribution rule using its explicit kind and required values.
+    /// This standalone/legacy representation stores ABV in the rule. Modern catalogue
+    /// definitions decode alcohol hydration through `DrinkDefinition`, using its alcohol
+    /// content instead. Catalogue validation owns numeric ranges and cross-field consistency.
     ///
     /// - Parameter decoder: The decode supplying the rule data.
-    /// - Throws: A decoding error for an unsupported kind, missing required field or incorrectly types value.
+    /// - Throws: A decoding error for an unsupported kind, missing required field or incorrectly typed value.
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try container.decode(RuleKind.self, forKey: .kind)

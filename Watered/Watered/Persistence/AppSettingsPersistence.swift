@@ -11,17 +11,19 @@ import SwiftData
 /// Coordinates persistence operations for app settings and hydration goal history.
 @MainActor
 enum AppSettingsPersistence {
-    /// Loads existing settings or saves first-run settings and their initial goal record.
+    /// Loads existing settings or commits first-run settings and their initial goal record together.
     ///
-    /// Existing settings are returned unchanged. This does not invent historical records for development data created before
-    /// goal history was introduced.
+    /// Existing settings return without saving pending edits or adding missing goal history.
+    /// For first-run creation, pending edits are saved before inserting either record. A failed
+    /// creation save rolls back both insertions while preserving those earlier committed edits.
+    /// Initial fetch and pending-edit save failures propagate without rollback here.
     ///
     /// - Parameters:
-    ///  - defaults: Settings to use then no persisted settings exist.
-    ///  - context: The context used to fetch and save recrods.
-    ///  - date: the timestamp shared by initial settings and their goal record.
+    ///   - defaults: Settings to use when no persisted settings exist.
+    ///   - context: The context used to fetch and save records.
+    ///   - date: The timestamp shared by initial settings and their goal record.
     /// - Returns: The existing or newly saved settings record.
-    /// - Throws: A persisten error if fetching or saving fails.
+    /// - Throws: A persistence error if fetching or saving fails.
     static func loadOrCreate(
         defaults: AppSettings,
         in context: ModelContext,
@@ -65,17 +67,19 @@ enum AppSettingsPersistence {
     
     /// Saves a changed goal and appends its history record in one save.
     ///
-    /// An unchanged value and unit produce no writes. Existing history is preserved. If saving fails, both the settings update and
-    /// new history record are rolled back.
+    /// An unchanged numeric value and goal unit return without saving pending edits or adding history.
+    /// For a changed goal, pending edits are saved before mutating settings and inserting history.
+    /// Failure of that preliminary save propagates without rollback here. Failure of the goal save
+    /// rolls back the settings update and new history record, preserving earlier committed edits.
     ///
     /// - Parameters:
-    ///   - goal:The final goal commit.
-    ///   - source: How the goal was established
-    ///   - settings: The settings reord already managed by the supplied context.
+    ///   - goal: The final goal to commit; comparison uses its numeric value and unit, not converted volume.
+    ///   - source: How the goal was established.
+    ///   - settings: The settings record already managed by the supplied context.
     ///   - context: The context used to save both records.
     ///   - date: The timestamp for this committed goal change.
-    ///  - Returns: True if the goal changed and was saved' false if it was unchanged.
-    ///  - Throws: A persistence error is saving fails.
+    /// - Returns: True if the goal changed and was saved; false if it was unchanged.
+    /// - Throws: A persistence error from saving pending edits or committing the goal and history.
     static func saveGoal(
         _ goal: HydrationGoal,
         source: HydrationGoalSource,
@@ -119,8 +123,10 @@ enum AppSettingsPersistence {
     
     /// Saves a changed display unit without modifying the goal or its history.
     ///
-    /// Unchanged units produce no writes. Pending edits are saved first so this operation's
-    /// rollback cannot discard them. A failed unit save restores its previous value and timestamp.
+    /// An unchanged unit returns without saving pending edits or invoking the callback.
+    /// For a changed unit, pending edits are saved before mutation; failure of that preliminary
+    /// save propagates without rollback here. Callback or unit-save failures roll back the context,
+    /// restoring the previous unit and timestamp while preserving earlier committed edits.
     ///
     /// - Parameters:
     ///   - unit: The selected display unit.

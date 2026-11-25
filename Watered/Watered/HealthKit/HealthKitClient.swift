@@ -1,6 +1,6 @@
 import Foundation
 
-/// The reviewed write scope. App opt-in is a separate, persisted lifecycle decision (#109).
+/// The reviewed write scope. App opt-in is a separate, persisted lifecycle decision.
 nonisolated enum HealthWriteType: String, Codable, CaseIterable, Hashable, Sendable {
     // Persisted identity components; preserve these values when renaming Swift cases.
     case water = "water"
@@ -19,10 +19,18 @@ nonisolated enum HealthAuthorizationError: Error, Equatable {
     case unavailable, restricted, requestFailed, requestInProgress
 }
 
+/// Exposes per-type write permission independently of the app's persisted export preference.
 @MainActor
 protocol HealthKitClient: AnyObject {
+    /// Returns the current write-permission state without prompting or changing app opt-in.
+    /// An authorized result does not establish export eligibility or successful sample delivery.
     func authorization(for type: HealthWriteType) -> HealthWriteAuthorization
+    /// Requests permission to write water, caffeine and alcoholic-beverage quantities, with no read access.
     /// Call only in response to an explicit permission action, never launch, save or retry.
+    /// Successful completion does not imply any grant; callers must refresh each type with
+    /// `authorization(for:)`. This request does not change the persisted app opt-in preference.
+    /// - Throws: A `HealthAuthorizationError` for an unavailable or restricted service,
+    ///   a failed request or an overlapping request; denial is represented by per-type status.
     func requestWriteAuthorization() async throws
 }
 

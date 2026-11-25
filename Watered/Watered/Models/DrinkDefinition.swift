@@ -9,13 +9,13 @@ import Foundation
 
 /// A drink available through the catalogue.
 ///
-/// This describes a drink type, its optional serving defualt and hydration rule.
+/// This describes a drink type, its optional serving default and hydration rule.
 nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     
     /// The stable identifier, independent of the display name.
     let id: String
     
-    /// The dirnk name displayed during selection.
+    /// The drink name displayed during selection.
     let name: String
     
     /// The identifier of the category containing this drink.
@@ -28,7 +28,7 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     
     /// Whether the drink has been withdrawn from new selection.
     ///
-    /// Retirement mus tnot remove previously logged entries.
+    /// Retirement must not remove previously logged entries.
     let isRetired: Bool
     
     /// The suggested serving volume in millilitres, when one is defined.
@@ -71,8 +71,8 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
     ///   - defaultVolume: The suggested serving volume if known (in milliliters).
     ///   - hydrationContributionRule: The contribution rule, defaulting to unknown.
     ///   - caffeineOptions: Available preparations, defaulting to regular with an unknown rule.
-    ///   - defaultCaffeineVariant: The initial preparration, defaulting to regular.
-    ///   - shotConfiguration: Available shot counts and their defualt, if applicable.
+    ///   - defaultCaffeineVariant: The initial preparation, defaulting to regular.
+    ///   - shotConfiguration: Available shot counts and their default, if applicable.
     init(
         id: String,
         name: String,
@@ -137,7 +137,11 @@ nonisolated struct DrinkDefinition: Codable, Equatable, Identifiable {
                       requiresWaterContent: (decoder.userInfo[.catalogueSchemaVersion] as? Int ?? 0) >= 5)
     }
 
-    /// Schema 3 requires both content objects. Legacy catalogue decoding never touches saved entries.
+    /// Decodes definition structure; catalogue validation owns cross-field consistency.
+    /// Schema 3 onward requires explicit caffeine/alcohol objects; schema 5 onward also
+    /// requires water content. Older definitions without water retain unknown content.
+    /// The caller supplies those schema requirements. Presence of either caffeine/alcohol
+    /// object also selects strict modern decoding; legacy decoding never touches saved entries.
     init(from decoder: any Decoder, requiresContent: Bool, requiresWaterContent: Bool = false) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         if requiresWaterContent || container.contains(.waterContent) {

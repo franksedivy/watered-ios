@@ -1,8 +1,14 @@
 # HealthKit export lifecycle
 
-Status: approved policy and technical handoff, 22 November 2026. Runtime implementation remains pending.
+Status: approved policy and technical handoff, 22 November 2026. Runtime implementation was pending at that checkpoint; #109/#110 subsequently implemented durable export and cleanup, with Profile controls in #111.
 Owner: [#96](https://github.com/franksedivy/watered-ios/issues/96), parent [#106](https://github.com/franksedivy/watered-ios/issues/106).
 Mapping: [decision 001](001-healthkit-export-mapping.md).
+
+Current implementation note, 25 November 2026: this record preserves the approved
+policy and original handoff. See [Architecture](../ARCHITECTURE.md) for the runtime
+owners and [Testing](../TESTING.md) for evidence and limitations. Implemented policy
+and closed implementation tickets do not establish final release readiness; #113
+owns that reconciliation and #172 owns the standards/contracts audit.
 
 ## User contract
 

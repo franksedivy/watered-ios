@@ -5,6 +5,8 @@ import Testing
 
 @MainActor
 struct WaterContentTests {
+    // GIVEN the complete bundled catalogue and its default and non-alcoholic preparations,
+    // THEN all 60 definitions have known water content and each exercised preparation resolves a water amount.
     @Test func bundleHasReviewedWaterForEveryDrinkAndPreparation() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
@@ -20,6 +22,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN Broth and Miso amounts expressed in each unit,
+    // THEN their distinct water fractions and 95% goal credit survive snapshot persistence independently.
     @Test(arguments: LiquidUnit.allCases)
     func otherWaterIsSavedSeparatelyFromGoalCredit(unit: LiquidUnit) throws {
         let resolver = try DrinkCatalogueSnapshotResolver(catalogue: DrinkCatalogueLoader().load())
@@ -35,6 +39,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN reviewed Water definitions and older snapshots missing water amounts,
+    // THEN new logs and repeats capture approved fractions while saved unknowns remain unchanged.
     @Test(arguments: LiquidUnit.allCases)
     func reviewedWaterValuesAreCapturedWithoutChangingOldUnknowns(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -60,6 +66,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN every Coffee variant and supported shot count at a fixed volume,
+    // THEN water uses the drink's fixed fraction while shot-based caffeine follows the selected preparation.
     @Test(arguments: LiquidUnit.allCases)
     func coffeeWaterIsFixedAcrossVariantsAndEverySupportedShotCount(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -86,6 +94,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN each Tea caffeine variant at the same physical volume,
+    // THEN the fixed water fraction is independent of caffeine and the resulting snapshot survives persistence.
     @Test(arguments: LiquidUnit.allCases)
     func teaWaterIsFixedAcrossEverySupportedCaffeineVariant(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -110,6 +120,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN reviewed Juice definitions in each unit,
+    // THEN water amounts persist independently of goal credit, including Aloe's different water and hydration fractions.
     @Test(arguments: LiquidUnit.allCases)
     func juiceWaterIsCapturedSeparatelyFromGoalCredit(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -132,6 +144,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN Soft Drinks and their supported caffeine variants in each unit,
+    // THEN fixed water amounts, separate goal credit and variant-specific caffeine survive persistence.
     @Test(arguments: LiquidUnit.allCases)
     func softDrinkWaterIsFixedAcrossCaffeineVariantsAndSavedSeparately(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -156,6 +170,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN Wellness drinks in each unit, including Kombucha with unknown alcohol,
+    // THEN reviewed water amounts persist independently of hydration, caffeine and alcohol uncertainty.
     @Test(arguments: LiquidUnit.allCases)
     func wellnessWaterIsSavedIndependentlyOfCaffeineAndUnknownAlcohol(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -179,6 +195,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN Sports and Energy drinks expressed as prepared beverage volumes in each unit,
+    // THEN water uses the reviewed fractions while independent hydration and caffeine estimates survive persistence.
     @Test(arguments: LiquidUnit.allCases)
     func sportsWaterUsesPreparedVolumeAndIsSavedSeparately(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -201,6 +219,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN Milk and Alternatives in each unit, including cocoa drinks,
+    // THEN water persists separately from cocoa caffeine and differing hydration-goal estimates.
     @Test(arguments: LiquidUnit.allCases)
     func milkWaterIsSavedSeparatelyFromGoalCreditAndCocoaCaffeine(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -228,6 +248,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN all supported alcohol strengths, non-alcoholic choices and an older saved water estimate,
+    // THEN water follows reviewed tables, ABV uncertainty stays intact and only repeats capture current estimates.
     @Test(arguments: LiquidUnit.allCases)
     func alcoholWaterFollowsEveryStrengthAndPreservesSavedFacts(unit: LiquidUnit) throws {
         let catalogue = try DrinkCatalogueLoader().load()
@@ -274,6 +296,8 @@ struct WaterContentTests {
         #expect(record.drinkEntry()?.catalogueSnapshot.waterAmount == 1)
     }
 
+    // GIVEN water tables mismatched with alcohol choices, schema or requested strength,
+    // THEN catalogue validation or calculation rejects the incompatible configuration.
     @Test func alcoholWaterRejectsIncompleteOrIncompatibleTables() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let encoded = try JSONEncoder().encode(catalogue)
@@ -304,6 +328,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN malformed water fractions, alcohol tables or unsupported content fields,
+    // THEN decoding rejects the content instead of silently supplying an estimate.
     @Test(arguments: [#"{"kind":"alcoholOptions","options":[]}"#,
         #"{"kind":"alcoholOptions","options":[{"abv":0.05,"fraction":1.1}]}"#,
         #"{"kind":"alcoholOptions","options":[{"abv":0.05,"fraction":0.93},{"abv":0.05,"fraction":0.92}]}"#,
@@ -317,6 +343,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN missing water content loaded through current and legacy schema paths,
+    // THEN schema 5 rejects omission while legacy schema 4 preserves it as unknown.
     @Test func schemaFiveRequiresExplicitContentAndLegacyMissingStaysUnknown() throws {
         let original = catalogue(.fraction(0.9))
         var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(original)) as? [String: Any])
@@ -339,6 +367,8 @@ struct WaterContentTests {
         #expect(try JSONDecoder().decode(DrinkCatalogue.self, from: JSONEncoder().encode(original)) == original)
     }
 
+    // GIVEN known water fractions and unknown content in each volume unit,
+    // THEN water retains conversion precision independently of goal credit and distinguishes zero from unknown.
     @Test(arguments: LiquidUnit.allCases)
     func capturesWaterIndependentlyAtFullVolumePrecision(unit: LiquidUnit) throws {
         let amount = DrinkAmount(value: 8, unit: unit)
@@ -353,6 +383,8 @@ struct WaterContentTests {
         #expect(try DrinkEstimateCalculator.waterAmount(for: amount, content: .unknown) == nil)
     }
 
+    // GIVEN out-of-range or non-finite water fractions constructed in memory,
+    // THEN both catalogue validation and water calculation reject them.
     @Test(arguments: [-0.1, 1.1, Double.nan, Double.infinity])
     func invalidFractionsAreRejectedInMemory(value: Double) {
         #expect(throws: DrinkCatalogue.ValidationError.self) { try catalogue(.fraction(value)).validate() }
@@ -361,6 +393,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN nonpositive or non-finite consumed amounts with known or unknown water content,
+    // THEN calculation rejects the amount before resolving any water estimate.
     @Test(arguments: [0.0, -1, Double.nan, Double.infinity])
     func invalidAmountsNeverResolveEvenUnknownWater(value: Double) {
         for content in [WaterContent.unknown, .fraction(0.9)] {
@@ -370,6 +404,8 @@ struct WaterContentTests {
         }
     }
 
+    // GIVEN unknown, zero and positive water snapshots saved to disk before a rule change,
+    // THEN reopening preserves them and repeating uses the new fraction without rewriting the old entry.
     @Test func diskReopenPreservesWaterAndRepeatsCaptureNewRules() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -397,6 +433,8 @@ struct WaterContentTests {
         #expect(try read(at: url).first { $0.id == old.id }?.catalogueSnapshot.waterAmount == 297)
     }
 
+    // GIVEN an older row missing water and subsequent invalid or zero stored water values,
+    // THEN missing stays unknown, invalid values prevent restoration and zero preserves unrelated negative goal credit.
     @Test func oldRowsStayUnknownAndInvalidSavedWaterIsRejected() throws {
         let snapshot = DrinkCatalogueSnapshot(drinkID: "retired", drinkName: "Old drink",
             caffeineVariant: .regular, shotCount: nil, hydrationContribution: -20, caffeineAmount: nil,

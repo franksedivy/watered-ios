@@ -33,7 +33,11 @@ including cross-file duplicate IDs. Missing, malformed or invalid required files
 fail the load rather than exposing a partial catalogue. Unlisted files are ignored.
 
 The current seed contains 60 drinks across ten categories, including Broth and Miso soup under Other.
-The remaining catalogue population, estimates and metadata review stay in #101.
+The catalogue population and reviewed estimates were delivered through #101/#102.
+The dated batches below preserve the decisions and verification boundaries at each
+checkpoint; references to work remaining then are historical, not current ticket status.
+Current implementation is mapped in [Architecture](ARCHITECTURE.md); final release
+documentation and publication reconciliation remain #113.
 
 ## Caffeine and alcohol structure (schema 3, extended by schema 4 below, #102)
 
