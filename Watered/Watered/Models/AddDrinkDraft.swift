@@ -19,10 +19,18 @@ nonisolated struct AddDrinkDraft {
     /// Nil selects the configured default, or no shots when they do not apply.
     var shotCount: Int? = nil
 
+    /// Requests the definition's optional non-alcoholic preparation, not a known-zero ABV.
+    /// Resolution requires support for that preparation and a nil `alcoholABV`.
     var isNonAlcoholic: Bool = false
+
+    /// Selected exact ABV as a fraction (0.05 means 5%), for configurable alcoholic preparations.
+    /// Nil uses their current configured default. Non-alcoholic preparations and definitions
+    /// without alcohol choices require nil; resolution determines the captured facts.
     var alcoholABV: Double? = nil
 
     /// Resolves current catalogue rules and creates a new entry with captured facts.
+    /// Non-alcoholic choices capture the configured upper bound with unknown exact ABV;
+    /// unsupported or contradictory alcohol selections fail resolution rather than being coerced.
     ///
     /// - Parameters:
     ///   - resolver: The validated catalogue used for this submission.

@@ -30,15 +30,25 @@ nonisolated struct DrinkCatalogueSnapshotResolver {
         self.catalogue = catalogue
     }
     
-    /// Resolves an active drink using the selected preparation and shot count.
+    /// Resolves an active drink using its caffeine, shot and alcohol preparation choices.
+    ///
+    /// Configurable alcoholic preparations capture the selected or default exact ABV.
+    /// A supported non-alcoholic preparation uses its own hydration rule and captures only
+    /// its maximum ABV, leaving exact ABV unknown rather than assuming zero. Definitions
+    /// without alcohol choices accept no overrides; a fixed catalogue ABV is captured as authored.
     ///
     /// - Parameters:
     ///   - drinkID: The stable catalogue identifier.
     ///   - amount: The consumed liquid amount.
     ///   - caffeineVariant: The selected preparation, or nil to use the drink's default.
     ///   - shotCount: A supported count, or nil to use the configured default when applicable.
+    ///   - isNonAlcoholic: Requests a supported non-alcoholic preparation; requires nil `alcoholABV`.
+    ///   - alcoholABV: An exact supported ABV fraction, or nil for the configured alcoholic default.
+    ///     Must be nil for non-alcoholic preparations and definitions without alcohol choices.
     /// - Returns: Identity, preparation, estimates and versions captured together.
     /// - Throws: A resolution or calculation error when the drink cannot be logged.
+    ///   Unsupported alcohol choices, strengths or contradictory selections throw
+    ///   `ResolutionError.unavailableAlcoholPreparation` rather than falling back to another preparation.
     func resolve(
         drinkID: String,
         amount: DrinkAmount,
