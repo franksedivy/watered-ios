@@ -45,11 +45,19 @@ nonisolated struct RecentDrinkOption: Identifiable {
 
     /// Creates a shortcut from a supported preparation and the current drink definition.
     ///
+    /// Stores the supplied choices without validating their compatibility or resolving estimates.
+    /// The caller selects an available preparation; `drinkEntry(using:date:)` validates it again
+    /// against the catalogue used for the new submission.
+    ///
     /// - Parameters:
     ///   - definition: The active definition supplying the current display name.
     ///   - amount: The amount and unit to repeat.
     ///   - caffeineVariant: The previously selected, still-supported preparation.
     ///   - shotCount: The previously selected, still-supported shot count.
+    ///   - isNonAlcoholic: Requests the definition's supported non-alcoholic preparation.
+    ///   - alcoholABV: The exact ABV fraction for a configurable alcoholic preparation, or nil
+    ///     to use its default at resolution. Must be nil for non-alcoholic preparations and
+    ///     definitions without alcohol choices.
     init(
         definition: DrinkDefinition,
         amount: DrinkAmount,
@@ -90,6 +98,9 @@ nonisolated struct RecentDrinkOption: Identifiable {
     }
 
     /// Creates a new entry under current rules instead of copying historical estimates.
+    ///
+    /// Alcohol choices are revalidated; a non-alcoholic preparation captures the current
+    /// upper bound with unknown exact ABV. This does not modify the original logged entry.
     ///
     /// - Parameters:
     ///   - resolver: The catalogue resolver to use for the new submission.

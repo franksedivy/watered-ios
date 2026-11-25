@@ -44,6 +44,12 @@ final class WateredStore {
     /// Missing or retired drinks and unsupported preparations are excluded. Identity,
     /// amount, unit, caffeine variant, shot count, alcohol preparation and ABV distinguish shortcuts.
     ///
+    /// For configurable alcoholic preparations, a missing captured ABV uses the current default.
+    /// A missing preparation flag is treated as false. Non-alcoholic shortcuts require current
+    /// support and pass no exact ABV; definitions without alcohol choices also pass no ABV override.
+    /// These choices apply only to the shortcut, leaving historical snapshots unchanged.
+    /// Creating the repeated entry resolves and validates its facts under current catalogue rules.
+    ///
     /// - Parameter catalogue: The validated catalogue available for new submissions.
     /// - Returns: Distinct shortcuts that can be repeated using current rules.
     func recentDrinkOptions(in catalogue: DrinkCatalogue) -> [RecentDrinkOption] {
