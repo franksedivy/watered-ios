@@ -2,11 +2,14 @@
 The hydration tracker Apple forgot. Realistic drink textures and playful fluid dynamics make every pour feel alive, with a vision for hydration goals shaped around your climate, health, and training. Private by design. Delightful by nature.
 
 ## Current Status
-`0.4 Persistence & Analytics` is complete. Drink logging, Today summaries, recent-drink shortcuts, and drink deletion are implemented. SwiftData stores drinks, display units, the current hydration goal, and goal-change history locally. Analytics events are logged locally in Debug builds and discarded in Release builds.
 
-The current focus is `0.5 Drink Catalogue & HealthKit syncing`. The implementation contains 60 built-in drinks across ten categories, optional export-only HealthKit integration, and persistence operations separated from the app's navigation view. Snapshot-backed history retains its captured facts as the catalogue changes. See [Development Drink Data](Docs/Development-Drink-Data.md) for the older enum-only development-store boundary.
+The `0.5 Drink Catalogue & Apple Health` implementation is complete and under final release review. It includes 60 built-in drinks across ten categories, preparation choices, serving suggestions and optional one-way export of water, caffeine and alcohol estimates to Apple Health. Local logging works without Health permission.
 
-HealthKit export is implemented with independent app opt-in and per-type write permission, frozen quantities, retries and deletion cleanup. Reading/importing Health data and automatic historical export are excluded. Implementation does not establish 0.5 release approval: the standards audit and final release reconciliation remain in [#172](https://github.com/franksedivy/watered-ios/issues/172) and [#113](https://github.com/franksedivy/watered-ios/issues/113). Widgets, a Watch app, iCloud sync, and production analytics collection remain future work.
+SwiftData stores drink history, display units, the hydration goal and goal changes locally. Saved drinks retain their captured catalogue facts; repeating an available recent drink uses current rules. Health export uses independent per-type permission, frozen quantities, durable retries and scoped deletion cleanup. Existing history is not automatically exported. Debug analytics stay local; Release discards events.
+
+The standards audit is complete. The audited candidate passed 336 hosted unit tests; hosted UI is excluded, and final-candidate UI and Release/device verification remain unrecorded. Add Drink's larger-text clipping and remaining visual refinement are explicitly deferred. See the [draft release notes](Docs/releases/0.5-release-notes.md) and [release evidence](Docs/releases/0.5-evidence.md) for scope, accepted limitations and remaining release checks. No publication or release approval is implied.
+
+Health import, iCloud sync, remote catalogue delivery, widgets, a Watch app and production analytics collection remain outside this release. See [Development Drink Data](Docs/Development-Drink-Data.md) for the older enum-only development-store boundary; history is never automatically erased.
 
 ## Getting Started
 Requires Xcode 27 or later and an iOS 27 or later simulator or device.
@@ -47,24 +50,24 @@ Repository guidance:
 - [Releasing](Docs/RELEASING.md)
 - [Decision-record template](Docs/decisions/TEMPLATE.md) and [handoff template](Docs/handoffs/TEMPLATE.md)
 
-The wiki retains research, narrative and historical implementation context. Repository guidance is the current reference for principles, architecture and workflow; reconcile overlapping wiki pages as they are updated.
+The wiki explains how the app works, with a complete drink reference, calculations, research and decisions. Repository guidance owns implementation details, development workflow and recorded verification.
 
-- [Architecture Overview](https://github.com/franksedivy/watered/wiki/Architecture-Overview)
-- [Decision Log](https://github.com/franksedivy/watered/wiki/Decision-Log)
-- [Persistence](https://github.com/franksedivy/watered/wiki/Persistence)
-- [Drink Types & Contributions](https://github.com/franksedivy/watered/wiki/Drink-Types-And-Contributions)
-- [Hydration Model](https://github.com/franksedivy/watered/wiki/Hydration-Model)
-- [Research Notes](https://github.com/franksedivy/watered/wiki/Research-Notes)
-- [Testing Approach](https://github.com/franksedivy/watered/wiki/Testing-Approach)
+- [Architecture Overview](https://github.com/franksedivy/watered-ios/wiki/Architecture-Overview)
+- [Decision Log](https://github.com/franksedivy/watered-ios/wiki/Decision-Log)
+- [Persistence](https://github.com/franksedivy/watered-ios/wiki/Persistence)
+- [Drink Types & Contributions](https://github.com/franksedivy/watered-ios/wiki/Drink-Types-And-Contributions)
+- [Hydration Model](https://github.com/franksedivy/watered-ios/wiki/Hydration-Model)
+- [Research Notes](https://github.com/franksedivy/watered-ios/wiki/Research-Notes)
+- [Testing Approach](https://github.com/franksedivy/watered-ios/wiki/Testing-Approach)
 
-You can also read about the overall progress in my [Design Engineer's diary](https://github.com/franksedivy/watered/wiki/Design-Engineer's-Diary).
+You can also read about the overall progress in my [Design Engineer's diary](https://github.com/franksedivy/watered-ios/wiki/Design-Engineer's-Diary).
 
 ## Current Milestones & Releases
 - `0.1` [Core-model](https://github.com/franksedivy/watered/milestone/1), [Release notes](https://github.com/franksedivy/watered/releases/tag/0.1_Core-model)
 - `0.2` [Basic Today UI](https://github.com/franksedivy/watered/milestone/2), [Release notes](https://github.com/franksedivy/watered/releases/tag/0.2_Today-UI)
 - `0.3` [Add Drink Flow](https://github.com/franksedivy/watered/milestone/3), [Release notes](https://github.com/franksedivy/watered/releases/tag/0.3_Add-drink)
 - `0.4` [Persistence & Analytics](https://github.com/franksedivy/watered/milestone/4), [Release notes](https://github.com/franksedivy/watered-ios/releases/tag/0.4_Persistence-and-analytics)
-- `0.5` [Drink Catalogue & HealthKit syncing](https://github.com/franksedivy/watered/milestone/5)
+- `0.5` [Drink Catalogue & HealthKit syncing](https://github.com/franksedivy/watered-ios/milestone/5) — [draft release notes](Docs/releases/0.5-release-notes.md)
 - `0.6` [iOS Widget](https://github.com/franksedivy/watered/milestone/6)
 - `0.7` [Watch App](https://github.com/franksedivy/watered/milestone/7)
 - `0.8` [Polish And App Foundations](https://github.com/franksedivy/watered/milestone/8)
