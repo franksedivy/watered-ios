@@ -13,12 +13,18 @@ nonisolated struct AddDrinkPreparationPresentation {
         }
     }
 
+    struct AlcoholRows {
+        let configuration: AlcoholConfiguration
+
+        var isNonAlcoholicEnabled: Bool { configuration.nonAlcoholic != nil }
+    }
+
     let caffeineRow: CaffeineRow?
     let showsShots: Bool
     let shotConfiguration: ShotConfiguration?
-    let showsAlcohol: Bool
+    let alcoholRows: AlcoholRows?
 
-    var hasRows: Bool { caffeineRow != nil || showsShots || showsAlcohol }
+    var hasRows: Bool { caffeineRow != nil || showsShots || alcoholRows != nil }
 
     init(definition: DrinkDefinition) {
         let alternative = definition.caffeineOptions.first {
@@ -41,13 +47,14 @@ nonisolated struct AddDrinkPreparationPresentation {
         }
         shotConfiguration = definition.shotConfiguration
         showsShots = definition.categoryID == "coffee" || shotConfiguration != nil
-        showsAlcohol = definition.alcohol.configuration != nil
+        alcoholRows = definition.alcohol.configuration.map { AlcoholRows(configuration: $0) }
     }
 
     /// Fresh and restored forms reserve the same space for persistent category rows.
     static func sheetHeight(categoryID: String?, definition: DrinkDefinition?) -> CGFloat {
         guard let categoryID else { return 440 }
         switch categoryID {
+        case "alcohol": return 780
         case "coffee": return 720
         case "tea", "soft-drinks": return 660
         default:

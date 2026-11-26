@@ -24,7 +24,7 @@ icons are brown. Milk options, time editing and a liquid-filled wheel are deferr
 
 The clipped volume wheel stays below the independently scrolling cards and preparation.
 The sheet starts at 440 points. Shared preparation presentation reserves 720 points
-for Coffee and 660 for Tea and Soft Drinks, including drinks with unavailable options.
+for Coffee, 660 for Tea and Soft Drinks, and 780 for Alcohol, including drinks with unavailable options.
 Other categories retain 600 points without preparation or 720 with it. Manual
 full-height expansion remains available. Accessibility text sizes use full height;
 Reduce Motion suppresses the selection animation. Small screens may require scrolling.
@@ -36,6 +36,11 @@ only for Cola in the current catalogue. Disabled caffeine toggles remain off; th
 indicate unavailable alternatives, not the drink's actual caffeine content.
 Catalogue JSON still owns supported preparations and estimates. These placeholders
 do not change selected preparations, submission, or saved history.
+
+Alcohol retains a Non-alcoholic toggle for all eight drinks, disabled and off for
+Fortified wine, Spirits and Liqueur. Its taller sheet reserves room for the toggle,
+ABV slider and preset labels. Selecting a supported non-alcoholic alternative still
+replaces the ABV controls with the existing unknown-strength explanation.
 
 ## Unsaved session draft
 

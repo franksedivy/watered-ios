@@ -2,6 +2,21 @@ import Testing
 @testable import Watered
 
 struct AddDrinkPreparationPresentationTests {
+    // Alcohol always reserves the toggle and ABV controls, without inventing unsupported alternatives.
+    @Test func alcoholRowsFollowCatalogueAvailability() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+        let supported = ["beer", "cider", "wine", "cocktail", "sparkling-wine"]
+        for drink in catalogue.activeDrinks(inCategoryID: "alcohol") {
+            let presentation = AddDrinkPreparationPresentation(definition: drink)
+            let rows = try #require(presentation.alcoholRows)
+            #expect(rows.isNonAlcoholicEnabled == supported.contains(drink.id))
+            #expect(rows.configuration == drink.alcohol.configuration)
+            #expect(presentation.caffeineRow == nil)
+            #expect(!presentation.showsShots)
+            #expect(AddDrinkPreparationPresentation.sheetHeight(categoryID: "alcohol", definition: drink) == 780)
+        }
+    }
+
     // All drinks in these categories retain their row slots; only catalogue-supported options are editable.
     @Test func bundledCategoryRowsAndAvailability() throws {
         let catalogue = try DrinkCatalogueLoader().load()

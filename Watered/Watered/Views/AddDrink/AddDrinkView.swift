@@ -352,8 +352,8 @@ struct AddDrinkView: View {
             let presentation = AddDrinkPreparationPresentation(definition: definition)
             if presentation.hasRows {
                 VStack(spacing: 12) {
-                    if let configuration = definition.alcohol.configuration {
-                        alcoholPreparation(configuration)
+                    if let rows = presentation.alcoholRows {
+                        alcoholPreparation(rows)
                     }
                     if let row = presentation.caffeineRow {
                         Toggle(isOn: Binding(
@@ -429,10 +429,20 @@ struct AddDrinkView: View {
 
     /// Index-based stepping supports the distinct ABV presets without inventing intermediate strengths.
     @ViewBuilder
-    private func alcoholPreparation(_ configuration: AlcoholConfiguration) -> some View {
+    private func alcoholPreparation(_ rows: AddDrinkPreparationPresentation.AlcoholRows) -> some View {
+        let configuration = rows.configuration
+        Toggle("Non-alcoholic", isOn: Binding(
+            get: { rows.isNonAlcoholicEnabled && selectedNonAlcoholic },
+            set: { value in
+                guard rows.isNonAlcoholicEnabled else { return }
+                selectedNonAlcoholic = value
+            }
+        ))
+        .disabled(!rows.isNonAlcoholicEnabled)
+        .foregroundStyle(rows.isNonAlcoholicEnabled ? Color.primary : Color.secondary)
+        .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
+        .accessibilityHint(rows.isNonAlcoholicEnabled ? "" : "Not available for this drink.")
         if let preparation = configuration.nonAlcoholic {
-            Toggle("Non-alcoholic", isOn: $selectedNonAlcoholic)
-                .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
             if selectedNonAlcoholic {
                 Text("Up to \((preparation.maximumABV * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV · exact amount unknown")
                     .font(.footnote)
@@ -440,9 +450,7 @@ struct AddDrinkView: View {
             }
         }
         if !selectedNonAlcoholic {
-            if configuration.nonAlcoholic != nil {
-                Divider()
-            }
+            Divider()
             let steps = configuration.supportedABVs
             let value = selectedAlcoholABV ?? configuration.defaultABV
             let label = (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
@@ -528,7 +536,7 @@ struct AddDrinkView: View {
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(440), .height(600), .height(660), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(440), .height(600), .height(660), .height(720), .height(780), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

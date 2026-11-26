@@ -50,7 +50,9 @@ unit used by fresh/restored Add Drink forms and the recent menu. Settings `updat
 
 `ViewData/AddDrinkPreparationPresentation.swift` owns persistent preparation rows
 and their category sheet heights. Coffee retains caffeine and shots rows; Tea and
-Soft Drinks retain one caffeine row. Catalogue capabilities determine availability
+Soft Drinks retain one caffeine row. Alcohol retains its Non-alcoholic row and
+ABV controls, with the toggle disabled where the catalogue offers no alternative.
+Catalogue capabilities determine availability
 and the supported alternative. Disabled rows are presentation placeholders, not
 new preparations or changes to caffeine estimates. The view retains selection,
 draft and submission responsibilities.

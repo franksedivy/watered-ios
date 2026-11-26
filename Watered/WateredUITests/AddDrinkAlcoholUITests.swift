@@ -35,7 +35,9 @@ final class AddDrinkAlcoholUITests: XCTestCase {
             XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, volume)
             XCTAssertTrue(app.sliders["addDrinkABVSlider"].exists)
             let toggle = app.switches["addDrinkNonAlcoholicToggle"]
-            XCTAssertEqual(toggle.exists, supportsNonAlcoholic)
+            XCTAssertTrue(toggle.exists)
+            XCTAssertEqual(toggle.isEnabled, supportsNonAlcoholic)
+            XCTAssertEqual(toggle.value as? String, "0")
             XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
             if supportsNonAlcoholic {
                 XCTAssertEqual(toggle.value as? String, "0")
