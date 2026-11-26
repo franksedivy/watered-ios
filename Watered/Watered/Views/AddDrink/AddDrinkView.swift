@@ -151,7 +151,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
-        wateredLog("Add Drink category changed to \(category.id)")
+        wateredLog("Add Drink category changed")
     }
 
     /// Selects an active definition and starts from its supported preparation defaults.
@@ -171,7 +171,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
-        wateredLog("Add Drink selection changed to \(definition.id)")
+        wateredLog("Add Drink selection changed")
     }
 
     /// Resolves the selected drink once before handing the entry to the submission boundary.
@@ -193,10 +193,10 @@ struct AddDrinkView: View {
         do {
             let resolver = try DrinkCatalogueSnapshotResolver(catalogue: catalogue)
             let entry = try draft.drinkEntry(using: resolver)
-            wateredLog("Add Drink submitted \(entry.drinkID) at \(entry.amount.formatted)")
+            wateredLog("Add Drink submitted to save handler")
             onAddDrink(entry, .form)
         } catch {
-            wateredLog("Add Drink preparation failed: \(error.localizedDescription)")
+            wateredLog("Add Drink preparation failed")
             isShowingPreparationError = true
         }
     }
@@ -227,10 +227,7 @@ struct AddDrinkView: View {
             ))
             .accessibilityHint("Adjusts the amount for the drink being added.")
             .onChange(of: volumeSelection) { previousValue, newValue in
-                wateredLog(
-                    "Add Drink volume changed from \(previousValue) to \(newValue) "
-                    + "\(defaultUnit.rawValue)"
-                )
+                wateredLog("Add Drink volume changed")
             }
         }
         .padding(.horizontal, 20)
@@ -369,7 +366,7 @@ struct AddDrinkView: View {
                             let variant: CaffeineVariant = isEnabled ? alternative : .regular
                             guard variant != selectedCaffeineVariant else { return }
                             selectedCaffeineVariant = variant
-                            wateredLog("Add Drink caffeine preparation changed to \(variant.rawValue)")
+                            wateredLog("Add Drink caffeine preparation changed")
                         }
                     )) {
                         Label {
@@ -391,7 +388,7 @@ struct AddDrinkView: View {
                         set: { index in
                             let count = counts[index]
                             guard count != selectedShotCount else { return }
-                            wateredLog("Add Drink shots changed from \(selectedShotCount) to \(count)")
+                            wateredLog("Add Drink shot count changed")
                             selectedShotCount = count
                         }
                     ), in: 0...(counts.count - 1)) {
@@ -494,7 +491,7 @@ struct AddDrinkView: View {
                 Text("This selection could not be prepared. Choose a drink and try again.")
             }
             .onAppear {
-                wateredLog("Add Drink sheet appeared with unit \(defaultUnit.rawValue)")
+                wateredLog("Add Drink sheet appeared")
                 if retainedDraft != nil {
                     wateredLog("Add Drink restored unsaved session draft")
                 } else {
@@ -523,7 +520,7 @@ struct AddDrinkView: View {
         catalogue: catalogue,
         defaultUnit: .milliliters,
         recentDrinkOptions: WateredStore(entries: [entry]).recentDrinkOptions(in: catalogue),
-        onAddDrink: { entry, method in wateredLog("Preview submitted \(entry) via \(method)") }
+        onAddDrink: { entry, method in wateredLog("Preview drink submitted") }
     )
 }
 
@@ -532,7 +529,7 @@ struct AddDrinkView: View {
         catalogue: try! DrinkCatalogueLoader().load(),
         defaultUnit: .milliliters,
         recentDrinkOptions: [],
-        onAddDrink: { entry, method in wateredLog("Preview submitted \(entry) via \(method)") }
+        onAddDrink: { entry, method in wateredLog("Preview drink submitted") }
     )
 }
 #endif

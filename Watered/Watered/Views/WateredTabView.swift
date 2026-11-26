@@ -565,7 +565,7 @@ struct WateredTabView: View {
             let entry = try option.drinkEntry(using: resolver)
             addDrinkEntry(entry, method: .recent)
         } catch {
-            wateredLog("Recent drink preparation failed: \(error.localizedDescription)")
+            wateredLog("Recent drink preparation failed.")
             isShowingRecentDrinkError = true
         }
     }
