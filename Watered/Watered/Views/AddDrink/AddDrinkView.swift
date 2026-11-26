@@ -38,7 +38,7 @@ struct AddDrinkView: View {
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
     @State private var selectedDetent: PresentationDetent = .height(440)
-    @State private var preparationFeedback = (sequence: 0, effect: SensoryFeedback.selection)
+    @State private var drinkFeedback = (sequence: 0, effect: SensoryFeedback.selection)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -134,8 +134,9 @@ struct AddDrinkView: View {
         guard let defaultDrink = AddDrinkCategoryDefaults.drink(in: category.id, from: drinks) else {
             return
         }
+        let categoryChanged = selectedCategoryID != category.id
         withAnimation(selectionAnimation) {
-            if selectedCategoryID != category.id {
+            if categoryChanged {
                 selectedCategoryID = category.id
                 selectedDrinkID = defaultDrink.id
                 volumeSelection.applyServingDefault(defaultDrink.defaultVolume)
@@ -149,6 +150,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
+        if categoryChanged { playDrinkFeedback() }
         wateredLog("Add Drink category changed")
     }
 
@@ -158,6 +160,7 @@ struct AddDrinkView: View {
     ///
     /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
+        let drinkChanged = selectedDrinkID != definition.id
         withAnimation(selectionAnimation) {
             selectedDrinkID = definition.id
             volumeSelection.applyServingDefault(definition.defaultVolume)
@@ -169,6 +172,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
+        if drinkChanged { playDrinkFeedback() }
         wateredLog("Add Drink selection changed")
     }
 
@@ -364,7 +368,7 @@ struct AddDrinkView: View {
                                 let variant: CaffeineVariant = isEnabled ? row.alternative : .regular
                                 guard variant != selectedCaffeineVariant else { return }
                                 selectedCaffeineVariant = variant
-                                playPreparationFeedback()
+                                playDrinkFeedback()
                                 wateredLog("Add Drink caffeine preparation changed")
                             }
                         )) {
@@ -393,7 +397,7 @@ struct AddDrinkView: View {
                                 wateredLog("Add Drink shot count changed")
                                 selectedShotCount = count
                                 let progress = Double(index) / Double(max(counts.count - 1, 1))
-                                playPreparationFeedback(.impact(weight: .medium, intensity: 0.35 + 0.65 * progress))
+                                playDrinkFeedback(.impact(weight: .medium, intensity: 0.35 + 0.65 * progress))
                             }
                         ), in: 0...(counts.count - 1)) {
                             Label {
@@ -431,8 +435,8 @@ struct AddDrinkView: View {
     }
 
     /// Triggers feedback from control edits, including consecutive edits with the same effect.
-    private func playPreparationFeedback(_ effect: SensoryFeedback = .selection) {
-        preparationFeedback = (preparationFeedback.sequence + 1, effect)
+    private func playDrinkFeedback(_ effect: SensoryFeedback = .selection) {
+        drinkFeedback = (drinkFeedback.sequence + 1, effect)
     }
 
     /// Index-based stepping supports the distinct ABV presets without inventing intermediate strengths.
@@ -445,7 +449,7 @@ struct AddDrinkView: View {
             set: { value in
                 guard rows.isNonAlcoholicEnabled, value != selectedNonAlcoholic else { return }
                 selectedNonAlcoholic = value
-                playPreparationFeedback()
+                playDrinkFeedback()
             }
         )) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -471,7 +475,7 @@ struct AddDrinkView: View {
                     let value = configuration.supportedABVs[Int(index.rounded())]
                     guard value != (selectedAlcoholABV ?? configuration.defaultABV) else { return }
                     selectedAlcoholABV = value
-                    playPreparationFeedback()
+                    playDrinkFeedback()
                 }
             ), in: 0...Double(strength.values.count - 1), step: 1)
             .disabled(strength.isUpperBound)
@@ -551,8 +555,8 @@ struct AddDrinkView: View {
                 }
             }
         }
-        .sensoryFeedback(trigger: preparationFeedback.sequence) { _, _ in
-            preparationFeedback.effect
+        .sensoryFeedback(trigger: drinkFeedback.sequence) { _, _ in
+            drinkFeedback.effect
         }
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
