@@ -18,17 +18,14 @@ nonisolated struct AddDrinkPreparationPresentation {
 
         var isNonAlcoholicEnabled: Bool { configuration.nonAlcoholic != nil }
 
-        /// The disabled indicator marks the recipe's upper bound, never an exact non-alcoholic ABV.
+        /// Keeps the alcoholic scale and selection while presenting the non-alcoholic bound separately.
         func strength(isNonAlcoholic: Bool, selectedABV: Double?) -> AlcoholStrength {
-            if isNonAlcoholic, let preparation = configuration.nonAlcoholic {
-                return AlcoholStrength(
-                    values: [0, preparation.maximumABV], selectedIndex: 1, isUpperBound: true
-                )
-            }
             let values = configuration.supportedABVs
             let value = selectedABV ?? configuration.defaultABV
             return AlcoholStrength(
-                values: values, selectedIndex: values.firstIndex(of: value) ?? 0, isUpperBound: false
+                values: values,
+                selectedIndex: values.firstIndex(of: value) ?? 0,
+                maximumNonAlcoholicABV: isNonAlcoholic ? configuration.nonAlcoholic?.maximumABV : nil
             )
         }
     }
@@ -36,14 +33,20 @@ nonisolated struct AddDrinkPreparationPresentation {
     struct AlcoholStrength {
         let values: [Double]
         let selectedIndex: Int
-        let isUpperBound: Bool
+        let maximumNonAlcoholicABV: Double?
+
+        var isUpperBound: Bool { maximumNonAlcoholicABV != nil }
 
         var valueLabel: String { Self.label(values[selectedIndex]) }
-        var title: String {
-            isUpperBound ? "Up to \(valueLabel) ABV · exact amount unknown" : "Alcohol: \(valueLabel) ABV"
+        var title: String { "Alcohol: \(valueLabel) ABV" }
+        var nonAlcoholicNote: String? {
+            maximumNonAlcoholicABV.map { "Up to \(Self.label($0)) ABV" }
         }
         var accessibilityValue: String {
-            isUpperBound ? "Up to \(valueLabel) ABV; exact amount unknown" : valueLabel
+            if let maximumNonAlcoholicABV {
+                return "Up to \(Self.label(maximumNonAlcoholicABV)) ABV; exact amount unknown"
+            }
+            return valueLabel
         }
         static func label(_ value: Double) -> String {
             (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"

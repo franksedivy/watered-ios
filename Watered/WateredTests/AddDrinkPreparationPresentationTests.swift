@@ -3,8 +3,8 @@ import Testing
 @testable import Watered
 
 struct AddDrinkPreparationPresentationTests {
-    // Non-alcoholic display uses the catalogue bound while retaining the user's alcoholic preset.
-    @Test func nonAlcoholicSliderShowsBoundWithoutReplacingSelectedStrength() throws {
+    // Non-alcoholic display keeps the original presets and thumb position while showing the catalogue bound.
+    @Test func nonAlcoholicSliderKeepsOriginalScaleAndSelection() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         for drink in catalogue.activeDrinks(inCategoryID: "alcohol") {
             let rows = try #require(AddDrinkPreparationPresentation(definition: drink).alcoholRows)
@@ -13,10 +13,12 @@ struct AddDrinkPreparationPresentationTests {
             #expect(!alcoholic.isUpperBound)
             #expect(alcoholic.values[alcoholic.selectedIndex] == chosen)
             let alternative = rows.strength(isNonAlcoholic: true, selectedABV: chosen)
+            #expect(alternative.values == alcoholic.values)
+            #expect(alternative.selectedIndex == alcoholic.selectedIndex)
+            #expect(alternative.title == alcoholic.title)
             if let preparation = rows.configuration.nonAlcoholic {
                 #expect(alternative.isUpperBound)
-                #expect(alternative.values == [0, preparation.maximumABV])
-                #expect(alternative.selectedIndex == 1)
+                #expect(alternative.maximumNonAlcoholicABV == preparation.maximumABV)
                 #expect(alternative.accessibilityValue.contains("exact amount unknown"))
             } else {
                 #expect(!alternative.isUpperBound)

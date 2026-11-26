@@ -430,19 +430,28 @@ struct AddDrinkView: View {
     @ViewBuilder
     private func alcoholPreparation(_ rows: AddDrinkPreparationPresentation.AlcoholRows) -> some View {
         let configuration = rows.configuration
-        Toggle("Non-alcoholic", isOn: Binding(
+        let strength = rows.strength(isNonAlcoholic: selectedNonAlcoholic, selectedABV: selectedAlcoholABV)
+        Toggle(isOn: Binding(
             get: { rows.isNonAlcoholicEnabled && selectedNonAlcoholic },
             set: { value in
                 guard rows.isNonAlcoholicEnabled else { return }
                 selectedNonAlcoholic = value
             }
-        ))
+        )) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Non-alcoholic")
+                if let note = strength.nonAlcoholicNote {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
         .disabled(!rows.isNonAlcoholicEnabled)
         .foregroundStyle(rows.isNonAlcoholicEnabled ? Color.primary : Color.secondary)
         .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
         .accessibilityHint(rows.isNonAlcoholicEnabled ? "" : "Not available for this drink.")
         Divider()
-        let strength = rows.strength(isNonAlcoholic: selectedNonAlcoholic, selectedABV: selectedAlcoholABV)
         VStack(alignment: .leading, spacing: 8) {
             Text(strength.title)
             Slider(value: Binding(

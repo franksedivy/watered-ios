@@ -40,10 +40,9 @@ do not change selected preparations, submission, or saved history.
 Alcohol retains a Non-alcoholic toggle for all eight drinks, disabled and off for
 Fortified wine, Spirits and Liqueur. Its taller sheet reserves room for the toggle,
 ABV slider and preset labels. Selecting a supported non-alcoholic alternative keeps
-the slider visible but disabled, showing a zero-to-maximum scale with the indicator
-at the catalogue's upper bound (currently 0.5%). The heading explicitly says
-“Up to” and “exact amount unknown”; this is not a measured or saved exact ABV.
-Switching back restores the previously selected alcoholic strength.
+the slider visible but disabled, with the same heading, presets and thumb position.
+A small note beside the toggle shows the catalogue's upper bound (currently
+“Up to 0.5% ABV”). Switching back re-enables the previously selected strength.
 
 ## Unsaved session draft
 
