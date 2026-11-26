@@ -36,7 +36,7 @@ struct WateredTabView: View {
     
     /// Receives product events from the app's top-level action handlers.
     ///
-    /// The app supplies the implementation. Child views remain independent of analytics clients and provider SDKs
+    /// The app supplies the implementation, also forwarded through Profile for Health sync actions.
     private let analytics: any AnalyticsClient
 
     /// The loaded catalogue or a recoverable Add Drink availability failure.
