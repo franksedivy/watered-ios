@@ -456,12 +456,17 @@ struct AddDrinkView: View {
             .accessibilityLabel(strength.isUpperBound ? "Maximum alcohol strength" : "Alcohol strength")
             .accessibilityValue(strength.accessibilityValue)
             .accessibilityIdentifier("addDrinkABVSlider")
-            HStack {
-                ForEach(strength.values.indices, id: \.self) { index in
-                    Text(AddDrinkPreparationPresentation.AlcoholStrength.label(strength.values[index]))
-                        .font(.caption2)
-                    if index != strength.values.indices.last { Spacer(minLength: 0) }
+            ZStack {
+                HStack {
+                    ForEach(strength.values.indices, id: \.self) { index in
+                        Text(AddDrinkPreparationPresentation.AlcoholStrength.label(strength.values[index]))
+                            .font(.caption2)
+                        if index != strength.values.indices.last { Spacer(minLength: 0) }
+                    }
                 }
+                // Crossfade the whole scale so labels from different presets don't slide into place.
+                .id(strength.values)
+                .transition(.opacity)
             }
             .accessibilityHidden(true)
         }
