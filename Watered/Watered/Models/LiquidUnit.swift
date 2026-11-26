@@ -7,32 +7,19 @@
 
 import Foundation
 
-// The volume units Watered understands when logging a drink.
+/// Supported logging and display units, with separate durable storage identifiers.
 nonisolated enum LiquidUnit: String, CaseIterable, Identifiable {
     case milliliters = "ml"
     case usFluidOunces = "US fl oz"
     case imperialFluidOunces = "imp fl oz"
 
-    // Purpose:
-    // Gives each LiquidUnit a stable identity for a SwiftUI collections and pickers.
-    //
-    // Returns:
-    // The unit itself, which is unique for every LiquidUnit case.
-    //
-    // UI role:
-    // Lets ProfileView render all supported display units in a Picker without
-    // inventing separate IDs or labels.
+    /// Uses the unit itself as its stable identity in collections and pickers.
     var id: LiquidUnit {
         return self
     }
 
     // MARK: - Persistence
-    //
-    // Purpose:
-    // Provides a stable value for persistence.
-    //
-    // Notes:
-    // This avoids storing display labels such as "ml" as the app's durable data.
+    /// The durable storage identifier, independent of the display label.
     var persistenceIdentifier: String {
         switch self {
         case .milliliters:          return "milliliters"
@@ -41,8 +28,7 @@ nonisolated enum LiquidUnit: String, CaseIterable, Identifiable {
         }
     }
 
-    // Purpose:
-    // Recreates a liquid unit from a stored persistence value.
+    /// Restores a unit from its durable identifier; unrecognised identifiers return nil.
     init?(persistenceIdentifier: String) {
         switch persistenceIdentifier {
         case "milliliters":          self = .milliliters
@@ -52,7 +38,7 @@ nonisolated enum LiquidUnit: String, CaseIterable, Identifiable {
         }
     }
 
-    // The matching Foundation unit, used for system-backed conversions.
+    /// The Foundation unit used for conversions without changing the recorded amount.
     var foundationUnit: UnitVolume {
         switch self {
         case .milliliters:

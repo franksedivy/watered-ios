@@ -8,31 +8,13 @@
 import SwiftUI
 
 // MARK: - Profile Toolbar View
-//
-// Purpose:
-// Defines the persistent profile toolbar control.
-//
-// Input:
-// Accepts an onOpenProfile closure from the screen that attaches the toolbar.
-//
-// Returns:
-// Toolbar content containing the FS profile button.
-//
-// UI role:
-// Keep the profile entry point reusable across top-level screens such as Today
-// and Learn. The toolbar owns only the visual control' the parent decides what
-// happens when it is tapped.
-//
+/// Provides the shared Profile toolbar button; the parent owns sheet presentation.
 struct ProfileToolbar: ToolbarContent {
     // MARK: - Actions
-    //
-    // Purpose: Stores the action that opens the temporary profile sheet.
-    //
-    // Input:
-    // Supplied by the screen or container that owns the profile sheet state.
+    /// Delegates opening Profile to the presenting screen.
     private let onOpenProfile: () -> Void
     
-    // MARK: - Initisalisation
+    // MARK: - Initialisation
     
     init(onOpenProfile: @escaping () -> Void) {
         self.onOpenProfile = onOpenProfile

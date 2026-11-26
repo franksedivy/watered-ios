@@ -110,14 +110,11 @@ final class WateredStore {
         return options
     }
 
-    /// Adds an entry after persistence succeeds and logs the accepted drink.
+    /// Adds an entry after persistence succeeds and logs the action without drink details.
     ///
     /// - Parameter entry: The successfully saved submission.
     func addDrinkEntry(_ entry: DrinkEntry) {
         entries.append(entry)
-        wateredLog(
-            "Drink entry accepted by WateredStore: \(entry.displayName) \(entry.amount.formatted); "
-            + "drink count is \(entries.count)"
-        )
+        wateredLog("Drink entry accepted by WateredStore")
     }
 }

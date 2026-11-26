@@ -9,75 +9,31 @@ import SwiftUI
 
 
 struct TodayView: View {
-    // MARK: - Temporary State
+    // MARK: - Inputs
     
-    // Purpose:
-    // Stores the drink entries that Today should display.
-    //
-    // Input:
-    // Supplied by WateredTabView, which currently owns the temporary 0.2 demo state.
-    //
-    // UI role:
-    // Makes TodayView a read-only summary screen. It displays the current entries,
-    // but it no longer owns or changes them.
+    /// The entries for the active day, supplied by the app shell; this view does not mutate history.
     let entries: [DrinkEntry]
     
-    // Purpose:
-    // Stores the liquid unit Today should use when displaying volume values.
-    //
-    // Input:
-    // Supplied by WaterdTabView, which owns the temporary app-level display unit.
-    //
-    // UI role:
-    // Lets Today display the same hydration model in different supported units
-    // without owning the setting itself.
+    /// The applied display unit, used only to format volume values.
     let displayUnit: LiquidUnit
     
-    // Purpose: Stores the action that opens the persistent profile sheet.
-    // Input: Supplied by WateredTabView, which owns the profile sheet state.
-    //
-    // UI role:
-    // Lets TodayView show the stared profile toolbar without owning profile
-    // presentation itself.
+    /// Delegates Profile presentation to the app shell.
     let onOpenProfile: () -> Void
     
-    // MARK: - Temporary Configuration
+    // MARK: - Configuration
     
-    // Purpose: Stores the daily hydration goal used by Today.
-    //
-    // Input:
-    // Supplied by WateredTabView from app settings.
-    //
-    // UI role:
-    // Drives Today's progress, remaining hydration, and goal-reached state.
+    /// The applied goal used by the tracker to derive progress and remaining hydration.
     let dailyGoal: HydrationGoal
     private let volumeFormatter = VolumeFormatter()
     private let progressFormatter = ProgressFormatter()
     
     // MARK: - Appearance
-    //
-    // Purpose:
-    // Stores parent-level styling values for the Today screen
-    //
-    // UI role/:
-    // TodayView applies these values, but TodayAppearance owns the actual visual
-    // constants such as background gradients, screen padding and shared control tint.
+    /// Today-specific styling, owned separately from screen composition.
     private let appearance = TodayAppearance()
     
     // MARK: - Calculated Display Data
 
-    // Purpose:
-    // Builds the hydration tracker for the current temporary Today entries.
-    //
-    // Input:
-    // Uses entries from the view's temporary screen state and daily goal.
-    //
-    // Returns:
-    // A HydrationTracker containing the current entries and goal.
-    //
-    // UI role:
-    // The view does not calculate hydration totals directly. It asks the tracker to
-    // produce the model state that will later be converted into display-ready text.
+    /// Delegates hydration calculations for the supplied entries and goal to the model.
     private var tracker: HydrationTracker {
         HydrationTracker(
             entries: entries,
@@ -85,19 +41,7 @@ struct TodayView: View {
         )
     }
     
-    // Purpose: Converts the current tracker snapshot into display-ready values.
-    //
-    // Input:
-    // Uses the tracker snapshot, volume formatter, progress formatter and selected
-    // display unit.
-    //
-    // Returns:
-    // HydrationSummaryViewData containing text and progress values the SwiftUI view
-    // can render directly.
-    //
-    // UI role:
-    // Keeps formatting out of the visible SwiftUI sections so the screen can display
-    // simple values rather than building labels and percentages inline.
+    /// Formats the tracker snapshot for display using the applied unit.
     private var summary: HydrationSummaryViewData {
         return HydrationSummaryViewData(
             snapshot: tracker.snapshot,
@@ -113,13 +57,8 @@ struct TodayView: View {
         appearance.backgroundGradient(for: todayScreenMode)
     }
     
-    // Purpose: Decides which Today screen mode should be displayed.
-    // Input: Uses the temporary entries count and the calculated hydration progress.
-    // Returns: A TodayScreenMode value.
-    //
-    // UI role:
-    // Keeps state selection in one place so the body can render from a clear mode
-    // rather than scattering if statements through the layout.
+    /// Selects empty state first, then goal reached, then first drink or in progress.
+    /// Unknown progress cannot select the goal-reached state.
     private var todayScreenMode: TodayScreenMode {
         if entries.isEmpty {
             return .empty
@@ -140,11 +79,7 @@ struct TodayView: View {
     
     // MARK: - Body
     
-    // Purpose: Defines the high-level shell for the Today screen.
-    //
-    // UI role:
-    // Keeps the page structure in one place: scrollable content at the top and the
-    // temporary control pinned to the bottom safe area.
+    /// Composes scrollable Today content and the shared Profile toolbar.
     var body: some View {
         NavigationStack {
             ZStack {
@@ -173,13 +108,7 @@ struct TodayView: View {
     
     // MARK: - Screen Content
 
-    // Purpose: Selects the main content section for the current Today screen mode.
-    // Input: Uses todayScreenMode.
-    // Returns: The SwiftUI content for the selected mode.
-    //
-    // UI role:
-    // Keeps conditional screen routing out of body. Each mode can gradually get its
-    // own section without turning body into a chain of if statements.
+    /// Routes the selected mode to its presentation without changing entries.
     @ViewBuilder
     private var todayContentSection: some View {
         switch todayScreenMode {

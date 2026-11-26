@@ -117,15 +117,10 @@ final class WateredUITests: XCTestCase {
         XCTAssertTrue(addDrinkSubmitButton.waitForExistence(timeout: 2))
     }
     
+    // GIVEN an empty history, when the default Water serving is saved,
+    // THEN Today shows the exact 330 ml total.
     @MainActor
     func testAddingDrinkUpdatesTodayTotalAmount() throws {
-        // Purpose:
-        // Proves that adding a drink updates the Today summary.
-        //
-        // Behvaior:
-        // This test does not yet assert an exact amount.
-        // It only checks that the total amount text changes away from the empty
-        // starting value after a drink is added.
         let app = launchIsolatedApp()
         
         let addDrinkButton = app.buttons["addDrinkActionButton"]
@@ -181,14 +176,10 @@ final class WateredUITests: XCTestCase {
         )
     }
     
+    // GIVEN an empty history, when Water is added through the form three times,
+    // THEN the Today total remains visible after each submission.
     @MainActor
     func testAddingMultipleDrinksKeepsTodayUsable() throws {
-        // Purpose: Proves that repeated drink additions do not break the Today flow
-        //
-        // Behvaior:
-        // Each add goes through the same user path: open the sheet, tap the temporary
-        // add button, return to Today. The test does not care which random drinks are
-        // selected or waht exact totals are shown.
         let app = launchIsolatedApp()
         
         for addDrinkAttempt in 1...3 {
@@ -219,17 +210,19 @@ final class WateredUITests: XCTestCase {
         
         let addDrinkButton = app.buttons["addDrinkActionButton"]
         XCTAssertTrue(addDrinkButton.waitForExistence(timeout: 3))
+        addDrinkButton.press(forDuration: 1)
+        let emptyRecents = app.buttons["No recent drinks yet"]
+        XCTAssertTrue(emptyRecents.waitForExistence(timeout: 5))
+        XCTAssertFalse(emptyRecents.isEnabled)
+        XCTAssertFalse(app.buttons["330 ml of Still water"].exists)
+        // Dismiss the context menu without selecting an action.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue(emptyRecents.waitForNonExistence(timeout: 3))
         addDrinkButton.tap()
         selectWaterCategory(in: app)
         
         let submitButton = app.buttons["addDrinkSubmitButton"]
         XCTAssertTrue(submitButton.waitForExistence(timeout:3))
-        
-        let recentDrinksRow = app.scrollViews["addDrinkRecentsScrollView"]
-        XCTAssertFalse(
-            recentDrinksRow.exists,
-            "Recents should be hidden before any drinks are logged"
-        )
         
         // Create the history that the recent-drink shortcut will use.
         submitButton.tap()
@@ -419,8 +412,8 @@ final class WateredUITests: XCTestCase {
         )
     }
     
-    // Given two saved drinks, when the user confirms a history reset,
-    // then Profile closes, Stats is empty, and Add Drink has no recents.
+    // GIVEN two saved drinks with a shortcut in the long-press Recents menu,
+    // THEN confirming a history reset closes Profile, empties Stats and removes that shortcut.
     @MainActor
     func testDeletingAllDrinksClearsHistoryAndRecents() throws {
         
@@ -441,6 +434,14 @@ final class WateredUITests: XCTestCase {
         XCTAssertTrue(
             totalAmountText.wait(for: \.label, toEqual: "660 ml", timeout: 3)
         )
+
+        addDrinkButton.press(forDuration: 1)
+        let recent = app.buttons["330 ml of Still water"]
+        XCTAssertTrue(recent.waitForExistence(timeout: 5))
+        XCTAssertTrue(recent.isEnabled)
+        // Establish a populated menu, then dismiss without adding another drink.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue(recent.waitForNonExistence(timeout: 3))
 
         let profileButton = app.buttons["profileButton"]
         XCTAssertTrue(profileButton.waitForExistence(timeout: 3))
@@ -468,9 +469,12 @@ final class WateredUITests: XCTestCase {
         )
 
         app.tabBars.buttons["Today"].tap()
-        addDrinkButton.tap()
-        XCTAssertTrue(submitButton.waitForExistence(timeout: 3))
-        XCTAssertFalse(app.scrollViews["addDrinkRecentsScrollView"].exists)
+        XCTAssertTrue(addDrinkButton.wait(for: \.isHittable, toEqual: true, timeout: 3))
+        addDrinkButton.press(forDuration: 1)
+        let emptyRecents = app.buttons["No recent drinks yet"]
+        XCTAssertTrue(emptyRecents.waitForExistence(timeout: 5))
+        XCTAssertFalse(emptyRecents.isEnabled)
+        XCTAssertFalse(recent.exists, "Reset must remove the previously available shortcut.")
     }
     
     // Given a saved drink and customised profile settings, when history is

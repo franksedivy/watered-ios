@@ -7,45 +7,24 @@
 
 import Foundation
 
-// Centralises the volume unit Watered uses for internal model calculations.
+/// Centralises base-unit conversion for model arithmetic, independent of display formatting.
 nonisolated enum VolumeCalculation {
     
     // MARK: - Base Unit
     
-    // Purpose:
-    // Defines the single unit used when the model needs to compare, add, or
-    // subtract volume measurements.
-    //
-    // Notes:
-    // This is not the user's display unit. Display formatting is handled by
-    // VolumeFormatter and LiquidUnit.
+    /// The common unit for model arithmetic, independent of the user’s display unit.
     nonisolated static let baseUnit: UnitVolume = .milliliters
     
     // MARK: - Conversion
     
-    // Purpose:
-    // Converts any volume measurement into the model's base calculation value.
-    //
-    // Input:
-    // Uses a Measurement<UnitVolume> in any supported Foundation volume unit.
-    //
-    // Returns:
-    // A Double representing the measurement value in the base calculation unit.
+    /// Converts a volume to its value in the model’s base unit without rounding.
     nonisolated static func baseValue(from volume: Measurement<UnitVolume>) -> Double {
         volume.converted(to: baseUnit).value
     }
     
     // MARK: - Measurement Creation
     
-    // Purpose:
-    // Create a volume measurement from a value already expressed in the base
-    // calculation unit.
-    //
-    // Input:
-    // Uses a Double that has already been calculated in the base unit.
-    //
-    // Returns:
-    // A Measurement<UnitVolume> using the base calculation unit.
+    /// Wraps a value already expressed in the base unit as a volume measurement.
     nonisolated static func measurement(fromBaseValue value: Double) -> Measurement<UnitVolume> {
         Measurement(value: value, unit: baseUnit)
     }

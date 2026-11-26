@@ -8,18 +8,8 @@
 import SwiftUI
 
 // MARK: - First Drink Prompt
-//
-// Purpose:
-// Shows the empty-state prompt that nudges the user towards logging their first
-// drink of the day.
-//
-// Returns:
-// A small SwiftUI view containing prompt text.
-//
-// UI role:
-// Keeps the first-drink prompt separate from WateredTabView and EmptyTodayView.
-// WateredTabView decides when it appears because the prompt is positioned near
-// the app-level add-drink button.
+/// Displays the first-drink prompt beside the app-level Add Drink action.
+/// The parent decides when it is visible.
 struct FirstDrinkPrompt: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {

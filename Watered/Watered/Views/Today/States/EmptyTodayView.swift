@@ -8,19 +8,7 @@
 import SwiftUI
 
 // MARK: - Empty Today View
-//
-// Purpose: Displays the Today screen state shown when no drinks have been logged.
-//
-// Input:
-// This view currently does not accept model data. TodayView decides when the
-// empty state should appear and then renders this view.
-//
-// Returns:
-// A SwiftUI view containing the empty-state message
-//
-// UI Role:
-// Keeps empty-state presentation separate from TodayView, so TodayView can
-// focus on screen structure and state routing.
+/// Displays Today’s empty state; TodayView decides whether the day has no entries.
 struct EmptyTodayView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 12) {

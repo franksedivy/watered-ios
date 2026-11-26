@@ -9,17 +9,9 @@ import Foundation
 import SwiftData
 
 // MARK: - Persistent App Settings
-//
-// Purpose:
-// Stores Watered's user-configurable settings in SwiftData.
-//
-// Input:
-// Accepts stable persistence identifiers and primitive values that SwiftData can
-// store safely.
-//
-// Persistence role:
-// Maps between the app's AppSettings model and the SwiftData row that survives
-// app relaunches.
+/// Stores settings as primitive values and stable unit identifiers.
+/// Mapping restores the goal’s recorded value and unit without display-unit conversion;
+/// unrecognised unit identifiers return nil. Saving belongs to AppSettingsPersistence.
 @Model
 final class PersistentAppSettings {
     var id: String
