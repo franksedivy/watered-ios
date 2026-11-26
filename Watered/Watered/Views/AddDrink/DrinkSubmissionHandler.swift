@@ -13,11 +13,11 @@ struct DrinkSubmissionHandler {
     private let store: WateredStore
     private let analytics: any AnalyticsClient
     
-    /// Creates a handler using the app's existing state and analyticas client.
+    /// Creates a handler using the app's existing state and analytics client.
     ///
     /// - Parameters:
     ///  - store: The In-memory drink store updated after saving succeeds.
-    ///  - analytics: The client that recieves successful submission events.
+    ///  - analytics: The client that receives successful submission events.
     init(store: WateredStore, analytics: any AnalyticsClient) {
         self.store = store
         self.analytics = analytics
@@ -30,7 +30,7 @@ struct DrinkSubmissionHandler {
     ///  - method: Whether submission came from the form or a recent-drink shortcut.
     ///  - save: Persists the entry, returning only after saving succeeds.
     /// - Throws: The error reported by the supplied save operation.
-    /// - Important: The save operation must clean up pending changes if it fails.
+    /// - Important: The save operation owns its transaction and rollback boundaries.
     /// A thrown error prevents this handler from updating state or recording success.
     func submit(
         _ entry: DrinkEntry,
