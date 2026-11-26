@@ -8,22 +8,8 @@
 import SwiftUI
 
 // MARK: - First Drink Today View
-//
-// Purpose:
-// Displays the Today screen state shown after the user logs their first drink.
-//
-// Input:
-// Accepts HydrationSummaryViewData, which already contains the formatted text,
-// progress values and drink breakdown rows needed by the UI.
-//
-// Returns:
-// A SwiftUI view containing the first-drink message, summary and drink
-// breakdown.
-//
-// UI role:
-// Keeps the first-drink presentation separate from TodayView. TodayView
-// decides which state is active; this view only knows how to display the
-// first-drink state.
+/// Displays the first-drink celebration and a prepared hydration summary.
+/// TodayView selects this state; this view does not calculate progress.
 struct FirstDrinkTodayView: View {
     let summary: HydrationSummaryViewData
     

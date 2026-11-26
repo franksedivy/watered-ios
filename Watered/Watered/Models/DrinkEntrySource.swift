@@ -7,14 +7,9 @@
 
 import Foundation
 
-// MARK: - DrinK Entry Source
-//
-// Purpose:
-// Describes where a drink entry came from
-//
-// Persistence role:
-// Stores a small source value that can later help Watered distinguish manual
-// entries from healthKit or imported entries.
+// MARK: - Drink Entry Source
+/// Records a drink entry’s origin using a persisted raw value.
+/// Only manual entry is currently supported.
 nonisolated enum DrinkEntrySource: String, Codable {
     case manual
 }

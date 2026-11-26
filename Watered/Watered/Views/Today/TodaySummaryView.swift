@@ -8,21 +8,7 @@
 import SwiftUI
 
 // MARK: - Today Summary View
-//
-// Purpose:
-// Displays the main hydration summary for the Today screen.
-//
-// Input:
-// Accepts HydrationSummaryViewData, which contains display-ready text and visual
-// progress values prepared outside this view.
-//
-// Returns:
-// A SwiftUI view containing the total liquid amount, daily goal text and
-// hydration progress display.
-//
-// UI role:
-// Keeps the main Today summary presentation separate from TodayView. This view
-// does not calculate totals, goals, remaining hydration or progress.
+/// Displays prepared total, goal and progress values without calculating or formatting hydration data.
 struct TodaySummaryView: View {
     let summary: HydrationSummaryViewData
     

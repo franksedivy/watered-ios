@@ -8,20 +8,8 @@
 import SwiftUI
 
 // MARK: - Today Progress View
-//
-// Purpose: Displays the user's progress toward their daily hydration target.
-//
-// Input:
-// Accepts display-ready progress text, such as "54%"
-// Accepts a visual progress value for the progress bar.
-//
-// Returns:
-// A SwiftUI view containing the 0% label, progress bar, 100% label and current
-// progress text.
-//
-// UI role:
-// Keeps progress presentation separate from TodayView. This view does not
-// calculate hydration progress; it only displays values prepared elsewhere.
+/// Displays prepared progress text and a visual progress value.
+/// The caller supplies a value in 0...1; this view performs no hydration calculation or clamping.
 struct TodayProgressView: View {
     let progressText: String
     let visualProgressValue: Double

@@ -9,20 +9,8 @@ import SwiftUI
 
 // MARK: - In Progress Today View
 
-// Purpose:
-// Displays the normal Today screen state once more than one drink has been logged.
-//
-// Input:
-// Accepts the number of logged drinks and HydrationSummaryViewData.
-//
-// Returns:
-// A SwiftUI view containing the drink count message, hydration summary and drink
-// breakdown.
-//
-// UI role:
-// Keeps the main active Today state separate from TodayView. TodayView remains
-// responsible for choosing the current screen mode, while this view handles the
-// layout for the in-progress state.
+/// Displays the supplied drink count and prepared hydration summary.
+/// TodayView selects this state; this view does not calculate totals or progress.
 
 struct InProgressTodayView: View {
     let drinkCount: Int

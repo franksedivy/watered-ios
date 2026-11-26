@@ -8,35 +8,11 @@
 import SwiftUI
 
 // MARK: - Today Appearance
-//
-// Purpose:
-// Stores parent-level visual values used by the Today screen.
-//
-// Input:
-// This type does not accept model data. Some values are fixed screen constants,
-// while backgroundGradient(for:) accepts a TodayScreenMode.
-//
-// Returns:
-// SwiftUI styling values used by TodayView, such as gradients, padding and the
-// shared control glass tint.
-//
-// UI role:
-// Keeps TodayView focused on screen composition and state routing instead of
-// owning raw color and spacing values.
+/// Provides Today’s screen spacing and mode-specific backgrounds independently of hydration calculations.
 struct TodayAppearance {
     let screenHorizontalPadding: CGFloat = 16
     
-    // Purpose: Chooses the background gradient for a Today mode.
-    //
-    // Input: Accepts the current TodayScreenMode.
-    //
-    // Returns:
-    // SwiftUI styling values used by TodayView, such as gradients and screen
-    // padding.
-    //
-    // UI role:
-    // Keeps state-based background styling outside TodayView while still keeping
-    // the styling local to the Today feature.
+    /// Uses the empty-state background only for empty mode; all logged-drink modes share the active background.
     func backgroundGradient(for mode: TodayScreenMode) -> LinearGradient {
         switch mode {
         case .empty:

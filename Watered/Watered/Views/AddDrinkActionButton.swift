@@ -8,20 +8,12 @@
 import SwiftUI
 
 // MARK: - Add Drink Action Button
-//
-// Purpose: Shows the primary add-drink action used near the app tab bar.
-// Input: Accepts tap and recent-drink actions from the parent view.
-// Returns: A small circular SwiftUI button.
-//
-// UI role:
-// This button exists because Watered needs a prominent add-drink action near the
-// tab bar, similar in placement to Apple's search affordance, while keeping the
-// actual tab bar native.
+/// Presents Add Drink and up to three supplied recent shortcuts.
+/// The parent owns sheet presentation and saving; an empty list shows a disabled placeholder.
 struct AddDrinkActionButton: View {
     // MARK: - Actions
 
-    // Purpose: Stores the action that runs when the button is tapped.
-    // Input: Supplied by the parent view that owns the add-drink sheet state.
+    /// Delegates opening Add Drink to the parent.
     private let onTap: () -> Void
     private let displayUnit: LiquidUnit
     private let recentDrinks: [RecentDrinkOption]

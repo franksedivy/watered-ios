@@ -16,15 +16,8 @@ private let wateredDebugLogger = Logger(
 )
 #endif
 
-// Writes a Watered-only debug message to Apple's unified logging system.
-//
-// Input:
-// - message: A short, non-personal message describing an app-level action,
-//   state change, or handoff.
-//
-// Behavior:
-// Logs only in DEBUG builds. Release builds leave this helper as a no-op so
-// temporary development logging does not become production telemetry.
+/// Writes a public message to the local unified log in Debug; Release discards it.
+/// Callers must supply non-personal diagnostics because the message is not redacted.
 func wateredLog(_ message: String) {
     #if DEBUG
     wateredDebugLogger.debug("\(message, privacy: .public)")

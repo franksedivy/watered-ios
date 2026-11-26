@@ -8,22 +8,8 @@
 import SwiftUI
 
 // MARK: - Goal Reached Today View
-//
-// Purpose:
-// Displays the Today screen state shown once the user reaches their hydration goal.
-//
-// Input:
-// Accepts HydrationSummaryViewData, which already contains the formatted total,
-// goal, progress and drink breakdown rows needed by the UI.
-//
-// Returns:
-// A SwiftUI view containing the goal-reached message, hydration summary adn drink
-// breakdown.
-//
-// UI role:
-// Keeps the goal-reached presentation separate from TodayView. TodayView decides
-// when the user has reached the goal; this view only handles how that state is
-// shown.
+/// Displays the goal-reached message and a prepared hydration summary.
+/// TodayView determines whether the goal has been reached.
 struct GoalReachedTodayView: View {
     let summary: HydrationSummaryViewData
     

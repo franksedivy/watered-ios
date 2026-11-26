@@ -10,26 +10,9 @@ import SwiftData
 import UIKit
 
 // MARK: - Watered Tab View
-//
-// Purpose: Define Watered's top-level tab navigation.
-//
-// Returns:
-// A native SwiftUI TabView containing the main app areas.
-//
-// UI role:
-// Acts as Watered's main app shell. It owns tab selection, app-wide sheet
-// presentation, the floating Add Drink action, and the shared Profile entry
-// point so those controls behave consistently across top-level screens.
-//
-// It also bridges app-level state into the visible tabs: Today receives only
-// entries for the active local calendar day, while Stats receives the full
-// drink history for debugging and persistence validation.
-//
-// Notes:
-// WateredTabView currently sits at the boundary between SwiftUI navigation,
-// SwiftData persistence, and WateredStore. It hydrates the store from persisted
-// entries, saves new Add Drink submissions, and refreshes Today when iOS reports
-// a significant time change.
+/// Coordinates tab navigation, shared sheets and persistence-backed app state.
+/// Today receives entries for the active calendar day; Stats receives visible history.
+/// Drink and settings actions apply in-memory changes only after persistence succeeds.
 struct WateredTabView: View {
     
     // MARK: - Dependencies
@@ -43,21 +26,13 @@ struct WateredTabView: View {
     private let catalogueResult: Result<DrinkCatalogue, Error>
 
     // MARK: - Tabs
-    //
-    // Purpose: Defines the top-level app tabs that Watered currently supports.
-    //
-    // UI role:
-    // Gives the TabView a typed selection value so app-level overlays, such as the
-    // empty-state add-drink prompt, can react to the currently selected tab.
+    /// Identifies the top-level tabs for selection and tab-specific overlays.
     private enum WateredTab: String {
         case today = "Today"
         case stats = "Stats"
     }
     
-    // Purpose: Stores the currently selected top-level app tab.
-    //
-    // UI role: Lets WateredTabView show app-level UI only when it belongs to the
-    // active tab.
+    /// The active tab, used to scope shared overlays.
     @State private var selectedTab: WateredTab = .today
     
     /// Runs after drink insertion and before persistence saves.
@@ -67,32 +42,15 @@ struct WateredTabView: View {
     private let beforeDisplayUnitSave: () throws -> Void
 
     // MARK: - Settings State
-    //
-    // Purpose: Stores the display unit selected for the app.
-    //
-    // UI role:
-    // Stores the display unit currently applied across Watered's top-level views.
-    // TodayView uses it to format volume summaries, AddDrinkView uses it as the
-    // default logging unit, and ProfileView can change it through a binding.
-    //
-    // Persistence role:
-    // Starts from Watered's locale-aware defaults, then gets replaced by persisted
-    // settings when a saved setting exists.
+    /// The applied display unit, initially locale-based and then loaded from persistence.
+    /// Profile changes apply only after saving succeeds.
     @State private var displayUnit: LiquidUnit = AppSettings.defaults().displayUnit
     
-    // Purpose:
-    // Stores the daily hydration goal currently applied to Today.
-    //
-    // UI role:
-    // TodayView uses this goal to calculate and display hydration progress,
-    // remaining hydration, and goal-reached states.
-    //
-    // Persistence role:
-    // Starts from Watered's first-run defaults, then gets replaced by persisted
-    // settings when a saved goal exists.
+    /// The applied hydration goal, initially the default and then loaded from persistence.
+    /// Profile edits remain separate until committed on dismissal.
     @State private var dailyHydrationGoal = AppSettings.defaults().dailyHydrationGoal
     
-    /// Holds Profile's uncomitted goal until the sheet closes.
+    /// Holds Profile's uncommitted goal until the sheet closes.
     ///
     /// Opening Profile starts a new draft from the currently applied goal.
     @State private var profileDraftGoal = AppSettings.defaults().dailyHydrationGoal
@@ -103,19 +61,10 @@ struct WateredTabView: View {
     /// Presents feedback when Profile's selected display unit could not be saved.
     @State private var isShowingDisplayUnitSaveError = false
 
-    // Purpose: Stores Watered's first app-level state owner.
-    //
-    // UI role:
-    // Keeps drink entries above the tab views without making WateredTabView
-    // directly own or mutate the entries array.
+    /// Owns in-memory drink history shared by the tabs.
     @State private var store = WateredStore()
     
-    // Purpose:
-    // Stores the local calendar day currently shown by Today.
-    //
-    // Notes:
-    // Lets Today render a day-specific view while WateredStore keeps the full
-    // persisted drink history.
+    /// Scopes Today to a calendar day while the store retains visible history.
     @State private var activeCalendarDay = TodayCalendarDay()
     
     /// Connects Profile's selection to explicit persistence.
@@ -133,28 +82,15 @@ struct WateredTabView: View {
     }
     
     // MARK: - Persistence
-    //
-    // Purpose:
-    // Gives WateredTabView access to the SwiftData context supplied by WateredApp.
-    //
-    // UI role:
-    // Lets the Add Drink submission boundary save new drink entries.
+    /// The app-supplied context used for drink and settings persistence.
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(HealthExportCoordinator.self) private var healthExport: HealthExportCoordinator?
     
-    // Purpose:
-    // Reads persisted drink entries from SwiftData.
-    //
-    // UI role:
-    // Lets WateredTabView hydrate WateredStore when the app starts.
+    /// Observes non-deleted rows for loading and refreshing the in-memory store.
     @Query(filter: #Predicate<PersistentDrinkEntry> { $0.deletedAt == nil }, sort: \PersistentDrinkEntry.loggedAt) private var persistentDrinkEntries: [PersistentDrinkEntry]
 
-    // Purpose: Controls whether the Add Drink sheet is visible.
-    //
-    // UI role:
-    // Keeps AddDrinkView out of the tab bar while still allowing it to appear as a
-    // focused add-drink flow above the current tab.
+    /// Presents Add Drink above the active tab.
     @State private var isShowingAddDrinkSheet = false
 
     /// Survives sheet dismissal, but is never written to persistent storage.
@@ -166,31 +102,18 @@ struct WateredTabView: View {
     /// Recent-menu submissions happen without an Add Drink sheet to host an alert.
     @State private var isShowingRecentDrinkError = false
 
-    // Purpose: Controls whether the Profile sheet is visible.
-    //
-    // UI role:
-    // Keeps profile presentation at the app-tab level so the same profile button
-    // can appear on multiple top-level screens.
+    /// Presents the shared Profile sheet from either tab.
     @State private var isShowingProfileSheet = false
 
     // MARK: - Tab Icons
-    // Builds the SF Symbol name for today's calendar day.
-    //
-    // Returns:
-    // A Symbol name such as "1.calendar", "24.calendar", or "31.calendar".
+    /// Builds the calendar symbol for the current date using the active calendar.
     private var todayCalendarSymbolName: String {
         let dayOfMonth = activeCalendarDay.calendar.component(.day, from: Date())
         return "\(dayOfMonth).calendar"
     }
 
     // MARK: - Empty Today Prompt
-    //
-    // Purpose: Decide whether the first-drink prompt should be visible
-    // Returns: true when the user is on Today and has not logged any drinks
-    //
-    // UI role:
-    // Keeps the prompt attached to the app-level add-drink action without showing
-    // it over unrelated tabs such as Learn.
+    /// Shows the first-drink prompt only on Today when its active day has no entries.
     private var shouldShowFirstDrinkPrompt: Bool {
         let isTodaySelected = selectedTab == .today
         let hasNoDrinks = todayEntries.isEmpty
@@ -198,16 +121,7 @@ struct WateredTabView: View {
         return isTodaySelected && hasNoDrinks
     }
     
-    // Purpose:
-    // Returns the drink entries that belong to the active Today calendar day.
-    //
-    // Returns:
-    // DrinkEntry values from WateredStore whose loggedAt date falls on the same
-    // local calendar day as activeCalendarDay.
-    //
-    // UI role:
-    // Keeps Today scoped to one day without deleting previous-day entries from
-    // persistence or app state.
+    /// Selects entries by their logged date in the active calendar without changing history.
     private var todayEntries: [DrinkEntry] {
         return store.drinkEntries(
             for: activeCalendarDay.date,
@@ -226,17 +140,10 @@ struct WateredTabView: View {
     }
     
     // MARK: - Transitions
-    //
-    // Purpose:
-    // Provides the shared animation namespace used to visually connect the
-    // floating Add Drink button with the Add Drink sheet.
-    //
-    // UI role:
-    // Lets SwiftUI treat the button as the source of the sheet's zoom transition.
+    /// Connects the Add Drink button and sheet for the zoom transition.
     @Namespace private var addDrinkTransition
 
-    // Purpose:
-    // Gives the Add Drink button and Add Drink sheet a shared transition identity.
+    /// The shared identity of the Add Drink transition source and destination.
     private let addDrinkTransitionID = "addDrink"
 
     // MARK: - Initialisation
@@ -429,12 +336,8 @@ struct WateredTabView: View {
 
     // MARK: - Actions
 
-    // Purpose:
-    // Loads persisted drink entries into Watered's app-level store.
-    //
-    // Behavior:
-    // Converts SwiftData rows back into DrinkEntry values and ignores rows that no
-    // longer map to known model values.
+    /// Replaces in-memory history with mapped, non-deleted rows from the query.
+    /// Unmappable rows are skipped and counted in diagnostics, but remain in storage.
     private func loadPersistedDrinkEntries() {
         let loadedEntries = persistentDrinkEntries.compactMap { persistentDrinkEntry in
             persistentDrinkEntry.drinkEntry()
@@ -480,8 +383,8 @@ struct WateredTabView: View {
     
     /// Commits Profile's final goal when its sheet closes.
     ///
-    /// Persistence skips unchanged goals. Today recieves the draft only after the operation succeeds, a failuure leaves the
-    /// applied goal unchanged
+    /// Persistence skips unchanged goals. Today receives the draft only after the operation succeeds; a failure leaves the
+    /// applied goal unchanged.
     private func commitProfileGoal() {
         do {
             let settings = try AppSettingsPersistence.loadOrCreate(
@@ -530,7 +433,7 @@ struct WateredTabView: View {
     
     /// Deletes stored drinks before updating the in-memory history.
     ///
-    /// - Parameter entriesToDelete: Stored recrods belonging to this view's context.
+    /// - Parameter entriesToDelete: Stored records belonging to this view's context.
     /// - Throws: A persistence error, leaving the in-memory history unchanged.
     private func deleteDrinkEntries(
         _ entriesToDelete: [PersistentDrinkEntry]
@@ -574,7 +477,7 @@ struct WateredTabView: View {
     ///
     /// - Parameters:
     ///  - entry: The submitted drink
-    ///  - method: Whether subission came from the form or a recent-drink shortcut.
+    ///  - method: Whether submission came from the form or a recent-drink shortcut.
     /// - Important: Failures preserve the sheet draft or report directly from the recent menu.
     private func addDrinkEntry(_ entry: DrinkEntry, method: AddDrinkSubmissionMethod) {
         let handler = DrinkSubmissionHandler(store: store, analytics: analytics)
@@ -659,12 +562,7 @@ struct WateredTabView: View {
         }
     }
     
-    // Purpose:
-    // Refreshes the local calendar day shown by Today.
-    //
-    // Behavior:
-    // Updates activeCalendarDay after iOS reports a significant time change, such
-    // as midnight, daylight saving changes, or manual clock updates.
+    /// Refreshes Today’s date after a significant system time change without changing history.
     private func refreshActiveCalendarDay() {
         activeCalendarDay.refresh()
         wateredLog(
