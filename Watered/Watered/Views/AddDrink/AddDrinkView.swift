@@ -212,7 +212,11 @@ struct AddDrinkView: View {
 
             Picker("Volume", selection: Binding(
                 get: { volumeSelection.displayValue(in: defaultUnit) },
-                set: { volumeSelection.select($0, displayedAs: defaultUnit) }
+                set: { amount in
+                    guard amount != volumeSelection.displayValue(in: defaultUnit) else { return }
+                    volumeSelection.select(amount, displayedAs: defaultUnit)
+                    playDrinkFeedback()
+                }
             )) {
                 ForEach(volumeSelection.options(in: defaultUnit), id: \.self) { volumeOption in
                     Text(volumeSelection.label(for: volumeOption, in: defaultUnit)).tag(volumeOption)
