@@ -22,10 +22,20 @@ the drink or change its hydration ratio. Caffeine uses the reviewed per-shot or
 per-volume defaults in [Drink Catalogue Files](Drink-Catalogue-Files.md). The decaf icon changes from bolt to bolt.slash; preparation
 icons are brown. Milk options, time editing and a liquid-filled wheel are deferred.
 
-The clipped volume wheel, cards and preparation share one vertical scroll layout.
-The sheet starts at 440 points, expands to 600 without preparation or 720 with it,
-and allows manual full-height expansion. Accessibility text sizes use full height;
+The clipped volume wheel stays below the independently scrolling cards and preparation.
+The sheet starts at 440 points. Shared preparation presentation reserves 720 points
+for Coffee and 660 for Tea and Soft Drinks, including drinks with unavailable options.
+Other categories retain 600 points without preparation or 720 with it. Manual
+full-height expansion remains available. Accessibility text sizes use full height;
 Reduce Motion suppresses the selection animation. Small screens may require scrolling.
+
+Coffee retains a disabled Shots row for White coffee and Cold brew, displaying an
+em dash rather than inventing a count. Tea retains a disabled Decaffeinated row
+where no alternative is supported. Soft Drinks retain a Caffeine-free row, enabled
+only for Cola in the current catalogue. Disabled caffeine toggles remain off; they
+indicate unavailable alternatives, not the drink's actual caffeine content.
+Catalogue JSON still owns supported preparations and estimates. These placeholders
+do not change selected preparations, submission, or saved history.
 
 ## Unsaved session draft
 
@@ -77,7 +87,7 @@ or complete #104 acceptance is implied by this document.
 
 Plain tea (#101) uses the standard SwiftUI `.mint` category tint and catalogue serving defaults of 250 ml while the volume remains
 untouched. Deliberate volume choices and restored drafts take precedence. Black,
-Green and White offer regular/decaf; Herbal has no preparation controls. See
+Green and White offer regular/decaf; Herbal retains the disabled Decaffeinated row. See
 [reviewed tea defaults](Drink-Catalogue-Files.md#plain-tea--approved-8-november-2026-101--102).
 
 Selected drink image tiles use a 2-point category-color border over the neutral
@@ -88,9 +98,9 @@ text color (black in light mode), independently of category tint.
 The second Tea batch (#101/#102) adds Matcha, Matcha latte, Bubble milk tea,
 Bubble fruit tea, Yerba mate and Iced tea. All default to 250 ml except Iced tea
 at 330 ml, subject to the same untouched-volume rule. Only Bubble fruit tea and
-Iced tea offer a “Caffeine-free” toggle, off by default; the other four have no
-preparation controls. Decaf controls for Black/Green/White remain unchanged.
-The existing sheet layout and detents are retained; shifting elements are #149.
+Iced tea offer a “Caffeine-free” toggle, off by default; the other four retain a
+disabled Decaffeinated row. Decaf controls for Black/Green/White remain unchanged.
+Tea retains one preparation row and a stable category height under #149.
 
 ## Juices batch (#99 / #101 / #102)
 

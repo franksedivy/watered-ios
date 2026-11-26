@@ -48,6 +48,13 @@ unit used by fresh/restored Add Drink forms and the recent menu. Settings `updat
 
 ## Catalogue and current UI boundary
 
+`ViewData/AddDrinkPreparationPresentation.swift` owns persistent preparation rows
+and their category sheet heights. Coffee retains caffeine and shots rows; Tea and
+Soft Drinks retain one caffeine row. Catalogue capabilities determine availability
+and the supported alternative. Disabled rows are presentation placeholders, not
+new preparations or changes to caffeine estimates. The view retains selection,
+draft and submission responsibilities.
+
 `ViewData/AddDrinkArtworkSize.swift` owns Add Drink's local artwork presentation
 hints and small/medium/large bounds (54/64/74 pt). Espresso selects small and
 Sparkling wine medium; absent hints resolve to large. The row retains its fixed

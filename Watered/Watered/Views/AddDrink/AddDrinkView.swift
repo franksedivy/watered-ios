@@ -76,9 +76,9 @@ struct AddDrinkView: View {
             canApplyServingDefault: saved == nil
         ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
-        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil || $0.alcohol.configuration != nil } ?? false
-        _selectedDetent = State(initialValue: saved?.categoryID == nil
-            ? .height(440) : .height(hasPreparation ? 720 : 600))
+        _selectedDetent = State(initialValue: .height(AddDrinkPreparationPresentation.sheetHeight(
+            categoryID: saved?.categoryID, definition: definition
+        )))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -90,15 +90,12 @@ struct AddDrinkView: View {
         )
     }
 
-    /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
+    /// Uses the shared category row policy for both new selections and restored drafts.
     private var expandedDetent: PresentationDetent {
         if dynamicTypeSize.isAccessibilitySize { return .large }
-        return hasPreparationOptions ? .height(720) : .height(600)
-    }
-
-    private var hasPreparationOptions: Bool {
-        guard let definition = selectedDefinition else { return false }
-        return definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil || definition.alcohol.configuration != nil
+        return .height(AddDrinkPreparationPresentation.sheetHeight(
+            categoryID: selectedCategoryID, definition: selectedDefinition
+        ))
     }
 
     private var selectionAnimation: Animation? {
@@ -348,65 +345,85 @@ struct AddDrinkView: View {
         .id(selectedCategoryID)
     }
 
-    /// Shows only the preparation choices supported by the selected definition.
+    /// Renders the shared preparation policy without turning placeholders into editable catalogue options.
     @ViewBuilder
     private var preparationSection: some View {
-        if let definition = selectedDefinition, hasPreparationOptions {
-            VStack(spacing: 12) {
-                if let configuration = definition.alcohol.configuration {
-                    alcoholPreparation(configuration)
-                }
-                if definition.caffeineOptions.contains(where: { $0.variant == .regular }),
-                   let alternative = definition.caffeineOptions.first(where: {
-                       $0.variant == .decaf || $0.variant == .caffeineFree
-                   })?.variant {
-                    Toggle(isOn: Binding(
-                        get: { selectedCaffeineVariant == alternative },
-                        set: { isEnabled in
-                            let variant: CaffeineVariant = isEnabled ? alternative : .regular
-                            guard variant != selectedCaffeineVariant else { return }
-                            selectedCaffeineVariant = variant
-                            wateredLog("Add Drink caffeine preparation changed")
-                        }
-                    )) {
-                        Label {
-                            Text(alternative == .decaf ? "Decaffeinated" : "Caffeine-free")
-                        } icon: {
-                            Image(systemName: selectedCaffeineVariant == alternative ? "bolt.slash" : "bolt")
-                                .foregroundStyle(.brown)
-                        }
+        if let definition = selectedDefinition {
+            let presentation = AddDrinkPreparationPresentation(definition: definition)
+            if presentation.hasRows {
+                VStack(spacing: 12) {
+                    if let configuration = definition.alcohol.configuration {
+                        alcoholPreparation(configuration)
                     }
-                    .accessibilityIdentifier(alternative == .decaf ? "addDrinkDecafToggle" : "addDrinkCaffeineFreeToggle")
-                }
-                if let configuration = definition.shotConfiguration {
-                    if definition.caffeineOptions.count > 1 {
-                        Divider()
-                    }
-                    let counts = configuration.supportedCounts.sorted()
-                    Stepper(value: Binding(
-                        get: { counts.firstIndex(of: selectedShotCount) ?? 0 },
-                        set: { index in
-                            let count = counts[index]
-                            guard count != selectedShotCount else { return }
-                            wateredLog("Add Drink shot count changed")
-                            selectedShotCount = count
+                    if let row = presentation.caffeineRow {
+                        Toggle(isOn: Binding(
+                            get: { row.isEnabled && selectedCaffeineVariant == row.alternative },
+                            set: { isEnabled in
+                                guard row.isEnabled else { return }
+                                let variant: CaffeineVariant = isEnabled ? row.alternative : .regular
+                                guard variant != selectedCaffeineVariant else { return }
+                                selectedCaffeineVariant = variant
+                                wateredLog("Add Drink caffeine preparation changed")
+                            }
+                        )) {
+                            Label {
+                                Text(row.title)
+                                    .foregroundStyle(row.isEnabled ? Color.primary : Color.secondary)
+                            } icon: {
+                                Image(systemName: row.isEnabled && selectedCaffeineVariant == row.alternative ? "bolt.slash" : "bolt")
+                                    .foregroundStyle(row.isEnabled ? Color.brown : Color.secondary)
+                            }
                         }
-                    ), in: 0...(counts.count - 1)) {
-                        Label {
-                            Text("Shots: \(selectedShotCount)")
-                        } icon: {
-                            Image(systemName: "cup.and.saucer")
-                                .foregroundStyle(.brown)
-                        }
+                        .disabled(!row.isEnabled)
+                        .accessibilityIdentifier(row.accessibilityIdentifier)
+                        .accessibilityHint(row.isEnabled ? "" : "Not available for this drink.")
                     }
-                    .accessibilityIdentifier("addDrinkShotStepper")
-                    .accessibilityValue("\(selectedShotCount)")
+                    if let configuration = presentation.shotConfiguration {
+                        if presentation.caffeineRow != nil {
+                            Divider()
+                        }
+                        let counts = configuration.supportedCounts.sorted()
+                        Stepper(value: Binding(
+                            get: { counts.firstIndex(of: selectedShotCount) ?? 0 },
+                            set: { index in
+                                let count = counts[index]
+                                guard count != selectedShotCount else { return }
+                                wateredLog("Add Drink shot count changed")
+                                selectedShotCount = count
+                            }
+                        ), in: 0...(counts.count - 1)) {
+                            Label {
+                                Text("Shots: \(selectedShotCount)")
+                            } icon: {
+                                Image(systemName: "cup.and.saucer")
+                                    .foregroundStyle(.brown)
+                            }
+                        }
+                        .accessibilityIdentifier("addDrinkShotStepper")
+                        .accessibilityValue("\(selectedShotCount)")
+                    } else if presentation.showsShots {
+                        if presentation.caffeineRow != nil { Divider() }
+                        Stepper(onIncrement: nil, onDecrement: nil) {
+                            Label {
+                                Text("Shots: —")
+                            } icon: {
+                                Image(systemName: "cup.and.saucer")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .disabled(true)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("addDrinkShotStepper")
+                        .accessibilityValue("Not applicable")
+                        .accessibilityHint("This coffee does not use shot-based preparation.")
+                    }
                 }
+                .padding(16)
+                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+                .tint(categoryTint(definition.categoryID))
+                .padding(.horizontal, 20)
+                .border(.red)
             }
-            .padding(16)
-            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
-            .tint(categoryTint(definition.categoryID))
-            .padding(.horizontal, 20)
         }
     }
 
@@ -511,7 +528,7 @@ struct AddDrinkView: View {
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(440), .height(600), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(440), .height(600), .height(660), .height(720), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }
