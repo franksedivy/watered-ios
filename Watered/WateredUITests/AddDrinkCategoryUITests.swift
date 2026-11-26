@@ -3,6 +3,25 @@ import XCTest
 final class AddDrinkCategoryUITests: XCTestCase {
     private let readinessTimeout: TimeInterval = 10
 
+    // Coffees measured by volume retain an unavailable Shots row without implying a shot count.
+    @MainActor
+    func testVolumeBasedCoffeesKeepDisabledShotsRow() {
+        let app = openAddDrink()
+        app.buttons["addDrinkCategoryScrollView.coffee"].tap()
+        let types = app.scrollViews["addDrinkTypeScrollView"]
+        for id in ["coffee-with-milk", "cold-brew", "latte"] {
+            let drink = types.buttons["addDrinkTypeScrollView.\(id)"]
+            revealHorizontally(drink, in: types)
+            drink.tap()
+            XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
+            let shots = app.steppers["addDrinkShotStepper"]
+            XCTAssertTrue(shots.exists)
+            XCTAssertEqual(shots.isEnabled, id == "latte")
+            XCTAssertEqual(shots.value as? String, id == "latte" ? "2" : "Not applicable")
+            XCTAssertTrue(app.switches["addDrinkDecafToggle"].isEnabled)
+        }
+    }
+
     // GIVEN Add Drink has just opened, when no category has been chosen,
     // THEN no category is active, Type is hidden and form submission is disabled.
     @MainActor
@@ -307,9 +326,9 @@ final class AddDrinkCategoryUITests: XCTestCase {
     }
 
     // GIVEN a manually chosen volume while switching among plain teas,
-    // THEN the volume stays fixed and Herbal tea hides unsupported decaf controls.
+    // THEN the volume stays fixed and Herbal retains an off, disabled decaf row.
     @MainActor
-    func testTeaTypesPreserveChosenVolumeAndHerbalHidesDecaf() {
+    func testTeaTypesPreserveChosenVolumeAndHerbalDisablesDecaf() {
         let app = openAddDrink()
         let wheel = app.pickerWheels.firstMatch
         wheel.adjust(toPickerWheelValue: "500 ml")
@@ -324,15 +343,18 @@ final class AddDrinkCategoryUITests: XCTestCase {
             XCTAssertEqual(wheel.value as? String, "500 ml")
             XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
             if id == "herbal-tea" {
-                XCTAssertFalse(toggle.exists)
+                XCTAssertTrue(toggle.exists)
+                XCTAssertFalse(toggle.isEnabled)
+                XCTAssertEqual(toggle.value as? String, "0")
             } else {
                 XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
+                XCTAssertTrue(toggle.isEnabled)
                 XCTAssertEqual(toggle.value as? String, "0")
                 toggle.tap()
             }
         }
         let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "Herbal tea without caffeine controls"
+        screenshot.name = "Herbal tea with unavailable decaf row"
         screenshot.lifetime = .keepAlways
         add(screenshot)
     }
@@ -352,9 +374,9 @@ final class AddDrinkCategoryUITests: XCTestCase {
             drink.tap()
             XCTAssertTrue(drink.wait(for: \.isSelected, toEqual: true, timeout: readinessTimeout))
             XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, id == "iced-tea" ? "330 ml" : "250 ml")
-            XCTAssertFalse(app.switches["addDrinkDecafToggle"].exists)
             XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
             if id == "bubble-fruit-tea" || id == "iced-tea" {
+                XCTAssertFalse(app.switches["addDrinkDecafToggle"].exists)
                 XCTAssertTrue(toggle.wait(for: \.isHittable, toEqual: true, timeout: readinessTimeout))
                 XCTAssertEqual(toggle.value as? String, "0")
                 XCTAssertTrue(toggle.label.contains("Caffeine-free"))
@@ -362,6 +384,10 @@ final class AddDrinkCategoryUITests: XCTestCase {
                 XCTAssertEqual(toggle.value as? String, "1")
             } else {
                 XCTAssertFalse(toggle.exists)
+                let unavailableDecaf = app.switches["addDrinkDecafToggle"]
+                XCTAssertTrue(unavailableDecaf.exists)
+                XCTAssertFalse(unavailableDecaf.isEnabled)
+                XCTAssertEqual(unavailableDecaf.value as? String, "0")
             }
         }
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -460,10 +486,9 @@ final class AddDrinkCategoryUITests: XCTestCase {
             XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, volume)
             XCTAssertFalse(app.switches["addDrinkDecafToggle"].exists)
             XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
-            if id == "cola" {
-                XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
-                XCTAssertEqual(toggle.value as? String, "0")
-            } else { XCTAssertFalse(toggle.exists) }
+            XCTAssertTrue(toggle.waitForExistence(timeout: readinessTimeout))
+            XCTAssertEqual(toggle.value as? String, "0")
+            XCTAssertEqual(toggle.isEnabled, id == "cola")
         }
         let cola = types.buttons["addDrinkTypeScrollView.cola"]
         for _ in 0..<8 where !cola.isHittable { types.swipeRight() }

@@ -38,6 +38,7 @@ struct AddDrinkView: View {
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
     @State private var selectedDetent: PresentationDetent = .height(440)
+    @State private var drinkFeedback = (sequence: 0, effect: SensoryFeedback.selection)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -76,9 +77,9 @@ struct AddDrinkView: View {
             canApplyServingDefault: saved == nil
         ))
         let definition = saved?.drinkID.flatMap { catalogue.drink(withID: $0) }
-        let hasPreparation = definition.map { $0.caffeineOptions.count > 1 || $0.shotConfiguration != nil || $0.alcohol.configuration != nil } ?? false
-        _selectedDetent = State(initialValue: saved?.categoryID == nil
-            ? .height(440) : .height(hasPreparation ? 720 : 600))
+        _selectedDetent = State(initialValue: .height(AddDrinkPreparationPresentation.sheetHeight(
+            categoryID: saved?.categoryID, definition: definition
+        )))
     }
 
     private var currentDraft: AddDrinkSheetDraft {
@@ -90,15 +91,12 @@ struct AddDrinkView: View {
         )
     }
 
-    /// Leaves room for the selected drink's controls without reserving an empty preparation panel.
+    /// Uses the shared category row policy for both new selections and restored drafts.
     private var expandedDetent: PresentationDetent {
         if dynamicTypeSize.isAccessibilitySize { return .large }
-        return hasPreparationOptions ? .height(720) : .height(600)
-    }
-
-    private var hasPreparationOptions: Bool {
-        guard let definition = selectedDefinition else { return false }
-        return definition.caffeineOptions.count > 1 || definition.shotConfiguration != nil || definition.alcohol.configuration != nil
+        return .height(AddDrinkPreparationPresentation.sheetHeight(
+            categoryID: selectedCategoryID, definition: selectedDefinition
+        ))
     }
 
     private var selectionAnimation: Animation? {
@@ -136,8 +134,9 @@ struct AddDrinkView: View {
         guard let defaultDrink = AddDrinkCategoryDefaults.drink(in: category.id, from: drinks) else {
             return
         }
+        let categoryChanged = selectedCategoryID != category.id
         withAnimation(selectionAnimation) {
-            if selectedCategoryID != category.id {
+            if categoryChanged {
                 selectedCategoryID = category.id
                 selectedDrinkID = defaultDrink.id
                 volumeSelection.applyServingDefault(defaultDrink.defaultVolume)
@@ -151,6 +150,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
+        if categoryChanged { playDrinkFeedback() }
         wateredLog("Add Drink category changed")
     }
 
@@ -160,6 +160,7 @@ struct AddDrinkView: View {
     ///
     /// - Parameter definition: The active drink selected within the current category.
     private func selectDrink(_ definition: DrinkDefinition) {
+        let drinkChanged = selectedDrinkID != definition.id
         withAnimation(selectionAnimation) {
             selectedDrinkID = definition.id
             volumeSelection.applyServingDefault(definition.defaultVolume)
@@ -171,6 +172,7 @@ struct AddDrinkView: View {
                 selectedDetent = expandedDetent
             }
         }
+        if drinkChanged { playDrinkFeedback() }
         wateredLog("Add Drink selection changed")
     }
 
@@ -201,7 +203,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Bounds the wheel below preparation so its drawing and hit area cannot overlap controls.
+    /// A bounded wheel anchored below the independently scrolling drink controls.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
@@ -210,7 +212,11 @@ struct AddDrinkView: View {
 
             Picker("Volume", selection: Binding(
                 get: { volumeSelection.displayValue(in: defaultUnit) },
-                set: { volumeSelection.select($0, displayedAs: defaultUnit) }
+                set: { amount in
+                    guard amount != volumeSelection.displayValue(in: defaultUnit) else { return }
+                    volumeSelection.select(amount, displayedAs: defaultUnit)
+                    playDrinkFeedback()
+                }
             )) {
                 ForEach(volumeSelection.options(in: defaultUnit), id: \.self) { volumeOption in
                     Text(volumeSelection.label(for: volumeOption, in: defaultUnit)).tag(volumeOption)
@@ -348,127 +354,181 @@ struct AddDrinkView: View {
         .id(selectedCategoryID)
     }
 
-    /// Shows only the preparation choices supported by the selected definition.
+    /// Renders the shared preparation policy without turning placeholders into editable catalogue options.
     @ViewBuilder
     private var preparationSection: some View {
-        if let definition = selectedDefinition, hasPreparationOptions {
-            VStack(spacing: 12) {
-                if let configuration = definition.alcohol.configuration {
-                    alcoholPreparation(configuration)
-                }
-                if definition.caffeineOptions.contains(where: { $0.variant == .regular }),
-                   let alternative = definition.caffeineOptions.first(where: {
-                       $0.variant == .decaf || $0.variant == .caffeineFree
-                   })?.variant {
-                    Toggle(isOn: Binding(
-                        get: { selectedCaffeineVariant == alternative },
-                        set: { isEnabled in
-                            let variant: CaffeineVariant = isEnabled ? alternative : .regular
-                            guard variant != selectedCaffeineVariant else { return }
-                            selectedCaffeineVariant = variant
-                            wateredLog("Add Drink caffeine preparation changed")
-                        }
-                    )) {
-                        Label {
-                            Text(alternative == .decaf ? "Decaffeinated" : "Caffeine-free")
-                        } icon: {
-                            Image(systemName: selectedCaffeineVariant == alternative ? "bolt.slash" : "bolt")
-                                .foregroundStyle(.brown)
-                        }
+        if let definition = selectedDefinition {
+            let presentation = AddDrinkPreparationPresentation(definition: definition)
+            if presentation.hasRows {
+                VStack(spacing: 12) {
+                    if let rows = presentation.alcoholRows {
+                        alcoholPreparation(rows)
                     }
-                    .accessibilityIdentifier(alternative == .decaf ? "addDrinkDecafToggle" : "addDrinkCaffeineFreeToggle")
-                }
-                if let configuration = definition.shotConfiguration {
-                    if definition.caffeineOptions.count > 1 {
-                        Divider()
-                    }
-                    let counts = configuration.supportedCounts.sorted()
-                    Stepper(value: Binding(
-                        get: { counts.firstIndex(of: selectedShotCount) ?? 0 },
-                        set: { index in
-                            let count = counts[index]
-                            guard count != selectedShotCount else { return }
-                            wateredLog("Add Drink shot count changed")
-                            selectedShotCount = count
+                    if let row = presentation.caffeineRow {
+                        Toggle(isOn: Binding(
+                            get: { row.isEnabled && selectedCaffeineVariant == row.alternative },
+                            set: { isEnabled in
+                                guard row.isEnabled else { return }
+                                let variant: CaffeineVariant = isEnabled ? row.alternative : .regular
+                                guard variant != selectedCaffeineVariant else { return }
+                                selectedCaffeineVariant = variant
+                                playDrinkFeedback()
+                                wateredLog("Add Drink caffeine preparation changed")
+                            }
+                        )) {
+                            Label {
+                                Text(row.title)
+                                    .foregroundStyle(row.isEnabled ? Color.primary : Color.secondary)
+                            } icon: {
+                                Image(systemName: row.isEnabled && selectedCaffeineVariant == row.alternative ? "bolt.slash" : "bolt")
+                                    .foregroundStyle(row.isEnabled ? Color.brown : Color.secondary)
+                            }
                         }
-                    ), in: 0...(counts.count - 1)) {
-                        Label {
-                            Text("Shots: \(selectedShotCount)")
-                        } icon: {
-                            Image(systemName: "cup.and.saucer")
-                                .foregroundStyle(.brown)
-                        }
+                        .disabled(!row.isEnabled)
+                        .accessibilityIdentifier(row.accessibilityIdentifier)
+                        .accessibilityHint(row.isEnabled ? "" : "Not available for this drink.")
                     }
-                    .accessibilityIdentifier("addDrinkShotStepper")
-                    .accessibilityValue("\(selectedShotCount)")
+                    if let configuration = presentation.shotConfiguration {
+                        if presentation.caffeineRow != nil {
+                            Divider()
+                        }
+                        let counts = configuration.supportedCounts.sorted()
+                        Stepper(value: Binding(
+                            get: { counts.firstIndex(of: selectedShotCount) ?? 0 },
+                            set: { index in
+                                let count = counts[index]
+                                guard count != selectedShotCount else { return }
+                                wateredLog("Add Drink shot count changed")
+                                selectedShotCount = count
+                                let progress = Double(index) / Double(max(counts.count - 1, 1))
+                                playDrinkFeedback(.impact(weight: .medium, intensity: 0.35 + 0.65 * progress))
+                            }
+                        ), in: 0...(counts.count - 1)) {
+                            Label {
+                                Text("Shots: \(selectedShotCount)")
+                            } icon: {
+                                Image(systemName: "cup.and.saucer")
+                                    .foregroundStyle(.brown)
+                            }
+                        }
+                        .accessibilityIdentifier("addDrinkShotStepper")
+                        .accessibilityValue("\(selectedShotCount)")
+                    } else if presentation.showsShots {
+                        if presentation.caffeineRow != nil { Divider() }
+                        Stepper(onIncrement: nil, onDecrement: nil) {
+                            Label {
+                                Text("Shots: —")
+                            } icon: {
+                                Image(systemName: "cup.and.saucer")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .disabled(true)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("addDrinkShotStepper")
+                        .accessibilityValue("Not applicable")
+                        .accessibilityHint("This coffee does not use shot-based preparation.")
+                    }
                 }
+                .padding(16)
+                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
+                .tint(categoryTint(definition.categoryID))
+                .padding(.horizontal, 20)
             }
-            .padding(16)
-            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
-            .tint(categoryTint(definition.categoryID))
-            .padding(.horizontal, 20)
         }
+    }
+
+    /// Triggers feedback from control edits, including consecutive edits with the same effect.
+    private func playDrinkFeedback(_ effect: SensoryFeedback = .selection) {
+        drinkFeedback = (drinkFeedback.sequence + 1, effect)
     }
 
     /// Index-based stepping supports the distinct ABV presets without inventing intermediate strengths.
     @ViewBuilder
-    private func alcoholPreparation(_ configuration: AlcoholConfiguration) -> some View {
-        if let preparation = configuration.nonAlcoholic {
-            Toggle("Non-alcoholic", isOn: $selectedNonAlcoholic)
-                .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
-            if selectedNonAlcoholic {
-                Text("Up to \((preparation.maximumABV * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV · exact amount unknown")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+    private func alcoholPreparation(_ rows: AddDrinkPreparationPresentation.AlcoholRows) -> some View {
+        let configuration = rows.configuration
+        let strength = rows.strength(isNonAlcoholic: selectedNonAlcoholic, selectedABV: selectedAlcoholABV)
+        Toggle(isOn: Binding(
+            get: { rows.isNonAlcoholicEnabled && selectedNonAlcoholic },
+            set: { value in
+                guard rows.isNonAlcoholicEnabled, value != selectedNonAlcoholic else { return }
+                selectedNonAlcoholic = value
+                playDrinkFeedback()
+            }
+        )) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Non-alcoholic")
+                if let note = strength.nonAlcoholicNote {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        if !selectedNonAlcoholic {
-            if configuration.nonAlcoholic != nil {
-                Divider()
-            }
-            let steps = configuration.supportedABVs
-            let value = selectedAlcoholABV ?? configuration.defaultABV
-            let label = (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Alcohol: \(label) ABV")
-                Slider(value: Binding(
-                    get: { Double(steps.firstIndex(of: value) ?? 0) },
-                    set: { selectedAlcoholABV = steps[Int($0.rounded())] }
-                ), in: 0...Double(steps.count - 1), step: 1)
-                .accessibilityLabel("Alcohol strength")
-                .accessibilityValue(label)
-                .accessibilityIdentifier("addDrinkABVSlider")
+        .disabled(!rows.isNonAlcoholicEnabled)
+        .foregroundStyle(rows.isNonAlcoholicEnabled ? Color.primary : Color.secondary)
+        .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
+        .accessibilityHint(rows.isNonAlcoholicEnabled ? "" : "Not available for this drink.")
+        Divider()
+        VStack(alignment: .leading, spacing: 8) {
+            Text(strength.title)
+            Slider(value: Binding(
+                get: { Double(strength.selectedIndex) },
+                set: { index in
+                    guard !strength.isUpperBound else { return }
+                    let value = configuration.supportedABVs[Int(index.rounded())]
+                    guard value != (selectedAlcoholABV ?? configuration.defaultABV) else { return }
+                    selectedAlcoholABV = value
+                    playDrinkFeedback()
+                }
+            ), in: 0...Double(strength.values.count - 1), step: 1)
+            .disabled(strength.isUpperBound)
+            .accessibilityLabel(strength.isUpperBound ? "Maximum alcohol strength" : "Alcohol strength")
+            .accessibilityValue(strength.accessibilityValue)
+            .accessibilityIdentifier("addDrinkABVSlider")
+            ZStack {
                 HStack {
-                    ForEach(steps, id: \.self) { step in
-                        Text((step * 100).formatted(.number.precision(.fractionLength(0...1))) + "%")
+                    ForEach(strength.values.indices, id: \.self) { index in
+                        Text(AddDrinkPreparationPresentation.AlcoholStrength.label(strength.values[index]))
                             .font(.caption2)
-                        if step != steps.last { Spacer(minLength: 0) }
+                        if index != strength.values.indices.last { Spacer(minLength: 0) }
                     }
                 }
-                .accessibilityHidden(true)
+                // Crossfade the whole scale so labels from different presets don't slide into place.
+                .id(strength.values)
+                .transition(.opacity)
             }
+            .accessibilityHidden(true)
         }
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(selectedCategoryID == nil ? "Type" : "Select your drink")
-                        .font(.headline)
-                        .accessibilityAddTraits(.isHeader)
-                        .padding(.horizontal, 20)
-                    categoryRow
-                    if selectedCategoryID != nil {
-                        drinkRow
-                        preparationSection
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(selectedCategoryID == nil ? "Type" : "Select your drink")
+                            .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
+                            .padding(.horizontal, 20)
+                        categoryRow
+                        if selectedCategoryID != nil {
+                            drinkRow
+                            preparationSection
+                        }
                     }
-                    volumeSection
+                    .padding(.top, 16)
+                    .padding(.bottom, 16)
                 }
-                .padding(.top, 16)
+                .frame(maxHeight: .infinity)
+                .clipped()
+                .scrollBounceBehavior(.basedOnSize)
+                .accessibilityIdentifier("addDrinkScreen")
+
+                volumeSection
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .accessibilityIdentifier("addDrinkScreen")
+            .frame(maxHeight: .infinity, alignment: .bottom)
             .navigationTitle("Add drink")
             .navigationSubtitle("Now, change time")
             .navigationBarTitleDisplayMode(.inline)
@@ -499,10 +559,13 @@ struct AddDrinkView: View {
                 }
             }
         }
+        .sensoryFeedback(trigger: drinkFeedback.sequence) { _, _ in
+            drinkFeedback.effect
+        }
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
         }
-        .presentationDetents([.height(440), .height(600), .height(720), .large], selection: $selectedDetent)
+        .presentationDetents([.height(440), .height(600), .height(660), .height(720), .height(780), .large], selection: $selectedDetent)
         .onChange(of: dynamicTypeSize) { _, size in
             if size.isAccessibilitySize { selectedDetent = .large }
         }

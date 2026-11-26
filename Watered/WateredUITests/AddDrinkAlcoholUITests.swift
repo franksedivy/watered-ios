@@ -35,14 +35,19 @@ final class AddDrinkAlcoholUITests: XCTestCase {
             XCTAssertEqual(app.pickerWheels.firstMatch.value as? String, volume)
             XCTAssertTrue(app.sliders["addDrinkABVSlider"].exists)
             let toggle = app.switches["addDrinkNonAlcoholicToggle"]
-            XCTAssertEqual(toggle.exists, supportsNonAlcoholic)
+            XCTAssertTrue(toggle.exists)
+            XCTAssertEqual(toggle.isEnabled, supportsNonAlcoholic)
+            XCTAssertEqual(toggle.value as? String, "0")
             XCTAssertFalse(app.steppers["addDrinkShotStepper"].exists)
             if supportsNonAlcoholic {
                 XCTAssertEqual(toggle.value as? String, "0")
                 toggle.tap()
-                XCTAssertTrue(app.sliders["addDrinkABVSlider"].waitForNonExistence(timeout: 5))
+                let slider = app.sliders["addDrinkABVSlider"]
+                XCTAssertTrue(slider.exists)
+                XCTAssertFalse(slider.isEnabled)
+                XCTAssertEqual(slider.value as? String, "Up to 0.5% ABV; exact amount unknown")
                 toggle.tap()
-                XCTAssertTrue(app.sliders["addDrinkABVSlider"].waitForExistence(timeout: 5))
+                XCTAssertTrue(slider.isEnabled)
             }
         }
         let cocktail = types.buttons["addDrinkTypeScrollView.cocktail"]
@@ -58,7 +63,9 @@ final class AddDrinkAlcoholUITests: XCTestCase {
         dismissAddDrinkSheet(in: app)
         app.buttons["addDrinkActionButton"].tap()
         XCTAssertEqual(app.switches["addDrinkNonAlcoholicToggle"].value as? String, "1")
-        XCTAssertFalse(app.sliders["addDrinkABVSlider"].exists)
+        XCTAssertTrue(app.sliders["addDrinkABVSlider"].exists)
+        XCTAssertFalse(app.sliders["addDrinkABVSlider"].isEnabled)
+        XCTAssertEqual(app.sliders["addDrinkABVSlider"].value as? String, "Up to 0.5% ABV; exact amount unknown")
         app.switches["addDrinkNonAlcoholicToggle"].tap()
         XCTAssertEqual(app.sliders["addDrinkABVSlider"].value as? String, "25%")
         app.switches["addDrinkNonAlcoholicToggle"].tap()
