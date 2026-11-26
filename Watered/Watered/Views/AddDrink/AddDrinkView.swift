@@ -38,6 +38,7 @@ struct AddDrinkView: View {
     @State private var volumeSelection: AddDrinkVolumeSelection
     @State private var isShowingPreparationError = false
     @State private var selectedDetent: PresentationDetent = .height(440)
+    @State private var preparationFeedback = (sequence: 0, effect: SensoryFeedback.selection)
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -363,6 +364,7 @@ struct AddDrinkView: View {
                                 let variant: CaffeineVariant = isEnabled ? row.alternative : .regular
                                 guard variant != selectedCaffeineVariant else { return }
                                 selectedCaffeineVariant = variant
+                                playPreparationFeedback()
                                 wateredLog("Add Drink caffeine preparation changed")
                             }
                         )) {
@@ -390,6 +392,8 @@ struct AddDrinkView: View {
                                 guard count != selectedShotCount else { return }
                                 wateredLog("Add Drink shot count changed")
                                 selectedShotCount = count
+                                let progress = Double(index) / Double(max(counts.count - 1, 1))
+                                playPreparationFeedback(.impact(weight: .medium, intensity: 0.35 + 0.65 * progress))
                             }
                         ), in: 0...(counts.count - 1)) {
                             Label {
@@ -426,6 +430,11 @@ struct AddDrinkView: View {
         }
     }
 
+    /// Triggers feedback from control edits, including consecutive edits with the same effect.
+    private func playPreparationFeedback(_ effect: SensoryFeedback = .selection) {
+        preparationFeedback = (preparationFeedback.sequence + 1, effect)
+    }
+
     /// Index-based stepping supports the distinct ABV presets without inventing intermediate strengths.
     @ViewBuilder
     private func alcoholPreparation(_ rows: AddDrinkPreparationPresentation.AlcoholRows) -> some View {
@@ -434,8 +443,9 @@ struct AddDrinkView: View {
         Toggle(isOn: Binding(
             get: { rows.isNonAlcoholicEnabled && selectedNonAlcoholic },
             set: { value in
-                guard rows.isNonAlcoholicEnabled else { return }
+                guard rows.isNonAlcoholicEnabled, value != selectedNonAlcoholic else { return }
                 selectedNonAlcoholic = value
+                playPreparationFeedback()
             }
         )) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -458,7 +468,10 @@ struct AddDrinkView: View {
                 get: { Double(strength.selectedIndex) },
                 set: { index in
                     guard !strength.isUpperBound else { return }
-                    selectedAlcoholABV = configuration.supportedABVs[Int(index.rounded())]
+                    let value = configuration.supportedABVs[Int(index.rounded())]
+                    guard value != (selectedAlcoholABV ?? configuration.defaultABV) else { return }
+                    selectedAlcoholABV = value
+                    playPreparationFeedback()
                 }
             ), in: 0...Double(strength.values.count - 1), step: 1)
             .disabled(strength.isUpperBound)
@@ -537,6 +550,9 @@ struct AddDrinkView: View {
                     wateredLog("Add Drink opened with a fresh draft")
                 }
             }
+        }
+        .sensoryFeedback(trigger: preparationFeedback.sequence) { _, _ in
+            preparationFeedback.effect
         }
         .onChange(of: currentDraft) { _, draft in
             retainedDraft = draft
