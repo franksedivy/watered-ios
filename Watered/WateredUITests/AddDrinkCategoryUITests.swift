@@ -3,7 +3,8 @@ import XCTest
 final class AddDrinkCategoryUITests: XCTestCase {
     private let readinessTimeout: TimeInterval = 10
 
-    // Coffees measured by volume retain an unavailable Shots row without implying a shot count.
+    // GIVEN White coffee, Cold brew and Latte selected in turn,
+    // THEN Shots stays visible, disabled as not applicable for volume-based coffees and enabled with two shots for Latte.
     @MainActor
     func testVolumeBasedCoffeesKeepDisabledShotsRow() {
         let app = openAddDrink()

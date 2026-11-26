@@ -116,4 +116,5 @@ Vegetable juice, Smoothie and Aloe vera drink appear in that order, all with a 2
 default and no preparation options. The selected border and primary drink-name text
 follow existing styling. Missing artwork uses the existing fallback. See
 [approved juice estimates](Drink-Catalogue-Files.md#juices--approved-9-november-2026-99--101--102).
-Sheet sizing, spacing and volume-picker positioning remain unchanged under #149.
+The Juices batch did not change sheet layout. The later #149 change anchors Volume
+below the independently scrolling drink controls, as described above.

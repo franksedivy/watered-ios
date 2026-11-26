@@ -3,7 +3,8 @@ import Testing
 @testable import Watered
 
 struct AddDrinkPreparationPresentationTests {
-    // Non-alcoholic display keeps the original presets and thumb position while showing the catalogue bound.
+    // GIVEN an alcohol drink with a selected strength and optional non-alcoholic preparation,
+    // THEN switching modes preserves its scale and selection, showing the non-alcoholic upper bound only when supported.
     @Test func nonAlcoholicSliderKeepsOriginalScaleAndSelection() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         for drink in catalogue.activeDrinks(inCategoryID: "alcohol") {
@@ -29,7 +30,8 @@ struct AddDrinkPreparationPresentationTests {
         }
     }
 
-    // Alcohol always reserves the toggle and ABV controls, without inventing unsupported alternatives.
+    // GIVEN each bundled alcohol drink and its catalogue configuration,
+    // THEN Alcohol reserves the same controls and height while enabling only supported non-alcoholic alternatives.
     @Test func alcoholRowsFollowCatalogueAvailability() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         let supported = ["beer", "cider", "wine", "cocktail", "sparkling-wine"]
@@ -44,7 +46,8 @@ struct AddDrinkPreparationPresentationTests {
         }
     }
 
-    // All drinks in these categories retain their row slots; only catalogue-supported options are editable.
+    // GIVEN bundled Coffee, Tea and Soft Drinks definitions with differing preparation capabilities,
+    // THEN category rows and heights stay stable, only supported options are enabled, and Water has no preparation rows.
     @Test func bundledCategoryRowsAndAvailability() throws {
         let catalogue = try DrinkCatalogueLoader().load()
         for category in ["coffee", "tea", "soft-drinks"] {
@@ -75,7 +78,8 @@ struct AddDrinkPreparationPresentationTests {
         #expect(!AddDrinkPreparationPresentation(definition: water).hasRows)
     }
 
-    // New catalogue definitions work without adding their drink IDs to presentation code.
+    // GIVEN new Soft Drinks definitions with and without a caffeine-free alternative,
+    // THEN capability determines toggle availability, and an unselected category retains the compact sheet height.
     @Test func syntheticDefinitionsUseCapabilitiesNotDrinkNames() {
         let supported = DrinkDefinition(
             id: "new-soft-drink", name: "New drink", categoryID: "soft-drinks", sortOrder: 1,
