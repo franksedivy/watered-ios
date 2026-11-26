@@ -89,8 +89,9 @@ No published policy URL or App Store Connect answers were available in this chec
 apply the reviewed wording to the published policy before release and compare the
 final archive's privacy report with the submitted answers. The wiki's
 [Analytics and Privacy](https://github.com/franksedivy/watered-ios/wiki/Analytics-And-Privacy)
-page is historical context; its event inventory predates the permission events.
-Repository source and this review own current behavior.
+page was reconciled with the implemented behaviour in wiki commit `7fc210e`.
+Repository source and this review own implementation and verification details;
+the [0.5 evidence matrix](releases/0.5-evidence.md) records the release review.
 
 The [final #111 review](TESTING.md#final-user-reported-manual-review--24-november-2026)
 records Frank's confirmation of VoiceOver, appearance, the first-time permission sheet
