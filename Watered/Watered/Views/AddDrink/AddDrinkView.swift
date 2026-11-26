@@ -201,7 +201,7 @@ struct AddDrinkView: View {
         }
     }
 
-    /// Bounds the wheel below preparation so its drawing and hit area cannot overlap controls.
+    /// A bounded wheel anchored below the independently scrolling drink controls.
     private var volumeSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Volume")
@@ -452,23 +452,32 @@ struct AddDrinkView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(selectedCategoryID == nil ? "Type" : "Select your drink")
-                        .font(.headline)
-                        .accessibilityAddTraits(.isHeader)
-                        .padding(.horizontal, 20)
-                    categoryRow
-                    if selectedCategoryID != nil {
-                        drinkRow
-                        preparationSection
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(selectedCategoryID == nil ? "Type" : "Select your drink")
+                            .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
+                            .padding(.horizontal, 20)
+                        categoryRow
+                        if selectedCategoryID != nil {
+                            drinkRow
+                            preparationSection
+                        }
                     }
-                    volumeSection
+                    .padding(.top, 16)
+                    .padding(.bottom, 16)
                 }
-                .padding(.top, 16)
+                .frame(maxHeight: .infinity)
+                .clipped()
+                .scrollBounceBehavior(.basedOnSize)
+                .accessibilityIdentifier("addDrinkScreen")
+
+                volumeSection
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .accessibilityIdentifier("addDrinkScreen")
+            .border(.blue)
+            .frame(maxHeight: .infinity, alignment: .bottom)
             .navigationTitle("Add drink")
             .navigationSubtitle("Now, change time")
             .navigationBarTitleDisplayMode(.inline)
