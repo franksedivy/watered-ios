@@ -422,7 +422,6 @@ struct AddDrinkView: View {
                 .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 20))
                 .tint(categoryTint(definition.categoryID))
                 .padding(.horizontal, 20)
-                .border(.red)
             }
         }
     }
@@ -442,36 +441,29 @@ struct AddDrinkView: View {
         .foregroundStyle(rows.isNonAlcoholicEnabled ? Color.primary : Color.secondary)
         .accessibilityIdentifier("addDrinkNonAlcoholicToggle")
         .accessibilityHint(rows.isNonAlcoholicEnabled ? "" : "Not available for this drink.")
-        if let preparation = configuration.nonAlcoholic {
-            if selectedNonAlcoholic {
-                Text("Up to \((preparation.maximumABV * 100).formatted(.number.precision(.fractionLength(0...1))))% ABV · exact amount unknown")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        if !selectedNonAlcoholic {
-            Divider()
-            let steps = configuration.supportedABVs
-            let value = selectedAlcoholABV ?? configuration.defaultABV
-            let label = (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Alcohol: \(label) ABV")
-                Slider(value: Binding(
-                    get: { Double(steps.firstIndex(of: value) ?? 0) },
-                    set: { selectedAlcoholABV = steps[Int($0.rounded())] }
-                ), in: 0...Double(steps.count - 1), step: 1)
-                .accessibilityLabel("Alcohol strength")
-                .accessibilityValue(label)
-                .accessibilityIdentifier("addDrinkABVSlider")
-                HStack {
-                    ForEach(steps, id: \.self) { step in
-                        Text((step * 100).formatted(.number.precision(.fractionLength(0...1))) + "%")
-                            .font(.caption2)
-                        if step != steps.last { Spacer(minLength: 0) }
-                    }
+        Divider()
+        let strength = rows.strength(isNonAlcoholic: selectedNonAlcoholic, selectedABV: selectedAlcoholABV)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(strength.title)
+            Slider(value: Binding(
+                get: { Double(strength.selectedIndex) },
+                set: { index in
+                    guard !strength.isUpperBound else { return }
+                    selectedAlcoholABV = configuration.supportedABVs[Int(index.rounded())]
                 }
-                .accessibilityHidden(true)
+            ), in: 0...Double(strength.values.count - 1), step: 1)
+            .disabled(strength.isUpperBound)
+            .accessibilityLabel(strength.isUpperBound ? "Maximum alcohol strength" : "Alcohol strength")
+            .accessibilityValue(strength.accessibilityValue)
+            .accessibilityIdentifier("addDrinkABVSlider")
+            HStack {
+                ForEach(strength.values.indices, id: \.self) { index in
+                    Text(AddDrinkPreparationPresentation.AlcoholStrength.label(strength.values[index]))
+                        .font(.caption2)
+                    if index != strength.values.indices.last { Spacer(minLength: 0) }
+                }
             }
+            .accessibilityHidden(true)
         }
     }
 
@@ -501,7 +493,6 @@ struct AddDrinkView: View {
                 volumeSection
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .border(.blue)
             .frame(maxHeight: .infinity, alignment: .bottom)
             .navigationTitle("Add drink")
             .navigationSubtitle("Now, change time")

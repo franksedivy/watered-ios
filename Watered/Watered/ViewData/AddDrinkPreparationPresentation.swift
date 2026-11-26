@@ -17,6 +17,37 @@ nonisolated struct AddDrinkPreparationPresentation {
         let configuration: AlcoholConfiguration
 
         var isNonAlcoholicEnabled: Bool { configuration.nonAlcoholic != nil }
+
+        /// The disabled indicator marks the recipe's upper bound, never an exact non-alcoholic ABV.
+        func strength(isNonAlcoholic: Bool, selectedABV: Double?) -> AlcoholStrength {
+            if isNonAlcoholic, let preparation = configuration.nonAlcoholic {
+                return AlcoholStrength(
+                    values: [0, preparation.maximumABV], selectedIndex: 1, isUpperBound: true
+                )
+            }
+            let values = configuration.supportedABVs
+            let value = selectedABV ?? configuration.defaultABV
+            return AlcoholStrength(
+                values: values, selectedIndex: values.firstIndex(of: value) ?? 0, isUpperBound: false
+            )
+        }
+    }
+
+    struct AlcoholStrength {
+        let values: [Double]
+        let selectedIndex: Int
+        let isUpperBound: Bool
+
+        var valueLabel: String { Self.label(values[selectedIndex]) }
+        var title: String {
+            isUpperBound ? "Up to \(valueLabel) ABV · exact amount unknown" : "Alcohol: \(valueLabel) ABV"
+        }
+        var accessibilityValue: String {
+            isUpperBound ? "Up to \(valueLabel) ABV; exact amount unknown" : valueLabel
+        }
+        static func label(_ value: Double) -> String {
+            (value * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
+        }
     }
 
     let caffeineRow: CaffeineRow?

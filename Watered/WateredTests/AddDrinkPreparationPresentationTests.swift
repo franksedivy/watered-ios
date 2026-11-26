@@ -1,7 +1,32 @@
+import Foundation
 import Testing
 @testable import Watered
 
 struct AddDrinkPreparationPresentationTests {
+    // Non-alcoholic display uses the catalogue bound while retaining the user's alcoholic preset.
+    @Test func nonAlcoholicSliderShowsBoundWithoutReplacingSelectedStrength() throws {
+        let catalogue = try DrinkCatalogueLoader().load()
+        for drink in catalogue.activeDrinks(inCategoryID: "alcohol") {
+            let rows = try #require(AddDrinkPreparationPresentation(definition: drink).alcoholRows)
+            let chosen = try #require(rows.configuration.supportedABVs.last)
+            let alcoholic = rows.strength(isNonAlcoholic: false, selectedABV: chosen)
+            #expect(!alcoholic.isUpperBound)
+            #expect(alcoholic.values[alcoholic.selectedIndex] == chosen)
+            let alternative = rows.strength(isNonAlcoholic: true, selectedABV: chosen)
+            if let preparation = rows.configuration.nonAlcoholic {
+                #expect(alternative.isUpperBound)
+                #expect(alternative.values == [0, preparation.maximumABV])
+                #expect(alternative.selectedIndex == 1)
+                #expect(alternative.accessibilityValue.contains("exact amount unknown"))
+            } else {
+                #expect(!alternative.isUpperBound)
+                #expect(alternative.values[alternative.selectedIndex] == chosen)
+            }
+            let restored = rows.strength(isNonAlcoholic: false, selectedABV: chosen)
+            #expect(restored.values[restored.selectedIndex] == chosen)
+        }
+    }
+
     // Alcohol always reserves the toggle and ABV controls, without inventing unsupported alternatives.
     @Test func alcoholRowsFollowCatalogueAvailability() throws {
         let catalogue = try DrinkCatalogueLoader().load()
