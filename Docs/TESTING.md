@@ -542,3 +542,16 @@ Review screenshots use synthetic simulator data:
 - [Enabled sync screen](review/111/sync-enabled.png), captured at `2d102a8`.
 - [Plain information page and icon header](review/111/privacy-information.png),
   captured from the source committed as `6cc660f`.
+
+## Full UI suite — 28 November 2026
+
+Frank confirmed this was the full configured UI suite at normal text size. An existing local result bundle was independently inspected on 28 November; no tests were rerun.
+
+- Bundle: `~/Library/Developer/Xcode/DerivedData/Watered-aiadzohzpproclbzujkzytgsxpwr/Logs/Test/Test-Watered-2026.11.27_23-32-50-+0100.xcresult`. Inspection used a temporary copy, preserving the original.
+- Result: **53 passed, zero failures, zero skipped within selection**, across nine UI test classes. No unit-test pass is inferred from this selection.
+- Session: 27 November 23:32:50.423 to 28 November 00:09:53.942, Europe/Madrid. Frank’s console reports 2193.489 seconds of test execution; bundle session timing includes setup.
+- Build: shared `Watered` scheme and `Watered` test plan, Debug simulator configuration, arm64. Build log identifies the iOS 27.2 SDK (24B8118); destination is the **iPhone Air simulator, iOS 27.0 (24A434)**. Host reports macOS 27.2.1 (26B131). SDK and runtime versions differ intentionally in this record.
+- Frank confirmed the tested revision was `74fa375521b125507fca21579bf7feb01f5e3e27` and the run used normal text size. Git confirms that revision and merge `be2c4d9` have the same tree (`69b0033368905e0ea8b1f2d5dcc0999f487ac1b0`). The bundle identifies the usual checkout’s `Watered/Watered.xcodeproj`. The exact Xcode version remains unverified.
+- Four runtime warnings report `_UIGravityWellEffectAnchorView` being added beneath `UIHostingController.view`; the run passed. This record makes no diagnosis of those warnings.
+
+The shared plan excludes `WateredUITestsLaunchTests`; zero skipped within the selection does not include excluded tests. This pass does not establish larger-text layout, physical-device behaviour, real HealthKit writes, Release configuration or archive/privacy readiness. Earlier failed runs remain historical evidence; this pass does not establish their cause.
