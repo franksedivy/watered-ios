@@ -555,3 +555,16 @@ Frank confirmed this was the full configured UI suite at normal text size. An ex
 - Four runtime warnings report `_UIGravityWellEffectAnchorView` being added beneath `UIHostingController.view`; the run passed. This record makes no diagnosis of those warnings.
 
 The shared plan excludes `WateredUITestsLaunchTests`; zero skipped within the selection does not include excluded tests. This pass does not establish larger-text layout, physical-device behaviour, real HealthKit writes, Release configuration or archive/privacy readiness. Earlier failed runs remain historical evidence; this pass does not establish their cause.
+
+## Widget summary (#189)
+
+`WidgetSummaryTests` covers app parity for empty/mixed/unknown/negative/zero/reached/
+over-goal days; all display/goal unit pairs; committed settings without extra goal
+history; captured facts without current catalogue definitions; 23/25-hour Madrid
+DST days and half-open day boundaries; calendar/time-zone changes and clock rollback;
+explicit null round trips; minimal keys, malformed/missing/unsupported fields,
+arithmetic tolerance, invalid numbers and the inclusive 64 KiB boundary.
+
+The boundary is pure: callers provide committed visible entries and applied settings.
+Failed-save/deletion publication and bounded file I/O require later integration tests;
+these tests do not establish widget rendering, App Group protection or device behaviour.

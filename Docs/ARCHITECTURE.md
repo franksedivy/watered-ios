@@ -39,6 +39,27 @@ amount. Session drafts and submission retain the captured value/unit rather than
 rounded display text. Recent labels use the same volume formatter with the applied
 unit; shortcut identity and repetition retain the original amount and preparation.
 
+## Widget summary boundary (#189)
+
+`WidgetSummary/WidgetSummaryDerivation.swift` derives a daily summary from supplied
+visible committed entries and applied `AppSettings`, using the same Calendar day
+selection as `WateredStore` and the existing `HydrationTracker` snapshot. It never
+consults the current catalogue, reads persistence, or changes goal history. Callers
+must supply committed state, excluding drafts and deleted rows; publication wiring
+is separate work.
+
+`WidgetSummary.swift` defines Codable JSON v1 and a bounded codec. All eleven keys
+are required, with Unix-second timestamps, calendar/time-zone identifiers, durable
+Profile unit IDs and canonical millilitres. Unknown hydration encodes three explicit
+nulls; unavailable data is a separate result. Known negative and over-goal values
+remain unclamped. Arithmetic uses absolute/relative tolerance `1e-9`; remaining is
+nonnegative. Validation requires the current Calendar day and time zone, generation
+within that day and no later than the read clock. There is no same-day age expiry.
+Unsupported schemas, extra/missing fields, malformed values and payloads over 64 KiB
+are unavailable. Future storage readers must also bound file reads before allocation.
+The payload excludes history, liquid totals and Health data. There is no WidgetKit,
+App Group I/O, publication or rendering integration in this boundary.
+
 ## Settings and goal history
 
 SwiftData stores drink entries, app settings and goal-change records. `AppSettingsPersistence.loadOrCreate` creates first-run settings and a baseline goal record together. Profile edits use a draft; dismissal saves the final changed goal once. Unchanged goals create no additional record. A failed goal save preserves the applied goal.
