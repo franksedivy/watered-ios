@@ -6,7 +6,28 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		196000000000000000000001 /* Build Version */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 196000000000000000000002 /* Build configuration list for PBXAggregateTarget "Build Version" */;
+			buildPhases = (
+				196000000000000000000003 /* Allocate build number */,
+			);
+			dependencies = (
+			);
+			name = "Build Version";
+			productName = "Build Version";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXContainerItemProxy section */
+		C19DB38B30BAD00B0055D170 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C1F5F0AD2FEE623F00B03450 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 196000000000000000000001;
+			remoteInfo = "Build Version";
+		};
 		C1F5F0C32FEE624000B03450 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C1F5F0AD2FEE623F00B03450 /* Project object */;
@@ -124,6 +145,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				196000000000000000000004 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C1F5F0B72FEE623F00B03450 /* Watered */,
@@ -223,6 +245,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				196000000000000000000001 /* Build Version */,
 				C1F5F0B42FEE623F00B03450 /* Watered */,
 				C1F5F0C12FEE624000B03450 /* WateredTests */,
 				C1F5F0CB2FEE624000B03450 /* WateredUITests */,
@@ -254,6 +277,26 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		196000000000000000000003 /* Allocate build number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../Scripts/Build/allocate-build-number.py",
+			);
+			name = "Allocate build number";
+			outputPaths = (
+				"$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/BuildVersion/Version.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\n/usr/bin/python3 -B \"$SRCROOT/../Scripts/Build/allocate-build-number.py\" \"$SRCROOT/../BuildNumber.txt\" \"$PROJECT_TEMP_DIR/$CONFIGURATION$EFFECTIVE_PLATFORM_NAME/BuildVersion\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		C1F5F0B12FEE623F00B03450 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -279,6 +322,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		196000000000000000000004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 196000000000000000000001 /* Build Version */;
+			targetProxy = C19DB38B30BAD00B0055D170 /* PBXContainerItemProxy */;
+		};
 		C1F5F0C42FEE624000B03450 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C1F5F0B42FEE623F00B03450 /* Watered */;
@@ -292,6 +340,20 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		196000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+			};
+			name = Debug;
+		};
+		196000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+			};
+			name = Release;
+		};
 		C1F5F0D42FEE624000B03450 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -424,28 +486,19 @@
 				CODE_SIGN_ENTITLEMENTS = Watered/Watered.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = A5EYYY25C3;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Watered/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Watered;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Watered does not read your Apple Health data.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Watered can add estimated water, caffeine and alcohol amounts from drinks you log to Apple Health when you enable sync.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/BuildVersion/Version.h";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5;
+				MARKETING_VERSION = 0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.franksedivy.wateredapp-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -473,28 +526,19 @@
 				CODE_SIGN_ENTITLEMENTS = Watered/Watered.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = A5EYYY25C3;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Watered/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Watered;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Watered does not read your Apple Health data.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Watered can add estimated water, caffeine and alcohol amounts from drinks you log to Apple Health when you enable sync.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/BuildVersion/Version.h";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.5;
+				MARKETING_VERSION = 0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.franksedivy.wateredapp-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -618,6 +662,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		196000000000000000000002 /* Build configuration list for PBXAggregateTarget "Build Version" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				196000000000000000000005 /* Debug */,
+				196000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		C1F5F0B02FEE623F00B03450 /* Build configuration list for PBXProject "Watered" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
