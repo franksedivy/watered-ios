@@ -35,6 +35,7 @@ jobs:
       - name: Check CI helper and workflow configuration
         run: |
           mkdir -p "$RUNNER_TEMP/watered-ios-ci"
+          python3 -B Scripts/Build/test-build-number.py
           bash Scripts/CI/test-run-ios-tests.sh 2>&1 |
             tee "$RUNNER_TEMP/watered-ios-ci/helper-checks.log"
 

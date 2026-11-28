@@ -25,6 +25,13 @@ struct ProfileView: View {
     
     var analytics: any AnalyticsClient = NoOpAnalyticsClient()
 
+    /// Identifies the installed artifact, independently of the current checkout.
+    private var installedVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+        return "Version \(version) (build \(build))"
+    }
+
     /// Optional so standalone previews do not require a live HealthKit dependency.
     @Environment(HealthAuthorizationController.self)
     private var healthAuthorization: HealthAuthorizationController?
@@ -165,6 +172,17 @@ struct ProfileView: View {
                     }
                 }
                 #endif
+
+                Section {
+                    EmptyView()
+                } footer: {
+                    Text(installedVersion)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("profileAppVersion")
+                }
             }
             .navigationTitle("Profile")
             .accessibilityIdentifier("profileScreen")
